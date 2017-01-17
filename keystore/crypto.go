@@ -104,7 +104,7 @@ func (s Store) SignMessage(msg []byte, name, passphrase string) (sig []byte, pub
 	}
 
 	// go-wire format to be compatible with basecoin, and likely others
-	sig = wire.BinaryBytes(key.Sign(msg))
-	pubkey = wire.BinaryBytes(key.PubKey())
+	sig = wire.BinaryBytes(sigwire{key.Sign(msg)})
+	pubkey = wire.BinaryBytes(pubwire{key.PubKey()})
 	return sig, pubkey, nil
 }
