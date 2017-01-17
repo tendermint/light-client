@@ -1,6 +1,12 @@
-hash: 7244328d8a2c8827d2badf9f214af976fb8efd5e1845e8cc953680cbd6032337
-updated: 2017-01-17T15:01:21.421296069+01:00
+hash: 49711a90f34182e4c912e68e16f80744de770fe9e0ed976148ae638eb3666074
+updated: 2017-01-17T19:12:45.508027056+01:00
 imports:
+- name: github.com/alecthomas/template
+  version: a0175ee3bccc567396460bf5acd36800cb10c49c
+  subpackages:
+  - parse
+- name: github.com/alecthomas/units
+  version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
 - name: github.com/btcsuite/btcd
   version: afec1bd1245a4a19e6dfe1306974b733e7cbb9b8
   subpackages:
@@ -11,12 +17,18 @@ imports:
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 - name: github.com/ebuchman/fail-test
   version: c1eddaa09da2b4017351245b0d43234955276798
+- name: github.com/go-stack/stack
+  version: 100eb0c0a9c5b306ca2fb4f165df21d80ada4b82
 - name: github.com/golang/protobuf
   version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
   - proto
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: 757bef944d0f21880861c2dd9c871ca543023cba
 - name: github.com/gorilla/websocket
   version: 3ab3a8b8831546bd18fd182c20687ca853b2bb13
 - name: github.com/jmhodges/levigo
@@ -75,11 +87,12 @@ imports:
 - name: github.com/tendermint/go-merkle
   version: c7a7ae88ca72bf030a7fb7d0d52ce8d1e62b4e16
 - name: github.com/tendermint/go-p2p
-  version: 67963ab800a72e91fecfb954e489b21aa906171a
+#  version: eab2baa363de01b052b88c559e803776cd2c7dd6
+  version: 3d98f675f30dc4796546b8b890f895926152fa8d
   subpackages:
   - upnp
 - name: github.com/tendermint/go-rpc
-  version: 94fed25975c31e5d405369f0e3558da3cff85c2b
+  version: 161e36fd56c2f95ad133dd03ddb33db0363ca742
   subpackages:
   - client
   - server
@@ -88,6 +101,8 @@ imports:
   version: 37d5dd6530857a1abc1db50a48ba22c3459826a1
 - name: github.com/tendermint/log15
   version: ae0f3d6450da9eac7074b439c8e1c3cabf0d5ce6
+  subpackages:
+  - term
 - name: github.com/tendermint/tendermint
   version: 00d4157b80b4052b21d27460b33e411bfe07d79d
   subpackages:
@@ -141,11 +156,8 @@ imports:
   - stats
   - tap
   - transport
-- name: gopkg.in/inconshreveable/log15.v2
-  version: b105bd37f74e5d9dc7b6ad7806715c7a2b83fd3f
-  subpackages:
-  - stack
-  - term
+- name: gopkg.in/alecthomas/kingpin.v2
+  version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
