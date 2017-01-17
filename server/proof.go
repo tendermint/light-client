@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/pkg/errors"
 	merkle "github.com/tendermint/go-merkle"
 )
 
@@ -17,7 +18,7 @@ func VerifyProof(w http.ResponseWriter, r *http.Request) {
 
 	proof, err := merkle.LoadProof(req.Proof)
 	if err != nil {
-		writeError(w, err)
+		writeError(w, errors.Wrap(err, "Loading Proof"))
 		return
 	}
 

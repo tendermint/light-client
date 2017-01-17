@@ -13,16 +13,19 @@ import (
 
 /*
 Usage:
-  verifier --socket=<socket>
+  verifier --socket=<socket> --keydir=<dir>
 
 Testing:
   curl --unix-socket <socket> http://localhost/
   curl -XPOST --unix-socket <socket> http://localhost/prove -d '{"proof": "ABCD1234"}'
+  curl -XPOST --unix-socket <socket> http://localhost/key -d '{"name": "test", "password": "1234"}'
+  curl -XPOST --unix-socket <socket> http://localhost/sign -d '{"name": "test", "password": "1234", "data": "12345678deadbeef"}'
 */
 
 var (
 	app    = kingpin.New("verifier", "Local golang server to validate go-merkle proofs")
 	socket = app.Flag("socket", "path to unix socket to server on").Required().String()
+	keydir = app.Flag("keydir", "directory to store the secret keys").String()
 )
 
 // CreateSocket deletes existing socket if there, creates a new one,
@@ -58,6 +61,12 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", server.HelloWorld).Methods("GET")
 	router.HandleFunc("/prove", server.VerifyProof).Methods("POST")
+
+	if keydir != nil && *keydir != "" {
+		keystore := server.NewKeyStore(*keydir)
+		router.HandleFunc("/key", keystore.GenerateKey).Methods("POST")
+		router.HandleFunc("/sign", keystore.SignMessage).Methods("POST")
+	}
 
 	app.FatalIfError(http.Serve(l, router), "Server killed")
 }
