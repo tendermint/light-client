@@ -41,7 +41,7 @@ imports:
   - leveldb/table
   - leveldb/util
 - name: github.com/tendermint/abci
-  version: 05096de3687ac582bec63860b3dd384acd9149aa
+  version: fdc047ae7af0f0189dd9f21b932eb92ce455ffa5
   subpackages:
   - client
   - example/dummy
@@ -89,7 +89,7 @@ imports:
 - name: github.com/tendermint/log15
   version: ae0f3d6450da9eac7074b439c8e1c3cabf0d5ce6
 - name: github.com/tendermint/tendermint
-  version: 764091dfbb035f1b28da4b067526e04c6a849966
+  version: 00d4157b80b4052b21d27460b33e411bfe07d79d
   subpackages:
   - blockchain
   - config/tendermint_test

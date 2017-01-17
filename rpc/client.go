@@ -51,6 +51,15 @@ func (c *HTTPClient) ABCIQuery(query []byte) (*ctypes.ResultABCIQuery, error) {
 	return (*tmResult).(*ctypes.ResultABCIQuery), nil
 }
 
+func (c *HTTPClient) ABCIProof(key []byte, height uint64) (*ctypes.ResultABCIProof, error) {
+	tmResult := new(ctypes.TMResult)
+	_, err := c.rpc.Call("abci_proof", []interface{}{key, height}, tmResult)
+	if err != nil {
+		return nil, err
+	}
+	return (*tmResult).(*ctypes.ResultABCIProof), nil
+}
+
 func (c *HTTPClient) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
 	return c.broadcastTX("broadcast_tx_commit", tx)
 }

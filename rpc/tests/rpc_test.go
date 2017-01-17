@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/abci/example/dummy"
+	merkle "github.com/tendermint/go-merkle"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -30,7 +31,7 @@ func TestAppCalls(t *testing.T) {
 	_, err = c.BroadcastTxCommit(tx)
 	require.Nil(err)
 	// wait before querying
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
 	qres, err := c.ABCIQuery(k)
 	if assert.Nil(err) {
 		data := dummy.QueryResult{}
@@ -42,8 +43,22 @@ func TestAppCalls(t *testing.T) {
 		}
 	}
 	// and we can even check the block is added
-	_, err = c.Block(1)
+	block, err := c.Block(3)
 	assert.Nil(err) // now it's good :)
+	appHash := block.BlockMeta.Header.AppHash
+	assert.True(len(appHash) > 0)
+
+	// and we got a proof that works!
+	pres, err := c.ABCIProof(k, 0)
+	if assert.Nil(err) && assert.False(pres.Result.IsErr()) {
+		proof, err := merkle.LoadProof(pres.Result.Data)
+		if assert.Nil(err) {
+			assert.True(proof.Valid())
+			assert.Equal(proof.Key(), k)
+			assert.Equal(proof.Value(), v)
+			assert.Equal(appHash, proof.Root())
+		}
+	}
 }
 
 // run most calls just to make sure no syntax errors

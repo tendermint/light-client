@@ -21,6 +21,7 @@ type RPCClient interface {
 	BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error)
 
 	ABCIQuery(query []byte) (*ctypes.ResultABCIQuery, error)
+	ABCIProof(key []byte, height uint64) (*ctypes.ResultABCIProof, error)
 	ABCIInfo() (*ctypes.ResultABCIInfo, error)
 
 	// subscribe to events (how to read them depends on implementation...)
