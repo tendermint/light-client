@@ -1,0 +1,27 @@
+package: github.com/tendermint/light-client
+import:
+- package: github.com/tendermint/go-config
+- package: github.com/tendermint/go-p2p
+- package: github.com/tendermint/go-rpc
+  subpackages:
+  - client
+- package: github.com/tendermint/abci
+  subpackages:
+  - client
+  - example/dummy
+  - example/nil
+  - types
+- package: github.com/tendermint/tendermint
+  version: ~0.8.0
+  subpackages:
+  - config/tendermint_test
+  - node
+  - rpc/core/types
+  - types
+testImport:
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert
+  - require
+- package: github.com/tendermint/log15
