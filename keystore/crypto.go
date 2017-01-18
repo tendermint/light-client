@@ -31,6 +31,46 @@ func New(dir string) Store {
 	return Store{keyDir: dir}
 }
 
+func (s Store) CreateKey(name, passphrase string) error {
+	path := s.nameToPath(name)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, keyPerm)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	text := generateKey(name, passphrase)
+	_, err = file.WriteString(text)
+	return err
+}
+
+func (s Store) GenerateSignature(msg []byte, name, passphrase string) (sig []byte, pubkey []byte, err error) {
+	key, err := s.keyFromFile(name, passphrase)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// go-wire format to be compatible with basecoin, and likely others
+	sig = wire.BinaryBytes(sigwire{key.Sign(msg)})
+	pubkey = wire.BinaryBytes(pubwire{key.PubKey()})
+	return sig, pubkey, nil
+}
+
+func (s Store) SignMessage(payload []byte, name, passphrase string) (signed []byte, err error) {
+	key, err := s.keyFromFile(name, passphrase)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := message{
+		Data:      payload,
+		Signature: key.Sign(payload),
+		PubKey:    key.PubKey(),
+	}
+	// go-wire format to be compatible with basecoin, and likely others
+	return wire.BinaryBytes(msg), nil
+}
+
 func secret(passphrase string) []byte {
 	// TODO: Sha256(Bcrypt(passphrase))
 	return crypto.Sha256([]byte(passphrase))
@@ -73,38 +113,17 @@ func (s Store) nameToPath(name string) string {
 	return path.Join(s.keyDir, fname)
 }
 
-func (s Store) CreateKey(name, passphrase string) error {
-	path := s.nameToPath(name)
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, keyPerm)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	text := generateKey(name, passphrase)
-	_, err = file.WriteString(text)
-	return err
-}
-
-func (s Store) SignMessage(msg []byte, name, passphrase string) (sig []byte, pubkey []byte, err error) {
+func (s Store) keyFromFile(name, passphrase string) (crypto.PrivKey, error) {
 	path := s.nameToPath(name)
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "Cannot open keyfile")
+		return nil, errors.Wrap(err, "Cannot open keyfile")
 	}
 
 	keyData, err := ioutil.ReadAll(file)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "Cannot read keyfile")
+		return nil, errors.Wrap(err, "Cannot read keyfile")
 	}
 
-	key, err := decryptKey(string(keyData), passphrase)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// go-wire format to be compatible with basecoin, and likely others
-	sig = wire.BinaryBytes(sigwire{key.Sign(msg)})
-	pubkey = wire.BinaryBytes(pubwire{key.PubKey()})
-	return sig, pubkey, nil
+	return decryptKey(string(keyData), passphrase)
 }

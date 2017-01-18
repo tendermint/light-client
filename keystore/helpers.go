@@ -11,6 +11,11 @@ func init() {
 
 type pubwire struct{ crypto.PubKey }
 type sigwire struct{ crypto.Signature }
+type message struct {
+	Data      []byte
+	Signature crypto.Signature
+	PubKey    crypto.PubKey
+}
 
 // we must register these types here, to make sure they parse (maybe go-wire issue??)
 // TODO: fix go-wire, remove this code

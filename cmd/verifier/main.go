@@ -13,13 +13,14 @@ import (
 
 /*
 Usage:
-  verifier --socket=<socket> --keydir=<dir>
+  verifier --socket=$SOCKET --keydir=$KEYDIR
 
 Testing:
-  curl --unix-socket <socket> http://localhost/
-  curl -XPOST --unix-socket <socket> http://localhost/prove -d '{"proof": "ABCD1234"}'
-  curl -XPOST --unix-socket <socket> http://localhost/key -d '{"name": "test", "password": "1234"}'
-  curl -XPOST --unix-socket <socket> http://localhost/sign -d '{"name": "test", "password": "1234", "data": "12345678deadbeef"}'
+  curl --unix-socket $SOCKET http://localhost/
+  curl -XPOST --unix-socket $SOCKET http://localhost/prove -d '{"proof": "ABCD1234"}'
+  curl -XPOST --unix-socket $SOCKET http://localhost/key -d '{"name": "test", "password": "1234"}'
+  curl -XPOST --unix-socket $SOCKET http://localhost/sign -d '{"name": "test", "password": "1234", "data": "12345678deadbeef"}'
+  curl -XPOST --unix-socket $SOCKET http://localhost/wrap -d '{"name": "test", "password": "1234", "data": "12345678deadbeef"}'
 */
 
 var (
@@ -65,7 +66,8 @@ func main() {
 	if keydir != nil && *keydir != "" {
 		keystore := server.NewKeyStore(*keydir)
 		router.HandleFunc("/key", keystore.GenerateKey).Methods("POST")
-		router.HandleFunc("/sign", keystore.SignMessage).Methods("POST")
+		router.HandleFunc("/sign", keystore.GenerateSignature).Methods("POST")
+		router.HandleFunc("/wrap", keystore.SignMessage).Methods("POST")
 	}
 
 	app.FatalIfError(http.Serve(l, router), "Server killed")
