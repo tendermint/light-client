@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/tendermint/light-client/server"
 
@@ -25,7 +27,8 @@ Testing:
 
 var (
 	app    = kingpin.New("verifier", "Local golang server to validate go-merkle proofs")
-	socket = app.Flag("socket", "path to unix socket to server on").Required().String()
+	socket = app.Flag("socket", "path to unix socket to serve on").String()
+	port   = app.Flag("port", "port to listen on").Default("46667").Int()
 	keydir = app.Flag("keydir", "directory to store the secret keys").String()
 )
 
@@ -55,9 +58,18 @@ func CreateSocket(socket string) (net.Listener, error) {
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
-	l, err := CreateSocket(*socket)
-	app.FatalIfError(err,
-		"Cannot create socket: %s", *socket)
+
+	var l net.Listener
+	var err error
+	if *socket != "" {
+		l, err = CreateSocket(*socket)
+		app.FatalIfError(err,
+			"Cannot create socket: %s", *socket)
+	} else {
+		l, err = net.Listen("tcp", fmt.Sprintf(":%v", *port))
+		app.FatalIfError(err,
+			"Cannot listen on port: %v", *port)
+	}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", server.HelloWorld).Methods("GET")
@@ -70,5 +82,8 @@ func main() {
 		router.HandleFunc("/wrap", keystore.SignMessage).Methods("POST")
 	}
 
-	app.FatalIfError(http.Serve(l, router), "Server killed")
+	allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type"})
+	cors := handlers.CORS(allowedHeaders)(router)
+
+	app.FatalIfError(http.Serve(l, cors), "Server killed")
 }
