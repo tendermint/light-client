@@ -82,8 +82,14 @@ func main() {
 		router.HandleFunc("/wrap", keystore.SignMessage).Methods("POST")
 	}
 
-	allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type"})
-	cors := handlers.CORS(allowedHeaders)(router)
+	// only set cors for tcp listener
+	var h http.Handler
+	if *socket == "" {
+		allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type"})
+		h = handlers.CORS(allowedHeaders)(router)
+	} else {
+		h = router
+	}
 
-	app.FatalIfError(http.Serve(l, cors), "Server killed")
+	app.FatalIfError(http.Serve(l, h), "Server killed")
 }

@@ -1,7 +1,11 @@
+
 install: get_vendor_deps
 	go install ./cmd/...
 
-test:
+build:
+	go build ./cmd/...
+
+test: build
 	go test `glide novendor`
 
 get_vendor_deps:
