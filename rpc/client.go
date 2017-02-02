@@ -42,22 +42,13 @@ func (c *HTTPClient) ABCIInfo() (*ctypes.ResultABCIInfo, error) {
 	return (*tmResult).(*ctypes.ResultABCIInfo), nil
 }
 
-func (c *HTTPClient) ABCIQuery(query []byte) (*ctypes.ResultABCIQuery, error) {
+func (c *HTTPClient) ABCIQuery(path string, data []byte, prove bool) (*ctypes.ResultABCIQuery, error) {
 	tmResult := new(ctypes.TMResult)
-	_, err := c.rpc.Call("abci_query", []interface{}{query}, tmResult)
+	_, err := c.rpc.Call("abci_query", []interface{}{path, data, prove}, tmResult)
 	if err != nil {
 		return nil, err
 	}
 	return (*tmResult).(*ctypes.ResultABCIQuery), nil
-}
-
-func (c *HTTPClient) ABCIProof(key []byte, height uint64) (*ctypes.ResultABCIProof, error) {
-	tmResult := new(ctypes.TMResult)
-	_, err := c.rpc.Call("abci_proof", []interface{}{key, height}, tmResult)
-	if err != nil {
-		return nil, err
-	}
-	return (*tmResult).(*ctypes.ResultABCIProof), nil
 }
 
 func (c *HTTPClient) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {

@@ -1,13 +1,11 @@
 package tests
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/abci/example/dummy"
 	merkle "github.com/tendermint/go-merkle"
 	"github.com/tendermint/tendermint/types"
 )
@@ -32,15 +30,11 @@ func TestAppCalls(t *testing.T) {
 	require.Nil(err)
 	// wait before querying
 	time.Sleep(time.Second * 2)
-	qres, err := c.ABCIQuery(k)
-	if assert.Nil(err) {
-		data := dummy.QueryResult{}
-		// make sure dummy app return value...
-		err = json.Unmarshal(qres.Result.Data, &data)
-		if assert.Nil(err) {
-			assert.Equal(string(v), data.Value)
-			assert.True(data.Exists)
-		}
+	qres, err := c.ABCIQuery("/key", k, false)
+	if assert.Nil(err) && assert.EqualValues(0, qres.Response.GetCode()) {
+		data := qres.Response
+		// assert.Equal(k, data.GetKey())  // only returned for proofs
+		assert.Equal(v, data.GetValue())
 	}
 	// and we can even check the block is added
 	block, err := c.Block(3)
@@ -49,14 +43,15 @@ func TestAppCalls(t *testing.T) {
 	assert.True(len(appHash) > 0)
 
 	// and we got a proof that works!
-	pres, err := c.ABCIProof(k, 0)
-	if assert.Nil(err) && assert.False(pres.Result.IsErr()) {
-		proof, err := merkle.LoadProof(pres.Result.Data)
+	pres, err := c.ABCIQuery("/key", k, true)
+	if assert.Nil(err) && assert.EqualValues(0, pres.Response.GetCode()) {
+		proof, err := merkle.ReadProof(pres.Response.GetProof())
 		if assert.Nil(err) {
-			assert.True(proof.Valid())
-			assert.Equal(proof.Key(), k)
-			assert.Equal(proof.Value(), v)
-			assert.Equal(appHash, proof.Root())
+			key := pres.Response.GetKey()
+			value := pres.Response.GetValue()
+			assert.Equal(appHash, proof.RootHash)
+			valid := proof.Verify(key, value, appHash)
+			assert.True(valid)
 		}
 	}
 }
