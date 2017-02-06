@@ -32,9 +32,13 @@ This code is currently in the [keystore directory](./keystore).
 
 ### RPC Wrapper
 
-We will create a [nice interface](./rpc) to call the tendermint RPC, to avoid a lot of boilerplate casting and marshaling of data types when we call the RPC.
+First, we create a [nicer interface](./rpc) to call the tendermint RPC, to avoid a lot of boilerplate casting and marshaling of data types when we call the RPC. This is a literal client of the existing tendermint RPC, and will track the most recent version of tendermint rpc (and multiple versions once 1.0 is released).
 
 **Needs work**
+
+Secondly, we create an abstract interface `Node` representing the needs of a light client, which takes the results from tendermint rpc and does some validation and other processing on them.  This doesn't pull in any other dependencies and is the interface that is used internally in the package for all code that needs to interact with the tendermint server.
+
+**TODO**
 
 ### Creating Transactions
 
@@ -42,7 +46,9 @@ If the server is writen in go, especially if it is based on basecoin, generating
 
 This should be written in a way that it is easy to add custom transaction encodings to a custom build of this library without forking the codebase (just importing it and passing some initialization info).  Much the
 
-**TODO**
+The beginning of this work is in [Signable and Poster](./transactions.go#L21-L43), and the example [transaction wrappers](./sign). Other applications should create concrete transactions that implement `Signable`, and then we just need to expose this via cli or proxy.
+
+**Needs Work**
 
 ### Viewing Data
 
@@ -63,6 +69,8 @@ It is important to provide access to this essential functionality in a light cli
 A very important part of verifying a proof is to ensure that it's roothash was committed to a valid block.  We can get the proof and a block header, and validate they match.  But then we need to prove that the block is properly signed by a validator set.  The first step is to verify the signatures, the second that these public keys actually have the authority to sign blocks (not just some random keys).
 
 If a chain has a static validator set, we just need to feed in this set upon initialization, and can verify a block header with a simple 2/3 check. If it can update, we need an easy way to track them, without having to process every block header.
+
+There is background information in a [github issue](https://github.com/tendermint/tendermint/issues/377), the [block structure](https://tendermint.com/docs/internals/block-structure), and the [concept of validators](https://tendermint.com/docs/internals/validators)
 
 **TODO**: Link to Bucky's document about this algorithm
 

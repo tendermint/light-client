@@ -18,15 +18,15 @@ type KeyStore interface {
 	// TODO: import, export, and update (changing passphrase)
 }
 
-// Tx represents any transaction we wish to send to tendermint core
+// Signable represents any transaction we wish to send to tendermint core
 // These methods allow us to sign arbitrary Tx with the KeyStore
 // TODO: Look at tendermint/types/signable.go
-type Tx interface {
+type Signable interface {
 	// Bytes is the immutable data, which needs to be signed
 	Bytes() []byte
 
 	// AddSignature will add a signature (and address or pubkey as desired)
-	// Depending on the Tx, one may be able to call this multiple times for multisig
+	// Depending on the Signable, one may be able to call this multiple times for multisig
 	// Returns error if called with invalid data or too many times
 	Sign(addr, pubkey, sig []byte) error
 
@@ -35,11 +35,11 @@ type Tx interface {
 	Signed() ([]byte, error)
 }
 
-// Poster combines KeyStore and Node to process a Tx and deliver it to tendermint
+// Poster combines KeyStore and Node to process a Signable and deliver it to tendermint
 // returning the results from the tendermint node, once the transaction is processed
 // only handles single signatures
 type Poster interface {
-	Post(tx Tx, keyname, passphrase string) (BroadcastResult, error)
+	Post(sign Signable, keyname, passphrase string) (BroadcastResult, error)
 }
 
 // TODO: move this into a subpackage????
@@ -52,7 +52,7 @@ func NewPoster(node Node, keys KeyStore) Poster {
 	return poster{node, keys}
 }
 
-func (p poster) Post(tx Tx, keyname, passphrase string) (res BroadcastResult, err error) {
+func (p poster) Post(sign Signable, keyname, passphrase string) (res BroadcastResult, err error) {
 	var info KeyInfo
 	var data, sig, signed []byte
 
@@ -61,18 +61,18 @@ func (p poster) Post(tx Tx, keyname, passphrase string) (res BroadcastResult, er
 		return
 	}
 
-	data = tx.Bytes()
+	data = sign.Bytes()
 	sig, err = p.keys.Signature(keyname, passphrase, data)
 	if err != nil {
 		return
 	}
 
-	err = tx.Sign(info.Address, info.PubKey, sig)
+	err = sign.Sign(info.Address, info.PubKey, sig)
 	if err != nil {
 		return
 	}
 
-	signed, err = tx.Signed()
+	signed, err = sign.Signed()
 	if err != nil {
 		return
 	}
