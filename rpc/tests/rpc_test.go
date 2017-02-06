@@ -31,7 +31,7 @@ func TestAppCalls(t *testing.T) {
 	// wait before querying
 	time.Sleep(time.Second * 2)
 	qres, err := c.ABCIQuery("/key", k, false)
-	if assert.Nil(err) && assert.EqualValues(0, qres.Response.GetCode()) {
+	if assert.Nil(err) && assert.True(qres.Response.Code.IsOK()) {
 		data := qres.Response
 		// assert.Equal(k, data.GetKey())  // only returned for proofs
 		assert.Equal(v, data.GetValue())
@@ -44,7 +44,7 @@ func TestAppCalls(t *testing.T) {
 
 	// and we got a proof that works!
 	pres, err := c.ABCIQuery("/key", k, true)
-	if assert.Nil(err) && assert.EqualValues(0, pres.Response.GetCode()) {
+	if assert.Nil(err) && assert.True(pres.Response.Code.IsOK()) {
 		proof, err := merkle.ReadProof(pres.Response.GetProof())
 		if assert.Nil(err) {
 			key := pres.Response.GetKey()
