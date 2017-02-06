@@ -7,11 +7,12 @@ of tests in various packages.
 **/
 
 import (
+	"fmt"
+
 	logger "github.com/tendermint/go-logger"
 	"github.com/tendermint/light-client/rpc"
 
 	cfg "github.com/tendermint/go-config"
-	p2p "github.com/tendermint/go-p2p"
 	"github.com/tendermint/tendermint/config/tendermint_test"
 	nm "github.com/tendermint/tendermint/node"
 )
@@ -42,6 +43,7 @@ func GetClient() *rpc.HTTPClient {
 // TODO: can one pass an Application in????
 func StartNode() {
 	// start a node
+	fmt.Println("StartNode")
 	ready := make(chan struct{})
 	go NewNode(ready)
 	<-ready
@@ -51,13 +53,8 @@ func StartNode() {
 func NewNode(ready chan struct{}) {
 	// Create & start node
 	node := nm.NewNodeDefault(GetConfig())
-	protocol, address := nm.ProtocolAndAddress(config.GetString("node_laddr"))
-	l := p2p.NewDefaultListener(protocol, address, true)
-	node.AddListener(l)
+	// node.Start now does everything including the RPC server
 	node.Start()
-
-	// Run the RPC server.
-	node.StartRPC()
 	ready <- struct{}{}
 
 	// Sleep forever

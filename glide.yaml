@@ -6,14 +6,14 @@ import:
   subpackages:
   - client
 - package: github.com/tendermint/abci
-  version: abci_proof
+  version: develop
   subpackages:
   - client
   - example/dummy
   - example/nil
   - types
 - package: github.com/tendermint/tendermint
-  version: abci_proof
+  version: develop
   subpackages:
   - config/tendermint_test
   - node

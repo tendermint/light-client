@@ -16,28 +16,26 @@ func VerifyProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	proof, err := merkle.LoadProof(req.Proof)
+	proof, err := merkle.ReadProof(req.Proof)
 	if err != nil {
 		writeError(w, errors.Wrap(err, "Loading Proof"))
 		return
 	}
 
 	resp := ProofResponse{
-		Key:      proof.Key(),
-		Value:    proof.Value(),
-		RootHash: proof.Root(),
-		Valid:    proof.Valid(),
+		RootHash: proof.RootHash,
+		Valid:    proof.Verify(req.Key, req.Value, proof.RootHash),
 	}
 	writeSuccess(w, &resp)
 }
 
 type ProofRequest struct {
 	Proof []byte `json:"proof"`
+	Key   []byte `json:"key"`
+	Value []byte `json:"value"`
 }
 
 type ProofResponse struct {
-	Key      []byte `json:"key"`
-	Value    []byte `json:"value"`
 	RootHash []byte `json:"roothash"`
 	Valid    bool   `json:"valid"`
 }
