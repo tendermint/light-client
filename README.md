@@ -30,7 +30,7 @@ This code is currently in the [keystore directory](./keystore).
 
 **Needs work**
 
-## RPC Wrapper
+### RPC Wrapper
 
 We will create a [nice interface](./rpc) to call the tendermint RPC, to avoid a lot of boilerplate casting and marshaling of data types when we call the RPC.
 
