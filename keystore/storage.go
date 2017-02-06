@@ -5,12 +5,6 @@ import (
 	lightclient "github.com/tendermint/light-client"
 )
 
-// Encoder is used to encrypt any key with a passphrase for storage
-type Encoder interface {
-	Encrypt(key crypto.PrivKey, pass string) ([]byte, error)
-	Decrypt(data []byte, pass string) (crypto.PrivKey, error)
-}
-
 // Storage has many implementation, based on security and sharing requirements
 // like disk-backed, mem-backed, vault, db, etc.
 type Storage interface {

@@ -71,11 +71,6 @@ func (s Store) SignMessage(payload []byte, name, passphrase string) (signed []by
 	return wire.BinaryBytes(msg), nil
 }
 
-func secret(passphrase string) []byte {
-	// TODO: Sha256(Bcrypt(passphrase))
-	return crypto.Sha256([]byte(passphrase))
-}
-
 func generateKey(name, passphrase string) string {
 	priv := crypto.GenPrivKeyEd25519()
 	secret := secret(passphrase)
