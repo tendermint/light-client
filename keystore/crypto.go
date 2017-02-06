@@ -22,14 +22,14 @@ type Store struct {
 }
 
 // TODO: error not panic?
-func New(dir string) Store {
-	// make sure the dir is there...
-	err := os.Mkdir(dir, dirPerm)
-	if err != nil && !os.IsExist(err) {
-		panic(err)
-	}
-	return Store{keyDir: dir}
-}
+// func New(dir string) Store {
+// 	// make sure the dir is there...
+// 	err := os.Mkdir(dir, dirPerm)
+// 	if err != nil && !os.IsExist(err) {
+// 		panic(err)
+// 	}
+// 	return Store{keyDir: dir}
+// }
 
 func (s Store) CreateKey(name, passphrase string) error {
 	path := s.nameToPath(name)

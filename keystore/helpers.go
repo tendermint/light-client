@@ -5,6 +5,7 @@ import (
 	wire "github.com/tendermint/go-wire"
 )
 
+// TODO: is this necessary????
 func init() {
 	registerGoCryptoGoWire()
 }

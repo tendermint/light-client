@@ -10,12 +10,22 @@ type KeyInfo struct {
 // KeyStore represents secure storage of tendermint private keys
 // The implementation can specify what types of keys, generally ed25519....
 // The implementation is also responsible for deciding how to persist to disk
+// TODO: break this down into smaller pieces???
 type KeyStore interface {
 	Create(name, passphrase string) error
 	List() ([]KeyInfo, error)
 	Get(name string) (KeyInfo, error)
 	Signature(name, passphrase string, data []byte) ([]byte, error)
-	// TODO: import, export, and update (changing passphrase)
+	Verify(data, sig, pubkey []byte) error
+
+	// Too many methods???
+	Export(name, oldpass, transferpass string) ([]byte, error)
+	Import(name, newpass, transferpass string, key []byte) error
+	// Update reencodes a key with a different passphrase
+	// it can be achieved by Export, Import, and Delete
+	Update(name, oldpass, newpass string) error
+	// Too dangerous????
+	Delete(name string) error
 }
 
 // Signable represents any transaction we wish to send to tendermint core
