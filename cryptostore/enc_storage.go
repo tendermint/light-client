@@ -40,10 +40,8 @@ func (es encryptedStorage) Delete(name string) error {
 
 // info hardcodes the encoding of keys
 func info(name string, key crypto.PrivKey) lightclient.KeyInfo {
-	pub := key.PubKey()
 	return lightclient.KeyInfo{
-		Name:    name,
-		PubKey:  pub.Bytes(),
-		Address: pub.Address(),
+		Name:   name,
+		PubKey: key.PubKey(),
 	}
 }

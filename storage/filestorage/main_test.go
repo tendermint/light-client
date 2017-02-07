@@ -9,10 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	lightclient "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/mock"
 )
 
 func TestBasicCRUD(t *testing.T) {
-	assert := assert.New(t)
+	assert, require := assert.New(t), require.New(t)
 
 	dir, err := ioutil.TempDir("", "filestorage-test")
 	assert.Nil(err)
@@ -21,10 +22,12 @@ func TestBasicCRUD(t *testing.T) {
 
 	name := "bar"
 	key := []byte("secret-key-here")
+	pubkey := mock.PubKey{
+		Val: []byte("pubkey"),
+	}
 	info := lightclient.KeyInfo{
-		Name:    name,
-		Address: []byte("addr"),
-		PubKey:  []byte("pubkey"),
+		Name:   name,
+		PubKey: pubkey,
 	}
 
 	// No data: Get and Delete return nothing
@@ -46,11 +49,11 @@ func TestBasicCRUD(t *testing.T) {
 
 	// Now, we can get and list properly
 	k, i, err := store.Get(name)
-	assert.Nil(err)
+	require.Nil(err, "%+v", err)
 	assert.Equal(key, k)
 	assert.Equal(info, i)
 	l, err = store.List()
-	assert.Nil(err, "%+v", err)
+	require.Nil(err, "%+v", err)
 	assert.Equal(1, len(l))
 	assert.Equal(info, l[0])
 

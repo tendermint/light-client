@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	lightclient "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/mock"
 )
 
 func TestBasicCRUD(t *testing.T) {
@@ -13,10 +14,12 @@ func TestBasicCRUD(t *testing.T) {
 
 	name := "foo"
 	key := []byte("secret-key-here")
+	pubkey := mock.PubKey{
+		Val: []byte("pubkey"),
+	}
 	info := lightclient.KeyInfo{
-		Name:    name,
-		Address: []byte("addr"),
-		PubKey:  []byte("pubkey"),
+		Name:   name,
+		PubKey: pubkey,
 	}
 
 	// No data: Get and Delete return nothing

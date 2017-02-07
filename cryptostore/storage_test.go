@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	crypto "github.com/tendermint/go-crypto"
 	lightclient "github.com/tendermint/light-client"
 )
 
@@ -35,10 +34,8 @@ func TestSortKeys(t *testing.T) {
 
 	// make sure info put some real data there...
 	assert.NotEmpty(infos[0].PubKey)
+	assert.NotEmpty(infos[0].PubKey.Address())
+	assert.NotEmpty(infos[1].PubKey)
+	assert.NotEmpty(infos[1].PubKey.Address())
 	assert.NotEqual(infos[0].PubKey, infos[1].PubKey)
-	assert.NotEqual(infos[0].Address, infos[1].Address)
-
-	// and make sure the pubkey is really something we can use
-	_, err := crypto.PubKeyFromBytes(infos[2].PubKey)
-	assert.Nil(err, "%+v", err)
 }

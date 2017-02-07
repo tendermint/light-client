@@ -6,7 +6,6 @@ like standard ssh key storage.
 package filestorage
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -16,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	crypto "github.com/tendermint/go-crypto"
 	lightclient "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/mock"
 )
 
 const (
@@ -60,7 +60,7 @@ func (s FileStore) Put(name string, key []byte, info lightclient.KeyInfo) error 
 	}
 
 	// write private info
-	return writeKey(priv, name, key)
+	return write(priv, name, key)
 }
 
 // Get loads the keyinfo and (encoded) private key from the directory
@@ -74,7 +74,7 @@ func (s FileStore) Get(name string) ([]byte, lightclient.KeyInfo, error) {
 		return nil, info, err
 	}
 
-	key, err := readKey(priv)
+	key, _, err := read(priv)
 	return key, info, err
 }
 
@@ -125,61 +125,55 @@ func (s FileStore) nameToPaths(name string) (pub, priv string) {
 	return path.Join(s.keyDir, pubName), path.Join(s.keyDir, privName)
 }
 
-func readInfo(path string) (lightclient.KeyInfo, error) {
-	var info lightclient.KeyInfo
-	f, err := os.Open(path)
-	if err != nil {
-		return info, errors.Wrap(err, "Getting Public Key")
-	}
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		return info, errors.Wrap(err, "Getting Public Key")
-	}
-	err = json.Unmarshal(data, &info)
-	return info, errors.Wrap(err, "Parsing Public Key")
+func writeInfo(path string, info lightclient.KeyInfo) error {
+	return write(path, info.Name, info.PubKey.Bytes())
 }
 
-func readKey(path string) ([]byte, error) {
+func readInfo(path string) (info lightclient.KeyInfo, err error) {
+	var data []byte
+	data, info.Name, err = read(path)
+	if err != nil {
+		return
+	}
+	// now the tricky part... let's see if we can unmarshall the data
+	// using a known type!
+
+	// first, try with a real crypto stuff
+	info.PubKey, err = crypto.PubKeyFromBytes(data)
+	if err != nil {
+		// if not, let's try with mock data....
+		info.PubKey, err = mock.LoadPubKey(data)
+	}
+	return
+}
+
+func read(path string) ([]byte, string, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "Getting Private Key")
+		return nil, "", errors.Wrap(err, "Reading data")
 	}
 	d, err := ioutil.ReadAll(f)
 	if err != nil {
-		return nil, errors.Wrap(err, "Getting Private Key")
+		return nil, "", errors.Wrap(err, "Reading data")
 	}
-	block, _, key, err := crypto.DecodeArmor(string(d))
+	block, headers, key, err := crypto.DecodeArmor(string(d))
 	if err != nil {
-		return nil, errors.Wrap(err, "Invalid Armor")
+		return nil, "", errors.Wrap(err, "Invalid Armor")
 	}
 	if block != BlockType {
-		return nil, errors.Errorf("Unknown key type: %s", block)
+		return nil, "", errors.Errorf("Unknown key type: %s", block)
 	}
-	return key, nil
+	return key, headers["name"], nil
 }
 
-func writeInfo(path string, info lightclient.KeyInfo) error {
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, pubPerm)
-	if err != nil {
-		return errors.Wrap(err, "Saving Public Key")
-	}
-	defer f.Close()
-	d, err := json.Marshal(info)
-	if err != nil {
-		return errors.Wrap(err, "Saving Public Key")
-	}
-	_, err = f.Write(d)
-	return errors.Wrap(err, "Saving Public Key")
-}
-
-func writeKey(path, name string, key []byte) error {
+func write(path, name string, key []byte) error {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, keyPerm)
 	if err != nil {
-		return errors.Wrap(err, "Saving Private Key")
+		return errors.Wrap(err, "Writing data")
 	}
 	defer f.Close()
 	headers := map[string]string{"name": name}
 	text := crypto.EncodeArmor(BlockType, headers, key)
 	_, err = f.WriteString(text)
-	return errors.Wrap(err, "Saving Private Key")
+	return errors.Wrap(err, "Writing data")
 }

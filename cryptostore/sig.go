@@ -2,6 +2,7 @@ package cryptostore
 
 import (
 	"github.com/pkg/errors"
+	crypto "github.com/tendermint/go-crypto"
 	wire "github.com/tendermint/go-wire"
 	lightclient "github.com/tendermint/light-client"
 )
@@ -16,8 +17,8 @@ func NewSig(data []byte) *Sig {
 // more sense (particularly the verify method)
 type Sig struct {
 	data   []byte
-	sig    []byte
-	pubkey []byte
+	sig    crypto.Signature
+	pubkey crypto.PubKey
 }
 
 // assertSignable is just to make sure we stay in sync with the Signable interface
@@ -30,56 +31,55 @@ func (s *Sig) Bytes() []byte {
 	return s.data
 }
 
-// Sign attaches information from `KeySigner.Signature`, which should be
-// a properly encoded public key signature
-func (s *Sig) Sign(addr, pubkey, sig []byte) error {
-	if len(sig) == 0 || len(pubkey) == 0 {
+// Sign will add a signature and pubkey.
+//
+// Depending on the Signable, one may be able to call this multiple times for multisig
+// Returns error if called with invalid data or too many times
+func (s *Sig) Sign(pubkey lightclient.PubKey, sig lightclient.Signature) error {
+	if pubkey == nil || sig == nil {
 		return errors.New("Signature or Key missing")
 	}
 	if s.sig != nil {
 		return errors.New("Transaction can only be signed once")
 	}
-	s.sig = sig
-	s.pubkey = pubkey
+
+	// make sure the types are truly compatible
+	cpk, ok := pubkey.(crypto.PubKey)
+	if !ok {
+		return errors.New("pubkey must be crypto.PubKey")
+	}
+	csig, ok := sig.(crypto.Signature)
+	if !ok {
+		return errors.New("sig must be crypto.Signature")
+	}
+
+	// set the value once we are happy
+	s.pubkey = cpk
+	s.sig = csig
+
 	return nil
 }
 
-// Signed serializes the Sig to send it to a tendermint app.
+// SignedBy will return the public key(s) that signed if the signature
+// is valid, or an error if there is any issue with the signature,
+// including if there are no signatures
+func (s *Sig) SignedBy() ([]lightclient.PubKey, error) {
+	if s.pubkey == nil || s.sig == nil {
+		return nil, errors.New("Never signed")
+	}
+
+	if !s.pubkey.VerifyBytes(s.data, s.sig) {
+		return nil, errors.New("Signature doesn't match")
+	}
+
+	return []lightclient.PubKey{s.pubkey}, nil
+}
+
+// SignedBytes serializes the Sig to send it to a tendermint app.
 // It returns an error if the Sig was never Signed.
-func (s *Sig) Signed() ([]byte, error) {
+func (s *Sig) SignedBytes() ([]byte, error) {
 	if s.sig == nil {
 		return nil, errors.New("Transaction was never signed")
 	}
 	return wire.BinaryBytes(s), nil
 }
-
-// TODO: how do we verify this??? need some function to deserialize and verify the sigs!
-
-// // Validate will deserialize the contained action, and validate the signature or return an error
-// func (tx SignedAction) Validate() (ValidatedAction, error) {
-// 	res := ValidatedAction{
-// 		SignedAction: tx,
-// 	}
-// 	valid := tx.Signer.VerifyBytes(tx.ActionData, tx.Signature)
-// 	if !valid {
-// 		return res, errors.New("Invalid signature")
-// 	}
-
-// 	var err error
-// 	res.action, err = ActionFromBytes(tx.ActionData)
-// 	if err == nil {
-// 		res.valid = true
-// 	}
-// 	return res, err
-// }
-
-// // SignAction will serialize the action and sign it with your key
-// func SignAction(action Action, privKey crypto.PrivKey) (res SignedAction, err error) {
-// 	res.ActionData, err = ActionToBytes(action)
-// 	if err != nil {
-// 		return res, err
-// 	}
-// 	res.Signature = privKey.Sign(res.ActionData)
-// 	res.Signer = privKey.PubKey()
-// 	return res, nil
-// }

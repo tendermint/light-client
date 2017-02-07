@@ -28,7 +28,7 @@ We need to manage private keys locally, store them securely (passphrase protecte
 
 This code is in the [cryptostore directory](./cryptostore). It uses a composable architecture to allow you to customize the type of key (currently Ed25519 or Secp256k1), what symetric encryption algorithm we use to passphrase-encode the key for storage, and where we store the key (currently in-memory or on disk, could be extend to eg. vault, etcd, db...)
 
-Please take a look at the godoc for this package, as care was taken to make it approachable.
+Please take a look at the godoc for this package, as care was taken to make it approachable. Note that you can find the [storage options](./storage) in their own package.  They can be used to store eg. validator lists as well.
 
 The general concept (create, list, sign, import, export...) was inspired by [Ethereum Key Management](https://github.com/ethereum/go-ethereum/wiki/Managing-Your-Accounts).  The code and architecture was developed completely independently (I didn't even look at their code, so as not to possibly violate the GPLv3 license).
 

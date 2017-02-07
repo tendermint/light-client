@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/tendermint/light-client/cryptostore"
+	"github.com/tendermint/light-client/mock"
 )
 
 type KeyServer struct {
@@ -42,22 +43,18 @@ func (k *KeyServer) GenerateSignature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	info, err := k.manager.Get(req.KeyName)
+	tx := &mock.OneSign{Data: req.Data}
+	err = k.manager.Sign(req.KeyName, req.Passphrase, tx)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	sig, err := k.manager.Signature(req.KeyName, req.Passphrase, req.Data)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-
+	pk := tx.PubKey
 	resp := GenerateSignatureResponse{
-		Signature: sig,
-		PubKey:    info.PubKey,
-		Address:   info.Address,
+		Signature: tx.Sig.Bytes(),
+		PubKey:    pk.Bytes(),
+		Address:   pk.Address(),
 	}
 	writeSuccess(w, &resp)
 }
