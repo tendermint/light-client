@@ -40,6 +40,9 @@ func TestBasicCRUD(t *testing.T) {
 	// Putting the key in the  store must work
 	err = store.Put(name, key, info)
 	assert.Nil(err)
+	// But a second time is a failure
+	err = store.Put(name, key, info)
+	assert.NotNil(err)
 
 	// Now, we can get and list properly
 	k, i, err := store.Get(name)

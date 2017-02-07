@@ -24,21 +24,13 @@ Finally, we could export a nice `.so` file with a simple C ABI using [-buildmode
 
 ### Key Management
 
-We need to manage private ed25519 keys locally, store them securely (passphrase protected), sign transactions, and display their addresses (for receiving transactions).
+We need to manage private keys locally, store them securely (passphrase protected), sign transactions, and display their addresses (for receiving transactions).
 
-This code is currently in the [keystore directory](./keystore).
+This code is in the [cryptostore directory](./cryptostore). It uses a composable architecture to allow you to customize the type of key (currently Ed25519 or Secp256k1), what symetric encryption algorithm we use to passphrase-encode the key for storage, and where we store the key (currently in-memory or on disk, could be extend to eg. vault, etcd, db...)
 
-**Needs work**
+Please take a look at the godoc for this package, as care was taken to make it approachable.
 
-### RPC Wrapper
-
-First, we create a [nicer interface](./rpc) to call the tendermint RPC, to avoid a lot of boilerplate casting and marshaling of data types when we call the RPC. This is a literal client of the existing tendermint RPC, and will track the most recent version of tendermint rpc (and multiple versions once 1.0 is released).
-
-**Needs work**
-
-Secondly, we create an abstract interface `Node` representing the needs of a light client, which takes the results from tendermint rpc and does some validation and other processing on them.  This doesn't pull in any other dependencies and is the interface that is used internally in the package for all code that needs to interact with the tendermint server.
-
-**TODO**
+The general concept (create, list, sign, import, export...) was inspired by [Ethereum Key Management](https://github.com/ethereum/go-ethereum/wiki/Managing-Your-Accounts).  The code and architecture was developed completely independently (I didn't even look at their code, so as not to possibly violate the GPLv3 license).
 
 ### Creating Transactions
 
@@ -49,6 +41,17 @@ This should be written in a way that it is easy to add custom transaction encodi
 The beginning of this work is in [Signable and Poster](./transactions.go#L21-L43), and the example [transaction wrappers](./sign). Other applications should create concrete transactions that implement `Signable`, and then we just need to expose this via cli or proxy.
 
 **Needs Work**
+
+
+### RPC Wrapper
+
+First, we create a [nicer interface](./rpc) to call the tendermint RPC, to avoid a lot of boilerplate casting and marshaling of data types when we call the RPC. This is a literal client of the existing tendermint RPC, and will track the most recent version of tendermint rpc (and multiple versions once 1.0 is released).
+
+**Needs work**
+
+Secondly, we create an abstract interface `Node` representing the needs of a light client, which takes the results from tendermint rpc and does some validation and other processing on them.  This doesn't pull in any other dependencies and is the interface that is used internally in the package for all code that needs to interact with the tendermint server.
+
+**TODO**
 
 ### Viewing Data
 
@@ -81,5 +84,4 @@ There is background information in a [github issue](https://github.com/tendermin
 Some other projects that may inspire this:
 
 * [Project Trillian](https://github.com/google/trillian) - Verifiable data structures (Apache 2.0)
-* [Ethereum Key Management](https://github.com/ethereum/go-ethereum/wiki/Managing-Your-Accounts) - This is (L)GPLv3 code, so be careful not to borrow
 
