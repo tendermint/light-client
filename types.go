@@ -5,23 +5,24 @@ import (
 	"time"
 )
 
-type CodeType int32
+// TmCode is a code from Tendermint
+type TmCode int32
 
-func (c CodeType) IsOK() bool {
+func (c TmCode) IsOK() bool {
 	return int32(c) == 0
 }
 
-type BroadcastResult struct {
-	Code CodeType `json:"code"` // TODO: rethink this
-	Data []byte   `json:"data"`
-	Log  string   `json:"log"`
+type TmBroadcastResult struct {
+	Code TmCode `json:"code"` // TODO: rethink this
+	Data []byte `json:"data"`
+	Log  string `json:"log"`
 }
 
-func (r BroadcastResult) IsOk() bool {
+func (r TmBroadcastResult) IsOk() bool {
 	return r.Code.IsOK()
 }
 
-type StatusResult struct {
+type TmStatusResult struct {
 	LatestBlockHash   []byte `json:"latest_block_hash"`
 	LatestAppHash     []byte `json:"latest_app_hash"`
 	LatestBlockHeight int    `json:"latest_block_height"`
@@ -30,8 +31,8 @@ type StatusResult struct {
 
 // TODO: how to handle proofs?
 // where do we parse them from bytes into Proof objects we can work with
-type QueryResult struct {
-	Code CodeType `json:"code"`
+type TmQueryResult struct {
+	Code TmCode `json:"code"`
 	// Index  int64    `json:"index,omitempty"` // ????
 	Key   []byte `json:"key"`
 	Value []byte `json:"value"`
@@ -41,31 +42,31 @@ type QueryResult struct {
 	Log    string `json:"log"`
 }
 
-// Validator more or less from tendermint/types
-type Validator struct {
+// TmValidator more or less from tendermint/types
+type TmValidator struct {
 	Address []byte `json:"address"`
 	PubKey  []byte `json:"pub_key"`
 	// PubKey      crypto.PubKey `json:"pub_key"`
 	VotingPower int64 `json:"voting_power"`
 }
 
-type ValidatorResult struct {
+type TmValidatorResult struct {
 	BlockHeight int
-	Validators  []Validator
+	Validators  []TmValidator
 }
 
-// BlockMeta is the Header info and the Hash that corresponds to it
+// TmBlockMeta is the Header info and the Hash that corresponds to it
 // (and which is used to cannonically identiry the block)
 // The Node implementation is responsible for validating this is correct,
 // thus we can return the Header is any useful format, not byte-for-byte how
 // tendermint stores it.
-type BlockMeta struct {
+type TmBlockMeta struct {
 	Hash   []byte
-	Header Header
+	Header TmHeader
 }
 
-// Header is the info in block headers (from tendermint/types/block.go)
-type Header struct {
+// TmHeader is the info in block headers (from tendermint/types/block.go)
+type TmHeader struct {
 	ChainID        string    `json:"chain_id"`
 	Height         int       `json:"height"`
 	Time           time.Time `json:"time"`    // or int64 nanoseconds????
@@ -77,10 +78,10 @@ type Header struct {
 	AppHash        []byte    `json:"app_hash"`         // state after txs from the previous block
 }
 
-// Vote must be verified by the Node implementation, this asserts a validly
+// TmVote must be verified by the Node implementation, this asserts a validly
 // signed precommit vote for the given Height and BlockHash.
 // The client can decide if these validators are to be trusted.
-type Vote struct {
+type TmVote struct {
 	ValidatorAddress []byte `json:"validator_address"`
 	// ValidatorIndex   int              `json:"validator_index"`
 	Height    int    `json:"height"`
@@ -91,11 +92,11 @@ type Vote struct {
 	// Signature        crypto.Signature `json:"signature"`
 }
 
-// Votes is a slice of Vote structs, but let's add some control access here
-type Votes []Vote
+// TmVotes is a slice of TmVote structs, but let's add some control access here
+type TmVotes []TmVote
 
 // ForBlock returns true only if all votes are for the given block
-func (v Votes) ForBlock(hash []byte) bool {
+func (v TmVotes) ForBlock(hash []byte) bool {
 	if len(v) == 0 {
 		return false
 	}

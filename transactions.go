@@ -64,7 +64,7 @@ func NewPoster(server Broadcaster, keys KeySigner) Poster {
 
 // Post will sign the transaction with the given credentials and push it to
 // the tendermint server
-func (p Poster) Post(sign Signable, keyname, passphrase string) (res BroadcastResult, err error) {
+func (p Poster) Post(sign Signable, keyname, passphrase string) (res TmBroadcastResult, err error) {
 	var info KeyInfo
 	var data, sig, signed []byte
 

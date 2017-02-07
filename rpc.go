@@ -5,7 +5,7 @@ type Broadcaster interface {
 	// Broadcast sends into to the chain
 	// We only implement BroadcastCommit for now, add others???
 	// The return result cannot be fully trusted without downloading signed headers
-	Broadcast(tx []byte) (BroadcastResult, error)
+	Broadcast(tx []byte) (TmBroadcastResult, error)
 }
 
 // Checker provides access to calls to get data from the tendermint core
@@ -13,12 +13,12 @@ type Broadcaster interface {
 type Checker interface {
 	// Query gets data from the Blockchain state, and can optionally provide
 	// a Proof we can validate
-	Query(path string, data []byte, prove bool) (QueryResult, error)
+	Query(path string, data []byte, prove bool) (TmQueryResult, error)
 
 	// You need to check the Headers and Votes together to prove anything
 	// is actually on the chain
-	Headers(minHeight, maxHeight int) ([]BlockMeta, error)
-	Votes(height int) (Votes, error)
+	Headers(minHeight, maxHeight int) ([]TmBlockMeta, error)
+	Votes(height int) (TmVotes, error)
 }
 
 // Node represents someway to query a tendermint node for info
@@ -31,8 +31,8 @@ type Node interface {
 	// Status and Validators give some info, nothing to be trusted though...
 	// Unless we find that eg. the ValidatorResult matches the ValidatorHash
 	// in a properly signed block header
-	Status() (StatusResult, error)
-	Validators() (ValidatorResult, error)
+	Status() (TmStatusResult, error)
+	Validators() (TmValidatorResult, error)
 
 	// TODO: let's make this reactive if possible
 	// TODO: listen for a transaction being committed?

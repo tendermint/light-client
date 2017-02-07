@@ -1,46 +1,38 @@
-package sign
+package cryptostore
 
 import (
 	"github.com/pkg/errors"
-	crypto "github.com/tendermint/go-crypto"
 	wire "github.com/tendermint/go-wire"
 	lightclient "github.com/tendermint/light-client"
 )
 
-func init() {
-	registerGoCryptoGoWire()
+func NewSig(data []byte) *Sig {
+	return &Sig{data: data}
 }
 
-// we must register these types here, to make sure they parse (maybe go-wire issue??)
-// TODO: fix go-wire, remove this code
-func registerGoCryptoGoWire() {
-	wire.RegisterInterface(
-		struct{ crypto.PubKey }{},
-		wire.ConcreteType{O: crypto.PubKeyEd25519{}, Byte: crypto.PubKeyTypeEd25519},
-		wire.ConcreteType{O: crypto.PubKeySecp256k1{}, Byte: crypto.PubKeyTypeSecp256k1},
-	)
-	wire.RegisterInterface(
-		struct{ crypto.Signature }{},
-		wire.ConcreteType{O: crypto.SignatureEd25519{}, Byte: crypto.SignatureTypeEd25519},
-		wire.ConcreteType{O: crypto.SignatureSecp256k1{}, Byte: crypto.SignatureTypeSecp256k1},
-	)
-}
-
-func Single(data []byte) lightclient.Signable {
-	return &single{data: data}
-}
-
-type single struct {
+// Sig lets us wrap arbitrary data with a go-crypto signature
+//
+// TODO: rethink how we want to integrate this with KeyStore so it makes
+// more sense (particularly the verify method)
+type Sig struct {
 	data   []byte
 	sig    []byte
 	pubkey []byte
 }
 
-func (s *single) Bytes() []byte {
+// assertSignable is just to make sure we stay in sync with the Signable interface
+func (s *Sig) assertSignable() lightclient.Signable {
+	return s
+}
+
+// Bytes returns the original data passed into `NewSig`
+func (s *Sig) Bytes() []byte {
 	return s.data
 }
 
-func (s *single) Sign(addr, pubkey, sig []byte) error {
+// Sign attaches information from `KeySigner.Signature`, which should be
+// a properly encoded public key signature
+func (s *Sig) Sign(addr, pubkey, sig []byte) error {
 	if len(sig) == 0 || len(pubkey) == 0 {
 		return errors.New("Signature or Key missing")
 	}
@@ -52,7 +44,9 @@ func (s *single) Sign(addr, pubkey, sig []byte) error {
 	return nil
 }
 
-func (s *single) Signed() ([]byte, error) {
+// Signed serializes the Sig to send it to a tendermint app.
+// It returns an error if the Sig was never Signed.
+func (s *Sig) Signed() ([]byte, error) {
 	if s.sig == nil {
 		return nil, errors.New("Transaction was never signed")
 	}

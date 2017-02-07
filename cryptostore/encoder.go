@@ -6,11 +6,15 @@ import (
 )
 
 var (
+	// SecretBox uses the algorithm from NaCL to store secrets securely
 	SecretBox Encoder = secretbox{}
-	Noop      Encoder = noop{}
+	// Noop doesn't do any encryption, should only be used in test code
+	Noop Encoder = noop{}
 )
 
-// Encoder is used to encrypt any key with a passphrase for storage
+// Encoder is used to encrypt any key with a passphrase for storage.
+//
+// This should use a well-designed symetric encryption algorithm
 type Encoder interface {
 	Encrypt(key crypto.PrivKey, pass string) ([]byte, error)
 	Decrypt(data []byte, pass string) (crypto.PrivKey, error)

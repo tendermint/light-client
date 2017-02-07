@@ -1,7 +1,7 @@
 /*
 package memstorage provides a simple in-memory key store designed for
-use in test cases, particularly to isolate them from the filesystem and
-concurrency, cleanup issues.
+use in test cases, particularly to isolate them from the filesystem,
+concurrency, and cleanup issues.
 */
 package memstorage
 
@@ -16,14 +16,21 @@ type data struct {
 	key  []byte
 }
 
-type store map[string]data
+type MemStore map[string]data
 
 // New creates an instance of file-based key storage with tight permissions
-func New(dir string) cryptostore.Storage {
-	return store{}
+func New(dir string) MemStore {
+	return MemStore{}
 }
 
-func (s store) Put(name string, key []byte, info lightclient.KeyInfo) error {
+// assertStorage just makes sure we implement the Storage interface
+func (s MemStore) assertStorage() cryptostore.Storage {
+	return s
+}
+
+// Put adds the given key, returns an error if it another key
+// is already stored under this name
+func (s MemStore) Put(name string, key []byte, info lightclient.KeyInfo) error {
 	if _, ok := s[name]; ok {
 		return errors.Errorf("Key named '%s' already exists", name)
 	}
@@ -31,7 +38,8 @@ func (s store) Put(name string, key []byte, info lightclient.KeyInfo) error {
 	return nil
 }
 
-func (s store) Get(name string) ([]byte, lightclient.KeyInfo, error) {
+// Get returns the key stored under the name, or returns an error if not present
+func (s MemStore) Get(name string) ([]byte, lightclient.KeyInfo, error) {
 	var err error
 	d, ok := s[name]
 	if !ok {
@@ -40,7 +48,8 @@ func (s store) Get(name string) ([]byte, lightclient.KeyInfo, error) {
 	return d.key, d.info, err
 }
 
-func (s store) List() ([]lightclient.KeyInfo, error) {
+// List returns the public info of all keys in the MemStore in unsorted order
+func (s MemStore) List() ([]lightclient.KeyInfo, error) {
 	res := make([]lightclient.KeyInfo, len(s))
 	i := 0
 	for _, d := range s {
@@ -50,7 +59,9 @@ func (s store) List() ([]lightclient.KeyInfo, error) {
 	return res, nil
 }
 
-func (s store) Delete(name string) error {
+// Delete removes the named key from the MemStore, raising an error if it
+// wasn't present yet.
+func (s MemStore) Delete(name string) error {
 	_, ok := s[name]
 	if !ok {
 		return errors.Errorf("Key named '%s' doesn't exist", name)

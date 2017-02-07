@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 	crypto "github.com/tendermint/go-crypto"
@@ -20,29 +21,37 @@ import (
 
 const (
 	BlockType = "Tendermint Light Client"
-	privExt   = "tlc"
-	pubExt    = "pub"
+	PrivExt   = "tlc"
+	PubExt    = "pub"
 	keyPerm   = os.FileMode(0600)
 	pubPerm   = os.FileMode(0644)
 	dirPerm   = os.FileMode(0700)
 )
 
-type store struct {
+type FileStore struct {
 	keyDir string
 }
 
 // New creates an instance of file-based key storage with tight permissions
-func New(dir string) cryptostore.Storage {
+//
+// dir should be an absolute path of a directory owner by this user. It will
+// be created if it doesn't exist already.
+func New(dir string) FileStore {
 	err := os.Mkdir(dir, dirPerm)
 	if err != nil && !os.IsExist(err) {
 		panic(err)
 	}
-	return store{dir}
+	return FileStore{dir}
+}
+
+// assertStorage just makes sure we
+func (s FileStore) assertStorage() cryptostore.Storage {
+	return s
 }
 
 // Put creates two files, one with the public info as json, the other
 // with the (encoded) private key as gpg ascii-armor style
-func (s store) Put(name string, key []byte, info lightclient.KeyInfo) error {
+func (s FileStore) Put(name string, key []byte, info lightclient.KeyInfo) error {
 	pub, priv := s.nameToPaths(name)
 
 	// write public info
@@ -58,7 +67,7 @@ func (s store) Put(name string, key []byte, info lightclient.KeyInfo) error {
 // Get loads the keyinfo and (encoded) private key from the directory
 // It uses `name` to generate the filename, and returns an error if the
 // files don't exist or are in the incorrect format
-func (s store) Get(name string) ([]byte, lightclient.KeyInfo, error) {
+func (s FileStore) Get(name string) ([]byte, lightclient.KeyInfo, error) {
 	pub, priv := s.nameToPaths(name)
 
 	info, err := readInfo(pub)
@@ -72,7 +81,7 @@ func (s store) Get(name string) ([]byte, lightclient.KeyInfo, error) {
 
 // List parses the key directory for public info and returns a list of
 // KeyInfo for all keys located in this directory.
-func (s store) List() ([]lightclient.KeyInfo, error) {
+func (s FileStore) List() ([]lightclient.KeyInfo, error) {
 	dir, err := os.Open(s.keyDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "List Keys")
@@ -86,12 +95,14 @@ func (s store) List() ([]lightclient.KeyInfo, error) {
 	// half the files is a good guess for pre-allocating the slice
 	infos := make([]lightclient.KeyInfo, len(names)/2, 0)
 	for _, name := range names {
-		p := path.Join(s.keyDir, name)
-		info, err := readInfo(p)
-		if err != nil {
-			return nil, err
+		if strings.HasSuffix(name, PubExt) {
+			p := path.Join(s.keyDir, name)
+			info, err := readInfo(p)
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info)
 		}
-		infos = append(infos, info)
 	}
 
 	return infos, nil
@@ -99,7 +110,7 @@ func (s store) List() ([]lightclient.KeyInfo, error) {
 
 // Delete permanently removes the public and private info for the named key
 // The calling function should provide some security checks first.
-func (s store) Delete(name string) error {
+func (s FileStore) Delete(name string) error {
 	pub, priv := s.nameToPaths(name)
 	err := os.Remove(priv)
 	if err != nil {
@@ -109,9 +120,9 @@ func (s store) Delete(name string) error {
 	return errors.Wrap(err, "Deleting Public Key")
 }
 
-func (s store) nameToPaths(name string) (pub, priv string) {
-	privName := fmt.Sprintf("%s.%s", name, privExt)
-	pubName := fmt.Sprintf("%s.%s", name, pubExt)
+func (s FileStore) nameToPaths(name string) (pub, priv string) {
+	privName := fmt.Sprintf("%s.%s", name, PrivExt)
+	pubName := fmt.Sprintf("%s.%s", name, PubExt)
 	return path.Join(s.keyDir, privName), path.Join(s.keyDir, pubName)
 }
 

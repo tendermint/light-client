@@ -24,29 +24,24 @@ type Proof interface {
 // Certifier must know the current set of validitors by some other means.
 // TODO: some implementation to track the validator set (various algorithms)
 type Certifier interface {
-	Certify(votes Votes, height int) error
+	Certify(votes TmVotes, height int) error
 }
 
 // Auditor takes data, proof, block headers, and tracking of the validator
 // set and combines it all to give you complete certainty of the truth
 // of a given statement.
-type Auditor interface {
-	Audit(key, value []byte, proof Proof, header BlockMeta, votes Votes) error
-}
-
-// TODO: some glue code to query proof and header, and validate all aspects
-func NewAuditor(cert Certifier) Auditor {
-	return auditor{cert}
-}
-
-type auditor struct {
+type Auditor struct {
 	cert Certifier
 }
 
-func (a auditor) Audit(key, value []byte,
+func NewAuditor(cert Certifier) Auditor {
+	return Auditor{cert}
+}
+
+func (a Auditor) Audit(key, value []byte,
 	proof Proof,
-	header BlockMeta,
-	votes Votes) error {
+	header TmBlockMeta,
+	votes TmVotes) error {
 
 	root := proof.Root()
 	if !proof.Verify(key, value, root) {
