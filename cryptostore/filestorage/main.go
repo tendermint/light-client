@@ -93,7 +93,7 @@ func (s FileStore) List() ([]lightclient.KeyInfo, error) {
 
 	// filter names for .pub ending and load them one by one
 	// half the files is a good guess for pre-allocating the slice
-	infos := make([]lightclient.KeyInfo, len(names)/2, 0)
+	infos := make([]lightclient.KeyInfo, 0, len(names)/2)
 	for _, name := range names {
 		if strings.HasSuffix(name, PubExt) {
 			p := path.Join(s.keyDir, name)
@@ -123,7 +123,7 @@ func (s FileStore) Delete(name string) error {
 func (s FileStore) nameToPaths(name string) (pub, priv string) {
 	privName := fmt.Sprintf("%s.%s", name, PrivExt)
 	pubName := fmt.Sprintf("%s.%s", name, PubExt)
-	return path.Join(s.keyDir, privName), path.Join(s.keyDir, pubName)
+	return path.Join(s.keyDir, pubName), path.Join(s.keyDir, privName)
 }
 
 func readInfo(path string) (lightclient.KeyInfo, error) {

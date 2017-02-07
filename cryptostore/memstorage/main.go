@@ -19,7 +19,7 @@ type data struct {
 type MemStore map[string]data
 
 // New creates an instance of file-based key storage with tight permissions
-func New(dir string) MemStore {
+func New() MemStore {
 	return MemStore{}
 }
 
