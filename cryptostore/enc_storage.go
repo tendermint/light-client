@@ -17,8 +17,8 @@ func (es encryptedStorage) Put(name, pass string, key crypto.PrivKey) error {
 		return err
 	}
 
-	info := Info(name, key)
-	return es.store.Put(name, secret, info)
+	ki := info(name, key)
+	return es.store.Put(name, secret, ki)
 }
 
 func (es encryptedStorage) Get(name, pass string) (crypto.PrivKey, lightclient.KeyInfo, error) {

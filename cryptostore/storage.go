@@ -16,8 +16,8 @@ type Storage interface {
 	Delete(name string) error
 }
 
-// Info hardcodes the encoding of keys
-func Info(name string, key crypto.PrivKey) lightclient.KeyInfo {
+// info hardcodes the encoding of keys
+func info(name string, key crypto.PrivKey) lightclient.KeyInfo {
 	pub := key.PubKey()
 	return lightclient.KeyInfo{
 		Name:    name,
