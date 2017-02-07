@@ -1,6 +1,8 @@
 package keystore
 
 import (
+	"sort"
+
 	crypto "github.com/tendermint/go-crypto"
 	lightclient "github.com/tendermint/light-client"
 )
@@ -21,5 +23,18 @@ func Info(name string, key crypto.PrivKey) lightclient.KeyInfo {
 		Name:    name,
 		PubKey:  pub.Bytes(),
 		Address: pub.Address(),
+	}
+}
+
+// KeyInfos is a wrapper to allows alphabetical sorting of the keys
+type SortKeys []lightclient.KeyInfo
+
+func (k SortKeys) Len() int           { return len(k) }
+func (k SortKeys) Less(i, j int) bool { return k[i].Name < k[j].Name }
+func (k SortKeys) Swap(i, j int)      { k[i], k[j] = k[j], k[i] }
+
+func (k SortKeys) Sort() {
+	if k != nil {
+		sort.Sort(k)
 	}
 }

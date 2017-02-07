@@ -2,9 +2,9 @@ package lightclient
 
 // KeyInfo is the public information about a key
 type KeyInfo struct {
-	Name    string
-	Address []byte
-	PubKey  []byte
+	Name    string `json:"name"`
+	Address []byte `json:"address"`
+	PubKey  []byte `json:"pub_key"`
 }
 
 // KeyStore represents secure storage of tendermint private keys

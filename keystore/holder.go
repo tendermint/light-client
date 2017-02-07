@@ -27,8 +27,11 @@ func (s storer) Create(name, passphrase string) error {
 	return s.es.Put(name, passphrase, key)
 }
 
+// List loads the keys from the storage and enforces alphabetical order
 func (s storer) List() ([]lightclient.KeyInfo, error) {
-	return s.es.List()
+	res, err := s.es.List()
+	SortKeys(res).Sort()
+	return res, err
 }
 
 func (s storer) Get(name string) (lightclient.KeyInfo, error) {
