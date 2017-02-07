@@ -1,4 +1,4 @@
-package keystore
+package cryptostore
 
 import (
 	"github.com/pkg/errors"
@@ -6,14 +6,14 @@ import (
 	lightclient "github.com/tendermint/light-client"
 )
 
-// storer combines all these things to implement lightclient.KeyStore
-type storer struct {
+// Store combines all these things to implement lightclient.KeyStore
+type Store struct {
 	gen Generator
 	es  encryptedStorage
 }
 
-func New(gen Generator, coder Encoder, store Storage) lightclient.KeyStore {
-	return storer{
+func New(gen Generator, coder Encoder, store Storage) Store {
+	return Store{
 		gen: gen,
 		es: encryptedStorage{
 			coder: coder,
@@ -22,24 +22,29 @@ func New(gen Generator, coder Encoder, store Storage) lightclient.KeyStore {
 	}
 }
 
-func (s storer) Create(name, passphrase string) error {
+// exists just to make sure we fulfill the KeySigner interface
+func (s Store) assertSigner() lightclient.KeySigner {
+	return s
+}
+
+func (s Store) Create(name, passphrase string) error {
 	key := s.gen.Generate()
 	return s.es.Put(name, passphrase, key)
 }
 
 // List loads the keys from the storage and enforces alphabetical order
-func (s storer) List() ([]lightclient.KeyInfo, error) {
+func (s Store) List() ([]lightclient.KeyInfo, error) {
 	res, err := s.es.List()
 	SortKeys(res).Sort()
 	return res, err
 }
 
-func (s storer) Get(name string) (lightclient.KeyInfo, error) {
+func (s Store) Get(name string) (lightclient.KeyInfo, error) {
 	_, info, err := s.es.store.Get(name)
 	return info, err
 }
 
-func (s storer) Signature(name, passphrase string, data []byte) ([]byte, error) {
+func (s Store) Signature(name, passphrase string, data []byte) ([]byte, error) {
 	key, _, err := s.es.Get(name, passphrase)
 	if err != nil {
 		return nil, err
@@ -50,7 +55,7 @@ func (s storer) Signature(name, passphrase string, data []byte) ([]byte, error) 
 }
 
 // Verify includes hardcoded byte parsing
-func (s storer) Verify(data, sigBytes, pubkey []byte) error {
+func (s Store) Verify(data, sigBytes, pubkey []byte) error {
 	sig, err := crypto.SignatureFromBytes(sigBytes)
 	if err != nil {
 		return errors.Wrap(err, "Verify")
@@ -68,7 +73,7 @@ func (s storer) Verify(data, sigBytes, pubkey []byte) error {
 	return nil
 }
 
-func (s storer) Export(name, oldpass, transferpass string) ([]byte, error) {
+func (s Store) Export(name, oldpass, transferpass string) ([]byte, error) {
 	key, _, err := s.es.Get(name, oldpass)
 	if err != nil {
 		return nil, err
@@ -78,7 +83,7 @@ func (s storer) Export(name, oldpass, transferpass string) ([]byte, error) {
 	return res, err
 }
 
-func (s storer) Import(name, newpass, transferpass string, data []byte) error {
+func (s Store) Import(name, newpass, transferpass string, data []byte) error {
 	key, err := s.es.coder.Decrypt(data, transferpass)
 	if err != nil {
 		return err
@@ -87,11 +92,11 @@ func (s storer) Import(name, newpass, transferpass string, data []byte) error {
 	return s.es.Put(name, newpass, key)
 }
 
-func (s storer) Delete(name string) error {
+func (s Store) Delete(name string) error {
 	return s.es.Delete(name)
 }
 
-func (s storer) Update(name, oldpass, newpass string) error {
+func (s Store) Update(name, oldpass, newpass string) error {
 	key, _, err := s.es.Get(name, oldpass)
 	if err != nil {
 		return err

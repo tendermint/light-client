@@ -8,6 +8,8 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/tendermint/light-client/cryptostore"
+	"github.com/tendermint/light-client/cryptostore/filestorage"
 	"github.com/tendermint/light-client/server"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -76,10 +78,14 @@ func main() {
 	router.HandleFunc("/prove", server.VerifyProof).Methods("POST")
 
 	if keydir != nil && *keydir != "" {
-		keystore := server.NewKeyStore(*keydir)
+		crypto := cryptostore.New(
+			cryptostore.GenEd25519,
+			cryptostore.SecretBox,
+			filestorage.New(*keydir),
+		)
+		keystore := server.New(crypto)
 		router.HandleFunc("/key", keystore.GenerateKey).Methods("POST")
 		router.HandleFunc("/sign", keystore.GenerateSignature).Methods("POST")
-		router.HandleFunc("/wrap", keystore.SignMessage).Methods("POST")
 	}
 
 	// only set cors for tcp listener

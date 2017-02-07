@@ -7,26 +7,31 @@ type KeyInfo struct {
 	PubKey  []byte `json:"pub_key"`
 }
 
-// KeyStore represents secure storage of tendermint private keys
-// The implementation can specify what types of keys, generally ed25519....
-// The implementation is also responsible for deciding how to persist to disk
-// TODO: break this down into smaller pieces???
-type KeyStore interface {
-	Create(name, passphrase string) error
-	List() ([]KeyInfo, error)
+// KeySigner allows one to use a keystore
+type KeySigner interface {
 	Get(name string) (KeyInfo, error)
 	Signature(name, passphrase string, data []byte) ([]byte, error)
-	Verify(data, sig, pubkey []byte) error
-
-	// Too many methods???
-	Export(name, oldpass, transferpass string) ([]byte, error)
-	Import(name, newpass, transferpass string, key []byte) error
-	// Update reencodes a key with a different passphrase
-	// it can be achieved by Export, Import, and Delete
-	Update(name, oldpass, newpass string) error
-	// Too dangerous????
-	Delete(name string) error
 }
+
+// TODO: use this interface?
+// KeyManager represents secure storage of tendermint private keys
+// The implementation can specify what types of keys, generally ed25519....
+// The implementation is also responsible for deciding how to persist to disk
+// type KeyManager interface {
+// 	KeySigner
+// Create(name, passphrase string) error
+// List() ([]KeyInfo, error)
+// Verify(data, sig, pubkey []byte) error
+
+// // Too many methods???
+// Export(name, oldpass, transferpass string) ([]byte, error)
+// Import(name, newpass, transferpass string, key []byte) error
+// // Update reencodes a key with a different passphrase
+// // it can be achieved by Export, Import, and Delete
+// Update(name, oldpass, newpass string) error
+// // Too dangerous????
+// Delete(name string) error
+// }
 
 // Signable represents any transaction we wish to send to tendermint core
 // These methods allow us to sign arbitrary Tx with the KeyStore
@@ -48,21 +53,18 @@ type Signable interface {
 // Poster combines KeyStore and Node to process a Signable and deliver it to tendermint
 // returning the results from the tendermint node, once the transaction is processed
 // only handles single signatures
-type Poster interface {
-	Post(sign Signable, keyname, passphrase string) (BroadcastResult, error)
+type Poster struct {
+	server Broadcaster
+	keys   KeySigner
 }
 
-// TODO: move this into a subpackage????
-type poster struct {
-	node Node
-	keys KeyStore
+func NewPoster(server Broadcaster, keys KeySigner) Poster {
+	return Poster{server, keys}
 }
 
-func NewPoster(node Node, keys KeyStore) Poster {
-	return poster{node, keys}
-}
-
-func (p poster) Post(sign Signable, keyname, passphrase string) (res BroadcastResult, err error) {
+// Post will sign the transaction with the given credentials and push it to
+// the tendermint server
+func (p Poster) Post(sign Signable, keyname, passphrase string) (res BroadcastResult, err error) {
 	var info KeyInfo
 	var data, sig, signed []byte
 
@@ -87,6 +89,6 @@ func (p poster) Post(sign Signable, keyname, passphrase string) (res BroadcastRe
 		return
 	}
 
-	res, err = p.node.Broadcast(signed)
+	res, err = p.server.Broadcast(signed)
 	return
 }

@@ -8,7 +8,7 @@ package memstorage
 import (
 	"github.com/pkg/errors"
 	lightclient "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/keystore"
+	"github.com/tendermint/light-client/cryptostore"
 )
 
 type data struct {
@@ -19,7 +19,7 @@ type data struct {
 type store map[string]data
 
 // New creates an instance of file-based key storage with tight permissions
-func New(dir string) keystore.Storage {
+func New(dir string) cryptostore.Storage {
 	return store{}
 }
 

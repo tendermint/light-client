@@ -1,4 +1,4 @@
-package keystore
+package cryptostore
 
 import crypto "github.com/tendermint/go-crypto"
 

@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 	crypto "github.com/tendermint/go-crypto"
 	lightclient "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/keystore"
+	"github.com/tendermint/light-client/cryptostore"
 )
 
 const (
@@ -32,7 +32,7 @@ type store struct {
 }
 
 // New creates an instance of file-based key storage with tight permissions
-func New(dir string) keystore.Storage {
+func New(dir string) cryptostore.Storage {
 	err := os.Mkdir(dir, dirPerm)
 	if err != nil && !os.IsExist(err) {
 		panic(err)
