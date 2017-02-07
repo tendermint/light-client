@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/light-client/cryptostore"
+	"github.com/tendermint/light-client/mock"
 	"github.com/tendermint/light-client/storage/memstorage"
 )
 
@@ -65,7 +66,7 @@ func TestKeyManagement(t *testing.T) {
 	assert.NotNil(err)
 
 	// make sure that it only signs with the right password
-	tx := cryptostore.NewSig([]byte("mytransactiondata"))
+	tx := mock.NewSig([]byte("mytransactiondata"))
 	err = cstore.Sign(n2, p1, tx)
 	assert.NotNil(err)
 	err = cstore.Sign(n2, p2, tx)
@@ -140,7 +141,7 @@ func TestKeyManagement(t *testing.T) {
 // }
 
 func assertPassword(assert *assert.Assertions, cstore cryptostore.Manager, name, pass, badpass string) {
-	tx := cryptostore.NewSig([]byte("some random stuff here...."))
+	tx := mock.NewSig([]byte("some random stuff here...."))
 	err := cstore.Sign(name, badpass, tx)
 	assert.NotNil(err)
 	err = cstore.Sign(name, pass, tx)
@@ -219,7 +220,7 @@ func ExampleStore() {
 	}
 
 	// We need to use passphrase to generate a signature
-	tx := cryptostore.NewSig([]byte("deadbeef"))
+	tx := mock.NewSig([]byte("deadbeef"))
 	err := cstore.Sign("Bob", "friend", tx)
 	if err != nil {
 		fmt.Println("don't accept real passphrase")

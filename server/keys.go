@@ -43,7 +43,7 @@ func (k *KeyServer) GenerateSignature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx := &mock.OneSign{Data: req.Data}
+	tx := mock.NewSig(req.Data)
 	err = k.manager.Sign(req.KeyName, req.Passphrase, tx)
 	if err != nil {
 		writeError(w, err)

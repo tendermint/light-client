@@ -36,22 +36,31 @@ The general concept (create, list, sign, import, export...) was inspired by [Eth
 
 If the server is writen in go, especially if it is based on basecoin, generating the transaction (with `go-wire`) and signing with `go-crypto` is very hard to reliably do from any language other than go.  This library will produce an interface, where the caller can simply provide the data to the transaction, as well as a keyname and passphrase, and the library will generate a byte array (or hex/base64 string) with the properly encoded and signed transaction. If running the proxy server, we will also post it directly to the blockchain for you.
 
-This should be written in a way that it is easy to add custom transaction encodings to a custom build of this library without forking the codebase (just importing it and passing some initialization info).  Much the
+This should be written in a way that it is easy to add custom transaction encodings to a custom build of this library without forking the codebase (just importing it and passing some initialization info).
 
-The beginning of this work is in [Signable and Poster](./transactions.go#L21-L43), and the example [transaction wrappers](./sign). Other applications should create concrete transactions that implement `Signable`, and then we just need to expose this via cli or proxy.
+We extracted these ideas and present the results in three interfaces:
 
-**Needs Work**
+* [Signable](./transactions.go#L28-L48), which can be implemented by any transaction
+* [Signer](./transactions.go#L50-L54), which is responsible for attaching signatures to the `Signable` and is implemented by [cryptostore.Manager](./cryptostore/holder.go#L9-L14)
+* [Poster](./transactions.go#L56-L62), which pulls together a `Signer` and `Broadcaster`, so we can `Post` the `Signable` directly to tendermint in one shot.
+
+The infrastructure is in place, it is just up to an app to create transactions that implement the `Signable` interface, to take advantage of the lightclient. We provide various implementations that can simply be used by applications that don't have special requirements:
+
+* `tx.OneSig` - supports one signature using go-crypto (`tx.New(data)`)
+* `tx.MultiSig` - supports multi-sig using go-crypto (`tx.NewMulti(data)`)
+* `mock.OneSig` - records a single signature for use in testing
+* `mock.MultiSig` - records multi-sig for use in testing
+
+**TODO** update basecoin transactions to support the `Signable` interface
 
 
 ### RPC Wrapper
 
-First, we create a [nicer interface](./rpc) to call the tendermint RPC, to avoid a lot of boilerplate casting and marshaling of data types when we call the RPC. This is a literal client of the existing tendermint RPC, and will track the most recent version of tendermint rpc (and multiple versions once 1.0 is released).
-
-**Needs work**
+First, we created a [simple interface](./rpc) to call the tendermint RPC, to avoid a lot of boilerplate casting and marshaling of data types when we call the RPC. This is a literal client of the existing tendermint RPC, and will track the most recent version of tendermint rpc (and multiple versions once 1.0 is released). The main advantage over using `github.com/tendermint/go-rpc/client` directly is that we handle casting the types and following the rpc interfaces, allowing you to just call simple, type-safe methods.
 
 Secondly, we create an abstract interface `Node` representing the needs of a light client, which takes the results from tendermint rpc and does some validation and other processing on them.  This doesn't pull in any other dependencies and is the interface that is used internally in the package for all code that needs to interact with the tendermint server.
 
-**TODO**
+**TODO** Node is not implemented
 
 ### Viewing Data
 
