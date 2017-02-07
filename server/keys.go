@@ -7,12 +7,12 @@ import (
 )
 
 type KeyServer struct {
-	store cryptostore.Store
+	manager cryptostore.Manager
 }
 
-func New(store cryptostore.Store) *KeyServer {
+func New(manager cryptostore.Manager) *KeyServer {
 	return &KeyServer{
-		store: store,
+		manager: manager,
 	}
 }
 
@@ -24,7 +24,7 @@ func (k *KeyServer) GenerateKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = k.store.Create(req.Name, req.Passphrase)
+	err = k.manager.Create(req.Name, req.Passphrase)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -42,13 +42,13 @@ func (k *KeyServer) GenerateSignature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	info, err := k.store.Get(req.KeyName)
+	info, err := k.manager.Get(req.KeyName)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	sig, err := k.store.Signature(req.KeyName, req.Passphrase, req.Data)
+	sig, err := k.manager.Signature(req.KeyName, req.Passphrase, req.Data)
 	if err != nil {
 		writeError(w, err)
 		return

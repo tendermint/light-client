@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	crypto "github.com/tendermint/go-crypto"
+	lightclient "github.com/tendermint/light-client"
 )
 
 func TestSortKeys(t *testing.T) {
@@ -15,7 +16,7 @@ func TestSortKeys(t *testing.T) {
 
 	// alphabetical order is n3, n1, n2
 	n1, n2, n3 := "john", "mike", "alice"
-	infos := SortKeys{
+	infos := lightclient.SortKeys{
 		info(n1, gen()),
 		info(n2, gen()),
 		info(n3, gen()),

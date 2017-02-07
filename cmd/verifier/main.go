@@ -9,8 +9,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/tendermint/light-client/cryptostore"
-	"github.com/tendermint/light-client/cryptostore/filestorage"
 	"github.com/tendermint/light-client/server"
+	"github.com/tendermint/light-client/storage/filestorage"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )

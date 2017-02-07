@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/light-client/cryptostore"
-	"github.com/tendermint/light-client/cryptostore/memstorage"
+	"github.com/tendermint/light-client/storage/memstorage"
 )
 
 // TestKeyManagement makes sure we can manipulate these keys well

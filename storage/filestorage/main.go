@@ -16,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 	crypto "github.com/tendermint/go-crypto"
 	lightclient "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/cryptostore"
 )
 
 const (
@@ -44,8 +43,8 @@ func New(dir string) FileStore {
 	return FileStore{dir}
 }
 
-// assertStorage just makes sure we
-func (s FileStore) assertStorage() cryptostore.Storage {
+// assertStorage just makes sure we implement the proper Storage interface
+func (s FileStore) assertStorage() lightclient.Storage {
 	return s
 }
 

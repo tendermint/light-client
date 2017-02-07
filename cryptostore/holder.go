@@ -13,7 +13,7 @@ type Manager struct {
 	es  encryptedStorage
 }
 
-func New(gen Generator, coder Encoder, store Storage) Manager {
+func New(gen Generator, coder Encoder, store lightclient.Storage) Manager {
 	return Manager{
 		gen: gen,
 		es: encryptedStorage{
@@ -38,7 +38,7 @@ func (s Manager) Create(name, passphrase string) error {
 // List loads the keys from the storage and enforces alphabetical order
 func (s Manager) List() ([]lightclient.KeyInfo, error) {
 	res, err := s.es.List()
-	SortKeys(res).Sort()
+	lightclient.SortKeys(res).Sort()
 	return res, err
 }
 

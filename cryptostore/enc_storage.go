@@ -8,7 +8,7 @@ import (
 // encryptedStorage needs passphrase to get private keys
 type encryptedStorage struct {
 	coder Encoder
-	store Storage
+	store lightclient.Storage
 }
 
 func (es encryptedStorage) Put(name, pass string, key crypto.PrivKey) error {
@@ -36,4 +36,14 @@ func (es encryptedStorage) List() ([]lightclient.KeyInfo, error) {
 
 func (es encryptedStorage) Delete(name string) error {
 	return es.store.Delete(name)
+}
+
+// info hardcodes the encoding of keys
+func info(name string, key crypto.PrivKey) lightclient.KeyInfo {
+	pub := key.PubKey()
+	return lightclient.KeyInfo{
+		Name:    name,
+		PubKey:  pub.Bytes(),
+		Address: pub.Address(),
+	}
 }

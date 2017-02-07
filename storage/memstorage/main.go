@@ -8,7 +8,6 @@ package memstorage
 import (
 	"github.com/pkg/errors"
 	lightclient "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/cryptostore"
 )
 
 type data struct {
@@ -24,7 +23,7 @@ func New() MemStore {
 }
 
 // assertStorage just makes sure we implement the Storage interface
-func (s MemStore) assertStorage() cryptostore.Storage {
+func (s MemStore) assertStorage() lightclient.Storage {
 	return s
 }
 
