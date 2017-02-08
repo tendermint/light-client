@@ -41,7 +41,7 @@ func (s *OneSig) Bytes() []byte {
 //
 // Depending on the Signable, one may be able to call this multiple times for multisig
 // Returns error if called with invalid data or too many times
-func (s *OneSig) Sign(pubkey lightclient.PubKey, sig lightclient.Signature) error {
+func (s *OneSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	if pubkey == nil || sig == nil {
 		return errors.New("Signature or Key missing")
 	}
@@ -49,19 +49,9 @@ func (s *OneSig) Sign(pubkey lightclient.PubKey, sig lightclient.Signature) erro
 		return errors.New("Transaction can only be signed once")
 	}
 
-	// make sure the types are truly compatible
-	cpk, ok := pubkey.(crypto.PubKey)
-	if !ok {
-		return errors.New("pubkey must be crypto.PubKey")
-	}
-	csig, ok := sig.(crypto.Signature)
-	if !ok {
-		return errors.New("sig must be crypto.Signature")
-	}
-
 	// set the value once we are happy
-	s.pubkey = cpk
-	s.sig = csig
+	s.pubkey = pubkey
+	s.sig = sig
 
 	return nil
 }
@@ -69,7 +59,7 @@ func (s *OneSig) Sign(pubkey lightclient.PubKey, sig lightclient.Signature) erro
 // SignedBy will return the public key(s) that signed if the signature
 // is valid, or an error if there is any issue with the signature,
 // including if there are no signatures
-func (s *OneSig) SignedBy() ([]lightclient.PubKey, error) {
+func (s *OneSig) SignedBy() ([]crypto.PubKey, error) {
 	if s.pubkey == nil || s.sig == nil {
 		return nil, errors.New("Never signed")
 	}
@@ -78,7 +68,7 @@ func (s *OneSig) SignedBy() ([]lightclient.PubKey, error) {
 		return nil, errors.New("Signature doesn't match")
 	}
 
-	return []lightclient.PubKey{s.pubkey}, nil
+	return []crypto.PubKey{s.pubkey}, nil
 }
 
 // SignedBytes serializes the Sig to send it to a tendermint app.

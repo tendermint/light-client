@@ -6,6 +6,21 @@ Basecoin comes with a [nice simple cli](https://github.com/tendermint/basecoin-e
 
 If you're still with me, then you should take a deeper look at this repo.  The purpose here is to build a helper library to perform most common actions one would want to do with a client, make it extensible to easily support custom transaction and data types, and provide bindings to other languages.
 
+### More reasons
+
+If I develop a desktop/mobile client I don't want either:
+
+* Sync the entire chain on my device (be a non-validating node) or
+* Blindly trust whichever node I communicate with to be honest
+
+One goal of this project is to provide a library that pulls together all the crypto and algorithms, so given a relatively recent (< unbonding period) known validator set, one can get indisputable proof that data is in the chain (current state) or detect if the node is lying to the client.
+
+Tendermint RPC exposes a lot of info, but a malicious node could return any data it wants to queries, or even to block headers, even making up fake signatures from non-existent validators to justify it.  This is a lot of logic to get right, and I want to make a small, easy to use library, that does this for you, so people can just build nice UI.
+
+I refer to the tendermint consensus engine and rpc as a `node`, the abci app as an `app` (which implicitly runs in a trusted environment with a node), and any user-interface that is external to the validator network as a `client`.
+
+These external clients who have no strong trust relationship with any node, just the validator set as a whole. Beyond a nice mobile or desktop application, the cosmos hub is another important example of a `client`, that needs undeniable proof without syncing the full chain.
+
 ## Bindings
 
 First, the library will provide a nice API to call directly from other programs written in go and thus integrate nicely with headless clients, and provide an easy way to extend this functionality via a different interface.

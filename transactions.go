@@ -1,28 +1,11 @@
 package lightclient
 
-/*** interfaces copied from go-crypto to avoid top-levle dependency ***/
-type PubKey interface {
-	Address() []byte
-	Bytes() []byte
-	// KeyString() string
-	// rrr... an interface by another name is not the same :(
-	// VerifyBytes(msg []byte, sig Signature) bool
-	// Equals(PubKey) bool
-}
-
-// Signature can be verified by the corresponding PubKey
-type Signature interface {
-	Bytes() []byte
-	IsZero() bool
-	// String() string
-	// rrr... an interface by another name is not the same :(
-	// Equals(Signature) bool
-}
+import crypto "github.com/tendermint/go-crypto"
 
 // KeyInfo is the public information about a key
 type KeyInfo struct {
 	Name   string
-	PubKey PubKey
+	PubKey crypto.PubKey
 }
 
 // Signable represents any transaction we wish to send to tendermint core
@@ -35,12 +18,12 @@ type Signable interface {
 	//
 	// Depending on the Signable, one may be able to call this multiple times for multisig
 	// Returns error if called with invalid data or too many times
-	Sign(pubkey PubKey, sig Signature) error
+	Sign(pubkey crypto.PubKey, sig crypto.Signature) error
 
 	// SignedBy will return the public key(s) that signed if the signature
 	// is valid, or an error if there is any issue with the signature,
 	// including if there are no signatures
-	SignedBy() ([]PubKey, error)
+	SignedBy() ([]crypto.PubKey, error)
 
 	// Signed returns the transaction data as well as all signatures
 	// It should return an error if Sign was never called

@@ -45,23 +45,13 @@ func (s *MultiSig) Bytes() []byte {
 //
 // Depending on the Signable, one may be able to call this multiple times for multisig
 // Returns error if called with invalid data or too many times
-func (s *MultiSig) Sign(pubkey lightclient.PubKey, sig lightclient.Signature) error {
+func (s *MultiSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	if pubkey == nil || sig == nil {
 		return errors.New("Signature or Key missing")
 	}
 
-	// make sure the types are truly compatible
-	cpk, ok := pubkey.(crypto.PubKey)
-	if !ok {
-		return errors.New("pubkey must be crypto.PubKey")
-	}
-	csig, ok := sig.(crypto.Signature)
-	if !ok {
-		return errors.New("sig must be crypto.Signature")
-	}
-
 	// set the value once we are happy
-	x := signed{csig, cpk}
+	x := signed{sig, pubkey}
 	s.sigs = append(s.sigs, x)
 	return nil
 }
@@ -69,12 +59,12 @@ func (s *MultiSig) Sign(pubkey lightclient.PubKey, sig lightclient.Signature) er
 // SignedBy will return the public key(s) that signed if the signature
 // is valid, or an error if there is any issue with the signature,
 // including if there are no signatures
-func (s *MultiSig) SignedBy() ([]lightclient.PubKey, error) {
+func (s *MultiSig) SignedBy() ([]crypto.PubKey, error) {
 	if len(s.sigs) == 0 {
 		return nil, errors.New("Never signed")
 	}
 
-	keys := make([]lightclient.PubKey, len(s.sigs))
+	keys := make([]crypto.PubKey, len(s.sigs))
 	for i := range s.sigs {
 		ms := s.sigs[i]
 		if !ms.pubkey.VerifyBytes(s.data, ms.sig) {

@@ -3,6 +3,7 @@ package mock
 import (
 	"errors"
 
+	crypto "github.com/tendermint/go-crypto"
 	lightclient "github.com/tendermint/light-client"
 )
 
@@ -10,8 +11,8 @@ import (
 // record the values and inspect them later.  It performs no validation.
 type OneSig struct {
 	Data   []byte
-	PubKey lightclient.PubKey
-	Sig    lightclient.Signature
+	PubKey crypto.PubKey
+	Sig    crypto.Signature
 }
 
 func NewSig(data []byte) *OneSig {
@@ -26,7 +27,7 @@ func (o *OneSig) Bytes() []byte {
 	return o.Data
 }
 
-func (o *OneSig) Sign(pubkey lightclient.PubKey, sig lightclient.Signature) error {
+func (o *OneSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	if o.PubKey != nil {
 		return errors.New("OneSig already signed")
 	}
@@ -35,11 +36,11 @@ func (o *OneSig) Sign(pubkey lightclient.PubKey, sig lightclient.Signature) erro
 	return nil
 }
 
-func (o *OneSig) SignedBy() ([]lightclient.PubKey, error) {
+func (o *OneSig) SignedBy() ([]crypto.PubKey, error) {
 	if o.PubKey == nil {
 		return nil, errors.New("OneSig never signed")
 	}
-	return []lightclient.PubKey{o.PubKey}, nil
+	return []crypto.PubKey{o.PubKey}, nil
 }
 
 func (o *OneSig) SignedBytes() ([]byte, error) {
@@ -56,8 +57,8 @@ type MultiSig struct {
 }
 
 type signed struct {
-	pubkey lightclient.PubKey
-	sig    lightclient.Signature
+	pubkey crypto.PubKey
+	sig    crypto.Signature
 }
 
 func NewMultiSig(data []byte) *MultiSig {
@@ -72,17 +73,17 @@ func (m *MultiSig) Bytes() []byte {
 	return m.Data
 }
 
-func (m *MultiSig) Sign(pubkey lightclient.PubKey, sig lightclient.Signature) error {
+func (m *MultiSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	s := signed{pubkey, sig}
 	m.sigs = append(m.sigs, s)
 	return nil
 }
 
-func (m *MultiSig) SignedBy() ([]lightclient.PubKey, error) {
+func (m *MultiSig) SignedBy() ([]crypto.PubKey, error) {
 	if len(m.sigs) == 0 {
 		return nil, errors.New("MultiSig never signed")
 	}
-	keys := make([]lightclient.PubKey, len(m.sigs))
+	keys := make([]crypto.PubKey, len(m.sigs))
 	for i := range m.sigs {
 		keys[i] = m.sigs[i].pubkey
 	}
