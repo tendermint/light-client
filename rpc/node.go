@@ -12,11 +12,14 @@ import (
 
 type Node struct {
 	client *HTTPClient
+	// this is needed to calculate sign bytes for votes
+	chainID string
 }
 
-func NewNode(rpcAddr string) Node {
+func NewNode(rpcAddr, chainID string) Node {
 	return Node{
-		client: NewClient(rpcAddr, "/websocket"),
+		client:  NewClient(rpcAddr, "/websocket"),
+		chainID: chainID,
 	}
 }
 
@@ -89,8 +92,6 @@ func queryResp(qr *ctypes.ResultABCIQuery) lc.TmQueryResult {
 // It is also responsible for making the blockhash and header match,
 // and that all votes are valid pre-commit votes for this block
 // It does not check if the keys signing the votes are actual validators
-//
-// TODO
 func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
 	h := int(height)
 
@@ -107,9 +108,34 @@ func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
 	if err != nil {
 		return res, err
 	}
-	res.Votes, err = processVotes(votes, h, res.Hash)
+	res.Votes, err = n.processVotes(votes, h, res.Hash)
 
 	return res, err
+}
+
+// UNSAFE - use wisely
+//
+// Validators returns the current set of validators from the
+// node we call.  There is no guarantee it is correct.
+//
+// This is intended for use in test cases, or to query many nodes
+// to find consensus before trusting it.
+func (n Node) Validators() ([]lc.TmValidator, error) {
+	vres, err := n.client.Validators()
+	if err != nil {
+		return nil, err
+	}
+	// now we transform them into our world
+	vals := vres.Validators
+	res := make([]lc.TmValidator, len(vals))
+	for i, v := range vals {
+		res[i] = lc.TmValidator{
+			Address:     v.Address,
+			VotingPower: v.VotingPower,
+			PubKey:      v.PubKey,
+		}
+	}
+	return res, nil
 }
 
 func (n Node) getHeader(h int) (*ttypes.BlockMeta, error) {
@@ -180,11 +206,8 @@ func verifyHeaderInfo(header *ttypes.BlockMeta, h int) (lc.TmSignedHeader, error
 	return res, nil
 }
 
-func processVotes(votes []*ttypes.Vote, h int, blockHash []byte) (lc.TmVotes, error) {
+func (n Node) processVotes(votes []*ttypes.Vote, h int, blockHash []byte) (lc.TmVotes, error) {
 	res := make([]lc.TmVote, len(votes))
-
-	// TODO: where does this come from???
-	chainID := "test-chain"
 
 	i := 0
 	for _, v := range votes {
@@ -202,8 +225,8 @@ func processVotes(votes []*ttypes.Vote, h int, blockHash []byte) (lc.TmVotes, er
 
 		// calculate the signature bytes
 		// TODO: clean this up (modified from go-wire/util.go:JsonBytes)
-		w, n, err := new(bytes.Buffer), new(int), new(error)
-		v.WriteSignBytes(chainID, w, n, err)
+		w, cnt, err := new(bytes.Buffer), new(int), new(error)
+		v.WriteSignBytes(n.chainID, w, cnt, err)
 		if *err != nil {
 			cmn.PanicSanity(*err)
 		}

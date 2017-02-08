@@ -109,9 +109,9 @@ type TmStatusResult struct {
 // TmValidator more or less from tendermint/types
 type TmValidator struct {
 	Address []byte `json:"address"`
-	PubKey  []byte `json:"pub_key"`
-	// PubKey      crypto.PubKey `json:"pub_key"`
-	VotingPower int64 `json:"voting_power"`
+	// PubKey  []byte `json:"pub_key"`
+	PubKey      crypto.PubKey `json:"pub_key"`
+	VotingPower int64         `json:"voting_power"`
 }
 
 type TmValidatorResult struct {
