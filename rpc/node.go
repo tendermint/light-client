@@ -1,8 +1,13 @@
 package rpc
 
 import (
+	"bytes"
+
+	"github.com/pkg/errors"
+	cmn "github.com/tendermint/go-common"
 	lc "github.com/tendermint/light-client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	ttypes "github.com/tendermint/tendermint/types"
 )
 
 type Node struct {
@@ -87,5 +92,134 @@ func queryResp(qr *ctypes.ResultABCIQuery) lc.TmQueryResult {
 //
 // TODO
 func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
-	return lc.TmSignedHeader{}, nil
+	h := int(height)
+
+	bi, err := n.getHeader(h)
+	if err != nil {
+		return lc.TmSignedHeader{}, err
+	}
+	res, err := verifyHeaderInfo(bi, h)
+	if err != nil {
+		return res, err
+	}
+
+	votes, err := n.getPrecommits(h)
+	if err != nil {
+		return res, err
+	}
+	res.Votes, err = processVotes(votes, h, res.Hash)
+
+	return res, err
+}
+
+func (n Node) getHeader(h int) (*ttypes.BlockMeta, error) {
+	bis, err := n.client.BlockchainInfo(h, h)
+	if err != nil {
+		return nil, err
+	}
+	if bis.LastHeight != h {
+		return nil, errors.Errorf("Returned header for height %d, not %d", bis.LastHeight, h)
+	}
+	if len(bis.BlockMetas) != 1 {
+		return nil, errors.Errorf("Cannot get header for height %d", h)
+	}
+	// this is the header we actually want
+	return bis.BlockMetas[0], nil
+}
+
+// getPrecommits returns all precommit votes that prove the given
+// block was approved by the validators.
+//
+// The current API requires we query block at h+1 to see the votes
+// for block h
+func (n Node) getPrecommits(h int) ([]*ttypes.Vote, error) {
+	b, err := n.client.Block(h + 1)
+	if err != nil {
+		return nil, err
+	}
+	if b.Block == nil || b.Block.LastCommit == nil {
+		return nil, errors.Errorf("No commit data for block %d", h+1)
+	}
+	votes := b.Block.LastCommit.Precommits
+	err = b.Block.LastCommit.ValidateBasic()
+	return votes, err
+}
+
+func verifyHeaderInfo(header *ttypes.BlockMeta, h int) (lc.TmSignedHeader, error) {
+	var res lc.TmSignedHeader
+	head := header.Header
+	// make sure the height is what we wanted
+	if head.Height != h {
+		return res,
+			errors.Errorf("Returned header for height %d, not %d",
+				header.Header.Height, h)
+	}
+
+	// make sure the hash matches
+	calc := head.Hash()
+	if !bytes.Equal(header.Hash, calc) {
+		return res,
+			errors.Errorf("Calculated header hash: %X, claimed header hash: %X",
+				calc, header.Hash)
+	}
+
+	// this header looks good, transform the data!
+	res = lc.TmSignedHeader{
+		Hash: header.Hash,
+		Header: lc.TmHeader{
+			ChainID:        head.ChainID,
+			Height:         uint64(head.Height),
+			Time:           head.Time,
+			LastBlockID:    head.LastBlockID.Hash,
+			LastCommitHash: head.LastCommitHash,
+			DataHash:       head.DataHash,
+			ValidatorsHash: head.ValidatorsHash,
+			AppHash:        head.AppHash,
+		},
+	}
+	return res, nil
+}
+
+func processVotes(votes []*ttypes.Vote, h int, blockHash []byte) (lc.TmVotes, error) {
+	res := make([]lc.TmVote, len(votes))
+
+	// TODO: where does this come from???
+	chainID := "test-chain"
+
+	i := 0
+	for _, v := range votes {
+		// some votes may be nil, just skip them (tendermint/types/block.go:298)
+		if v == nil {
+			continue
+		}
+		// verify height and blockhash
+		if v.Height != h {
+			return nil, errors.New("Vote had incorrect height")
+		}
+		if !bytes.Equal(blockHash, v.BlockID.Hash) {
+			return nil, errors.New("Vote had incorrect block hash")
+		}
+
+		// calculate the signature bytes
+		// TODO: clean this up (modified from go-wire/util.go:JsonBytes)
+		w, n, err := new(bytes.Buffer), new(int), new(error)
+		v.WriteSignBytes(chainID, w, n, err)
+		if *err != nil {
+			cmn.PanicSanity(*err)
+		}
+
+		// and store the info we care about
+		res[i] = lc.TmVote{
+			SignBytes:        w.Bytes(),
+			ValidatorAddress: v.ValidatorAddress,
+			Signature:        v.Signature,
+			Height:           uint64(v.Height),
+			BlockHash:        v.BlockID.Hash,
+		}
+
+		// advance the count
+		i++
+	}
+
+	return lc.TmVotes(res[:i]), nil
 }

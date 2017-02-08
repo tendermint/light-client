@@ -3,6 +3,8 @@ package lightclient
 import (
 	"bytes"
 	"time"
+
+	crypto "github.com/tendermint/go-crypto"
 )
 
 // TmCode is a code from Tendermint
@@ -49,29 +51,34 @@ type TmSignedHeader struct {
 
 // TmHeader is the info in block headers (from tendermint/types/block.go)
 type TmHeader struct {
-	ChainID        string    `json:"chain_id"`
-	Height         uint64    `json:"height"`
-	Time           time.Time `json:"time"`    // or int64 nanoseconds????
-	NumTxs         int       `json:"num_txs"` // XXX: Can we get rid of this?
-	LastBlockID    []byte    `json:"last_block_id"`
-	LastCommitHash []byte    `json:"last_commit_hash"` // commit from validators from the last block
-	DataHash       []byte    `json:"data_hash"`        // transactions
-	ValidatorsHash []byte    `json:"validators_hash"`  // validators for the current block
-	AppHash        []byte    `json:"app_hash"`         // state after txs from the previous block
+	ChainID string    `json:"chain_id"`
+	Height  uint64    `json:"height"`
+	Time    time.Time `json:"time"` // or int64 nanoseconds????
+	// NumTxs         int       `json:"num_txs"` // XXX: Can we get rid of this?
+	LastBlockID    []byte `json:"last_block_id"`
+	LastCommitHash []byte `json:"last_commit_hash"` // commit from validators from the last block
+	DataHash       []byte `json:"data_hash"`        // transactions
+	ValidatorsHash []byte `json:"validators_hash"`  // validators for the current block
+	AppHash        []byte `json:"app_hash"`         // state after txs from the previous block
 }
 
 // TmVote must be verified by the Node implementation, this asserts a validly
 // signed precommit vote for the given Height and BlockHash.
 // The client can decide if these validators are to be trusted.
 type TmVote struct {
-	ValidatorAddress []byte `json:"validator_address"`
-	// ValidatorIndex   int              `json:"validator_index"`
+	// SignBytes are the cannonical bytes the signature refers to
+	// This is verified in the Checker
+	SignBytes []byte `json:"sign_bytes"`
+
+	// Signature and ValidatorAddress represent who signed this
+	// This information is not verified and must be validated
+	// by the caller
+	Signature        crypto.Signature `json:"signature"`
+	ValidatorAddress []byte           `json:"validator_address"`
+
+	// Height and BlockHash is embedded in SignBytes
 	Height    uint64 `json:"height"`
 	BlockHash []byte `json:"block_hash"`
-	// Round            int              `json:"round"`
-	// Type             byte             `json:"type"`
-	// BlockID          BlockID          `json:"block_id"` // zero if vote is nil.
-	// Signature crypto.Signature `json:"signature"`
 }
 
 // TmVotes is a slice of TmVote structs, but let's add some control access here
