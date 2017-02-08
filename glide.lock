@@ -1,5 +1,5 @@
 hash: 2413f10887035174f2051469c425c60dd43282ebfed4995928fc9160cc7e87c4
-updated: 2017-02-02T21:55:42.52128071+01:00
+updated: 2017-02-08T19:48:35.100770894+01:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -17,8 +17,6 @@ imports:
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/ebuchman/fail-test
   version: c1eddaa09da2b4017351245b0d43234955276798
-- name: github.com/go-stack/stack
-  version: 100eb0c0a9c5b306ca2fb4f165df21d80ada4b82
 - name: github.com/golang/protobuf
   version: 1f49d83d9aa00e6ce4fc8258c71cc7786aec968a
   subpackages:
@@ -101,13 +99,11 @@ imports:
   - server
   - types
 - name: github.com/tendermint/go-wire
-  version: 3216ec9d47bbdf8d4fc27d22169ea86a6688bc15
+  version: 2f3b7aafe21c80b19b6ee3210ecb3e3d07c7a471
 - name: github.com/tendermint/log15
   version: 9545b249b3aacafa97f79e0838b02b274adc6f5f
-  subpackages:
-  - term
 - name: github.com/tendermint/tendermint
-  version: 5fe04409164c00bcd3ae3976ba29cd8777ec0db2
+  version: d4b3dde8537bc62a6ea3c9830ac3669118141a84
   subpackages:
   - blockchain
   - config/tendermint_test
@@ -160,6 +156,11 @@ imports:
   - transport
 - name: gopkg.in/alecthomas/kingpin.v2
   version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
+- name: gopkg.in/inconshreveable/log15.v2
+  version: b105bd37f74e5d9dc7b6ad7806715c7a2b83fd3f
+  subpackages:
+  - stack
+  - term
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
