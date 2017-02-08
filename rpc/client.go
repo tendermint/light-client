@@ -15,7 +15,7 @@ type HTTPClient struct {
 	ws       *rpcclient.WSClient
 }
 
-func New(remote, wsEndpoint string) *HTTPClient {
+func NewClient(remote, wsEndpoint string) *HTTPClient {
 	return &HTTPClient{
 		rpc:      rpcclient.NewClientJSONRPC(remote),
 		remote:   remote,

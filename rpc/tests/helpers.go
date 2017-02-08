@@ -36,7 +36,7 @@ func GetConfig() cfg.Config {
 // GetClient gets a rpc client pointing to the test node
 func GetClient() *rpc.HTTPClient {
 	rpcAddr := GetConfig().GetString("rpc_laddr")
-	return rpc.New(rpcAddr, "/websocket")
+	return rpc.NewClient(rpcAddr, "/websocket")
 }
 
 // StartNode starts a test node in a go routine and returns when it is initialized

@@ -11,14 +11,19 @@ type Broadcaster interface {
 // Checker provides access to calls to get data from the tendermint core
 // and all cryptographic proof of its validity
 type Checker interface {
-	// Query gets data from the Blockchain state, and can optionally provide
-	// a Proof we can validate
-	Query(path string, data []byte, prove bool) (TmQueryResult, error)
+	// Prove returns a merkle proof for the given key
+	Prove(key []byte) (TmQueryResult, error)
 
 	// SignedHeader gives us Header data along with the backing signatures,
 	// so we can validate it externally (matching with the list of
 	// known validators)
 	SignedHeader(height uint64) (TmSignedHeader, error)
+}
+
+type Searcher interface {
+	// Query gets data from the Blockchain state, possibly with a
+	// complex path.  It doesn't worry about proofs
+	Query(path string, data []byte) (TmQueryResult, error)
 }
 
 // Node represents someway to reliably read and write to the
