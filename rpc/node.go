@@ -143,9 +143,10 @@ func (n Node) getHeader(h int) (*ttypes.BlockMeta, error) {
 	if err != nil {
 		return nil, err
 	}
-	if bis.LastHeight != h {
-		return nil, errors.Errorf("Returned header for height %d, not %d", bis.LastHeight, h)
-	}
+	// TODO: this lets us know the most recent header - useful info!
+	// if bis.LastHeight != h {
+	// 	return nil, errors.Errorf("Returned header for height %d, not %d", bis.LastHeight, h)
+	// }
 	if len(bis.BlockMetas) != 1 {
 		return nil, errors.Errorf("Cannot get header for height %d", h)
 	}

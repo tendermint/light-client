@@ -7,6 +7,6 @@ import (
 
 func TestMain(m *testing.M) {
 	// start a tendermint node (and dummy app) in the background to test against
-	StartNode()
+	StartTendermint()
 	os.Exit(m.Run())
 }

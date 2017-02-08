@@ -12,6 +12,8 @@ import (
 	logger "github.com/tendermint/go-logger"
 	"github.com/tendermint/light-client/rpc"
 
+	"github.com/tendermint/abci/example/dummy"
+	abci "github.com/tendermint/abci/types"
 	cfg "github.com/tendermint/go-config"
 	"github.com/tendermint/tendermint/config/tendermint_test"
 	nm "github.com/tendermint/tendermint/node"
@@ -33,26 +35,40 @@ func GetConfig() cfg.Config {
 	return config
 }
 
-// GetClient gets a rpc client pointing to the test node
+// GetClient gets a rpc client pointing to the test tendermint rpc
 func GetClient() *rpc.HTTPClient {
 	rpcAddr := GetConfig().GetString("rpc_laddr")
 	return rpc.NewClient(rpcAddr, "/websocket")
 }
 
-// StartNode starts a test node in a go routine and returns when it is initialized
+// GetNodeClient gets a Node object pointing to this test tendermint rpc
+func GetNode() rpc.Node {
+	rpcAddr := GetConfig().GetString("rpc_laddr")
+	chainID := GetConfig().GetString("chain_id")
+	return rpc.NewNode(rpcAddr, chainID)
+}
+
+// StartTendermint starts a test tendermint server in a go routine and returns when it is initialized
 // TODO: can one pass an Application in????
-func StartNode() {
+func StartTendermint() {
 	// start a node
-	fmt.Println("StartNode")
+	fmt.Println("Start Tendermint")
 	ready := make(chan struct{})
-	go NewNode(ready)
+
+	app := dummy.NewDummyApplication()
+	go NewTendermint(ready, app)
 	<-ready
 }
 
-// NewNode creates a new node and sleeps forever
-func NewNode(ready chan struct{}) {
+// NewTendermint creates a new tendermint server and sleeps forever
+func NewTendermint(ready chan struct{}, app abci.Application) {
 	// Create & start node
-	node := nm.NewNodeDefault(GetConfig())
+	config := GetConfig()
+	node := nm.NewNodeDefault(config)
+	// privValidator := ttypes.GenPrivValidator()
+	// node := nm.NewNode(config, privValidator,
+	// 	proxy.NewLocalClientCreator(app))
+
 	// node.Start now does everything including the RPC server
 	node.Start()
 	ready <- struct{}{}
