@@ -15,15 +15,16 @@ type Checker interface {
 	// a Proof we can validate
 	Query(path string, data []byte, prove bool) (TmQueryResult, error)
 
-	// You need to check the Headers and Votes together to prove anything
-	// is actually on the chain
-	Headers(minHeight, maxHeight int) ([]TmBlockMeta, error)
-	Votes(height int) (TmVotes, error)
+	// SignedHeader gives us Header data along with the backing signatures,
+	// so we can validate it externally (matching with the list of
+	// known validators)
+	SignedHeader(height uint64) (TmSignedHeader, error)
 }
 
-// Node represents someway to query a tendermint node for info
-// Typically via RPC, but could be mocked or connected locally
-// TODO: trim this down and distinguish from RPC a bit! (custom types)
+// Node represents someway to reliably read and write to the
+// tendermint core (or a mock implenetation).
+// TODO: is this interface even needed????
+// Designed to be minimal, use the RPC directly for unverified info
 type Node interface {
 	Broadcaster
 	Checker
@@ -31,8 +32,8 @@ type Node interface {
 	// Status and Validators give some info, nothing to be trusted though...
 	// Unless we find that eg. the ValidatorResult matches the ValidatorHash
 	// in a properly signed block header
-	Status() (TmStatusResult, error)
-	Validators() (TmValidatorResult, error)
+	// Status() (TmStatusResult, error)
+	// Validators() (TmValidatorResult, error)
 
 	// TODO: let's make this reactive if possible
 	// TODO: listen for a transaction being committed?

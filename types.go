@@ -22,13 +22,6 @@ func (r TmBroadcastResult) IsOk() bool {
 	return r.Code.IsOK()
 }
 
-type TmStatusResult struct {
-	LatestBlockHash   []byte `json:"latest_block_hash"`
-	LatestAppHash     []byte `json:"latest_app_hash"`
-	LatestBlockHeight int    `json:"latest_block_height"`
-	LatestBlockTime   int64  `json:"latest_block_time"` // nano
-}
-
 // TODO: how to handle proofs?
 // where do we parse them from bytes into Proof objects we can work with
 type TmQueryResult struct {
@@ -42,33 +35,22 @@ type TmQueryResult struct {
 	Log    string `json:"log"`
 }
 
-// TmValidator more or less from tendermint/types
-type TmValidator struct {
-	Address []byte `json:"address"`
-	PubKey  []byte `json:"pub_key"`
-	// PubKey      crypto.PubKey `json:"pub_key"`
-	VotingPower int64 `json:"voting_power"`
-}
-
-type TmValidatorResult struct {
-	BlockHeight int
-	Validators  []TmValidator
-}
-
-// TmBlockMeta is the Header info and the Hash that corresponds to it
-// (and which is used to cannonically identiry the block)
-// The Node implementation is responsible for validating this is correct,
-// thus we can return the Header is any useful format, not byte-for-byte how
-// tendermint stores it.
-type TmBlockMeta struct {
+// TmSignedHeader returns the header info and the corresponding validator
+// signatures for it (even if those are on differrent rpc endpoints).
+//
+// Checker is responsible for validating that the Hash matches the Header
+// which lets us return the Header in a non-binary format.
+// Votes must also be pre-verified, signatures checked, etc.
+type TmSignedHeader struct {
 	Hash   []byte
-	Header TmHeader
+	Header TmHeader // contains height
+	Votes  TmVotes
 }
 
 // TmHeader is the info in block headers (from tendermint/types/block.go)
 type TmHeader struct {
 	ChainID        string    `json:"chain_id"`
-	Height         int       `json:"height"`
+	Height         uint64    `json:"height"`
 	Time           time.Time `json:"time"`    // or int64 nanoseconds????
 	NumTxs         int       `json:"num_txs"` // XXX: Can we get rid of this?
 	LastBlockID    []byte    `json:"last_block_id"`
@@ -84,12 +66,12 @@ type TmHeader struct {
 type TmVote struct {
 	ValidatorAddress []byte `json:"validator_address"`
 	// ValidatorIndex   int              `json:"validator_index"`
-	Height    int    `json:"height"`
+	Height    uint64 `json:"height"`
 	BlockHash []byte `json:"block_hash"`
 	// Round            int              `json:"round"`
 	// Type             byte             `json:"type"`
 	// BlockID          BlockID          `json:"block_id"` // zero if vote is nil.
-	// Signature        crypto.Signature `json:"signature"`
+	// Signature crypto.Signature `json:"signature"`
 }
 
 // TmVotes is a slice of TmVote structs, but let's add some control access here
@@ -108,4 +90,24 @@ func (v TmVotes) ForBlock(hash []byte) bool {
 	}
 
 	return true
+}
+
+type TmStatusResult struct {
+	LatestBlockHash   []byte `json:"latest_block_hash"`
+	LatestAppHash     []byte `json:"latest_app_hash"`
+	LatestBlockHeight int    `json:"latest_block_height"`
+	LatestBlockTime   int64  `json:"latest_block_time"` // nano
+}
+
+// TmValidator more or less from tendermint/types
+type TmValidator struct {
+	Address []byte `json:"address"`
+	PubKey  []byte `json:"pub_key"`
+	// PubKey      crypto.PubKey `json:"pub_key"`
+	VotingPower int64 `json:"voting_power"`
+}
+
+type TmValidatorResult struct {
+	BlockHeight int
+	Validators  []TmValidator
 }

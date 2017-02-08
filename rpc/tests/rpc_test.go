@@ -85,8 +85,6 @@ func TestSubscriptions(t *testing.T) {
 
 	// subscribe to a transaction event
 	_, _, tx := TestTxKV()
-	// This DOES NOT cause an error!
-	// eventType := types.EventStringNewBlock()
 	// this causes a panic in tendermint core!!!
 	eventType := types.EventStringTx(types.Tx(tx))
 	c.Subscribe(eventType)

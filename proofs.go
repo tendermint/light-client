@@ -24,7 +24,7 @@ type Proof interface {
 // Certifier must know the current set of validitors by some other means.
 // TODO: some implementation to track the validator set (various algorithms)
 type Certifier interface {
-	Certify(votes TmVotes, height int) error
+	Certify(block TmSignedHeader) error
 }
 
 // Auditor takes data, proof, block headers, and tracking of the validator
@@ -40,23 +40,22 @@ func NewAuditor(cert Certifier) Auditor {
 
 func (a Auditor) Audit(key, value []byte,
 	proof Proof,
-	header TmBlockMeta,
-	votes TmVotes) error {
+	block TmSignedHeader) error {
 
 	root := proof.Root()
 	if !proof.Verify(key, value, root) {
 		return errors.New("Invalid proof")
 	}
 
-	if !bytes.Equal(root, header.Header.AppHash) {
+	if !bytes.Equal(root, block.Header.AppHash) {
 		return errors.New("Header AppHash doesn't match proof")
 	}
 
-	if !votes.ForBlock(header.Hash) {
+	if !block.Votes.ForBlock(block.Hash) {
 		return errors.New("Votes don't match header")
 	}
 
 	// we have traced the data all the way back to a header, now just check
 	// this header has all signatures to validate it
-	return a.cert.Certify(votes, header.Header.Height)
+	return a.cert.Certify(block)
 }
