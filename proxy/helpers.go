@@ -1,3 +1,10 @@
+/*
+package proxy provides http handlers to construct a proxy server
+for key management, transaction signing, and query validation.
+
+Please read the README and godoc to see how to
+configure the server for your application.
+*/
 package proxy
 
 import (
@@ -6,8 +13,39 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	lc "github.com/tendermint/light-client"
+
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
+
+// KeyStore is implemented by cryptostore.Manager
+type KeyStore interface {
+	lc.KeyManager
+	lc.Signer
+}
+
+// Node is all rpc stuff together, implemented by rpc.Node
+type Node interface {
+	lc.Broadcaster
+	lc.Checker
+	lc.Searcher
+}
+
+// RegisterDefault constructs all components and wires them up under
+// standard routes.
+func RegisterDefault(r *mux.Router, keys KeyStore, node Node,
+	txReader lc.SignableReader, valReader lc.ValueReader) {
+
+	key := NewKeyServer(keys)
+	sk := r.PathPrefix("/keys").Subrouter()
+	key.Register(sk)
+
+	tx := NewTxSigner(node, keys, txReader)
+	st := r.PathPrefix("/txs").Subrouter()
+	tx.Register(st)
+
+}
 
 func readRequest(r *http.Request, o interface{}) error {
 	defer r.Body.Close()

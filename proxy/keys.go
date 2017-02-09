@@ -128,7 +128,7 @@ func (k KeyServer) DeleteKey(w http.ResponseWriter, r *http.Request) {
 	writeSuccess(w, &resp)
 }
 
-func (k KeyServer) Register(r mux.Router) {
+func (k KeyServer) Register(r *mux.Router) {
 	r.HandleFunc("/", k.GenerateKey).Methods("POST")
 	r.HandleFunc("/", k.ListKeys).Methods("GET")
 	r.HandleFunc("/{name}", k.GetKey).Methods("GET")
