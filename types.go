@@ -43,9 +43,10 @@ type TmQueryResult struct {
 // which lets us return the Header in a non-binary format.
 // Votes must also be pre-verified, signatures checked, etc.
 type TmSignedHeader struct {
-	Hash   []byte
-	Header TmHeader // contains height
-	Votes  TmVotes
+	Hash       []byte
+	Header     TmHeader // contains height
+	Votes      TmVotes
+	LastHeight uint64 // the most recent block commited to the chain
 }
 
 // TmHeader is the info in block headers (from tendermint/types/block.go)
@@ -114,6 +115,6 @@ type TmValidator struct {
 }
 
 type TmValidatorResult struct {
-	BlockHeight int
+	BlockHeight uint64
 	Validators  []TmValidator
 }

@@ -46,26 +46,27 @@ func TestNodeHeaders(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 	n := GetNode()
 
-	// get the validator set
-	vals, err := n.Validators()
-	require.Nil(err)
-	assert.Equal(1, len(vals))
-
 	// send some data
 	_, _, tx := TestTxKV()
 	br, err := n.Broadcast(tx)
 	require.Nil(err)
 	require.True(br.Code.IsOK())
 
+	// get the validator set
+	vals, err := n.Validators()
+	require.Nil(err)
+	assert.Equal(1, len(vals.Validators))
+
 	// get a signed header
-	height := uint64(1) // TODO - better
+	height := vals.BlockHeight - 1 // looking for sig queries height+1...
 	block, err := n.SignedHeader(height)
 	require.Nil(err, "%+v", err)
 	assert.Equal(height, block.Header.Height)
 	assert.Equal(1, len(block.Votes))
 
 	// try to certify this header is proper
-	cert := rpc.StaticCertifier{Vals: vals}
+	cert := rpc.StaticCertifier{Vals: vals.Validators}
 	err = cert.Certify(block)
 	assert.Nil(err, "%+v", err)
+
 }

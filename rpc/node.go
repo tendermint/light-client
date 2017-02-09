@@ -117,7 +117,7 @@ func (n Node) queryResp(qr *ctypes.ResultABCIQuery, err error) (lc.TmQueryResult
 func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
 	h := int(height)
 
-	bi, err := n.getHeader(h)
+	bi, lh, err := n.getHeader(h)
 	if err != nil {
 		return lc.TmSignedHeader{}, err
 	}
@@ -125,6 +125,7 @@ func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
 	if err != nil {
 		return res, err
 	}
+	res.LastHeight = uint64(lh)
 
 	votes, err := n.getPrecommits(h)
 	if err != nil {
@@ -142,16 +143,21 @@ func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
 //
 // This is intended for use in test cases, or to query many nodes
 // to find consensus before trusting it.
-func (n Node) Validators() ([]lc.TmValidator, error) {
+func (n Node) Validators() (lc.TmValidatorResult, error) {
 	vres, err := n.client.Validators()
 	if err != nil {
-		return nil, err
+		return lc.TmValidatorResult{}, err
 	}
 	// now we transform them into our world
 	vals := vres.Validators
-	res := make([]lc.TmValidator, len(vals))
+	rvals := make([]lc.TmValidator, len(vals))
+
+	res := lc.TmValidatorResult{
+		BlockHeight: uint64(vres.BlockHeight),
+		Validators:  rvals,
+	}
 	for i, v := range vals {
-		res[i] = lc.TmValidator{
+		rvals[i] = lc.TmValidator{
 			Address:     v.Address,
 			VotingPower: v.VotingPower,
 			PubKey:      v.PubKey,
@@ -160,20 +166,20 @@ func (n Node) Validators() ([]lc.TmValidator, error) {
 	return res, nil
 }
 
-func (n Node) getHeader(h int) (*ttypes.BlockMeta, error) {
+// get header returns the header info along with the most recent height
+func (n Node) getHeader(h int) (*ttypes.BlockMeta, int, error) {
 	bis, err := n.client.BlockchainInfo(h, h)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	// TODO: this lets us know the most recent header - useful info!
-	// if bis.LastHeight != h {
-	// 	return nil, errors.Errorf("Returned header for height %d, not %d", bis.LastHeight, h)
-	// }
+	if bis.LastHeight < h {
+		return nil, 0, errors.Errorf("Last height %d less than queries height %d", bis.LastHeight, h)
+	}
 	if len(bis.BlockMetas) != 1 {
-		return nil, errors.Errorf("Cannot get header for height %d", h)
+		return nil, bis.LastHeight, errors.Errorf("Cannot get header for height %d", h)
 	}
 	// this is the header we actually want
-	return bis.BlockMetas[0], nil
+	return bis.BlockMetas[0], bis.LastHeight, nil
 }
 
 // getPrecommits returns all precommit votes that prove the given
