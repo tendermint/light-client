@@ -13,6 +13,11 @@ type Proof interface {
 	Verify(key, value, root []byte) bool
 }
 
+// ProofReader is an abstraction to let us parse proofs
+type ProofReader interface {
+	ReadProof(data []byte) (Proof, error)
+}
+
 // Certifier checks the votes to make sure the block really is signed properly.
 // Certifier must know the current set of validitors by some other means.
 // TODO: some implementation to track the validator set (various algorithms)

@@ -46,6 +46,11 @@ type Signable interface {
 	SignedBytes() ([]byte, error)
 }
 
+// SignableReader is an abstraction to let us parse Signables
+type SignableReader interface {
+	ReadSignable(data []byte) (Signable, error)
+}
+
 // Signer allows one to use a keystore
 type Signer interface {
 	Sign(name, passphrase string, tx Signable) error

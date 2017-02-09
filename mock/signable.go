@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	crypto "github.com/tendermint/go-crypto"
+	wire "github.com/tendermint/go-wire"
 	lightclient "github.com/tendermint/light-client"
 )
 
@@ -44,7 +45,7 @@ func (o *OneSig) SignedBy() ([]crypto.PubKey, error) {
 }
 
 func (o *OneSig) SignedBytes() ([]byte, error) {
-	return nil, errors.New("SignedBytes not implemented")
+	return wire.BinaryBytes(wrapper{o}), nil
 }
 
 // MultiSig is a Signable implementation that can be used to
@@ -91,5 +92,5 @@ func (m *MultiSig) SignedBy() ([]crypto.PubKey, error) {
 }
 
 func (m *MultiSig) SignedBytes() ([]byte, error) {
-	return nil, errors.New("SignedBytes not implemented")
+	return wire.BinaryBytes(wrapper{m}), nil
 }

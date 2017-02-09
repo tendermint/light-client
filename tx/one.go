@@ -77,5 +77,5 @@ func (s *OneSig) SignedBytes() ([]byte, error) {
 	if s.sig == nil {
 		return nil, errors.New("Transaction was never signed")
 	}
-	return wire.BinaryBytes(s), nil
+	return wire.BinaryBytes(wrapper{s}), nil
 }

@@ -82,5 +82,5 @@ func (s *MultiSig) SignedBytes() ([]byte, error) {
 	if len(s.sigs) == 0 {
 		return nil, errors.New("Never signed")
 	}
-	return wire.BinaryBytes(s), nil
+	return wire.BinaryBytes(wrapper{s}), nil
 }

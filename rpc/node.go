@@ -15,17 +15,12 @@ type Node struct {
 	client *HTTPClient
 	// this is needed to calculate sign bytes for votes
 	chainID string
-	ProofReader
-}
-
-// ProofReader is an abstraction to let us parse proofs
-type ProofReader interface {
-	ReadProof(data []byte) (lc.Proof, error)
+	lc.ProofReader
 }
 
 // MerkleReader is currently the only implementation of ProofReader,
 // using the IAVLProof from go-merkle
-var MerkleReader ProofReader = merkleReader{}
+var MerkleReader lc.ProofReader = merkleReader{}
 
 type merkleReader struct{}
 
