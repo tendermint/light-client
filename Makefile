@@ -1,4 +1,4 @@
-DOC_PKGS:=./cryptostore ./mock ./rpc ./rpc/tests ./storage ./storage/filestorage ./storage/memstorage ./tx ./util
+DOC_PKGS:=./cryptostore ./mock ./proxy ./rpc ./rpc/tests ./storage ./storage/filestorage ./storage/memstorage ./tx ./util
 REPO:=github.com/tendermint/light-client
 
 .PHONY: install build test list_pkg docs clean_docs get_vendor_deps tools $(DOC_PKGS)

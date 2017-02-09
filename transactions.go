@@ -61,5 +61,6 @@ type KeyManager interface {
 	Create(name, passphrase string) error
 	List() (KeyInfos, error)
 	Get(name string) (KeyInfo, error)
+	Update(name, oldpass, newpass string) error
 	Delete(name, passphrase string) error
 }
