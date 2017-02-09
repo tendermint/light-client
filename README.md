@@ -73,31 +73,36 @@ The infrastructure is in place, it is just up to an app to create transactions t
 
 First, we created a [simple interface](./rpc) to call the tendermint RPC, to avoid a lot of boilerplate casting and marshaling of data types when we call the RPC. This is a literal client of the existing tendermint RPC, and will track the most recent version of tendermint rpc (and multiple versions once 1.0 is released). The main advantage over using `github.com/tendermint/go-rpc/client` directly is that we handle casting the types and following the rpc interfaces, allowing you to just call simple, type-safe methods.
 
-Secondly, we create an abstract interface `Node` representing the needs of a light client, which takes the results from tendermint rpc and does some validation and other processing on them.  This doesn't pull in any other dependencies and is the interface that is used internally in the package for all code that needs to interact with the tendermint server.
-
-**TODO** Node is not implemented
+Secondly, we create two abstract interfaces `Broadcaster` and `Checker` representing the needs of a light client, either sending info to tendermint, or getting and validating a key-value pair.  These interfaces (and a but more) are implemented by [rpc.Node](https://github.com/tendermint/light-client/blob/develop/rpc/node.go), which takes the results from `rpc.HTTPClient` and does some validation and other processing on them.  This is responsible for all parsing of tendermint structures, as well as app-specific data structures.  To that end, it must be configurable to allow custom deserializing of `Proof` and `Value`.
 
 ### Viewing Data
 
 When querying data, we often get binary data back from the server.  We need a way to unpack this data (using domain knowledge of the application's data format) and return it as JSON (or generic dictionary).  Something like how the basecoin cli [queries the account](https://github.com/tendermint/basecoin/blob/develop/cmd/basecoin/commands/utils.go#L59-L81), and then [renders it as json](https://github.com/tendermint/basecoin/blob/develop/cmd/basecoin/commands/query.go#L118-L124)
 
-**TODO**
+The data must be returned from the app as bytes that match the merkle proof, thus it is the responsibility of this library to parse it.  Since this is application-specific domain knowledge, we cannot program this, but rather allow the application designer to provide us this information in a special `ValueReader` interface, which knows how to read the application-specific values stored in the merkle tree, and convert them into a struct that can be json-encoded, or otherwise transformed for other binding.
+
+**TODO**: implement
 
 ### Verifying Proofs
 
 Beyond simply querying data from a blockchain, we often want **undeniable, cryptographic proof** of its validity.  This is the reason for exposing merkle proofs as first class objects in the new query [request](https://github.com/tendermint/abci/blob/develop/types/types.pb.go#L718-L723) and [response](https://github.com/tendermint/abci/blob/develop/types/types.pb.go#L1413-L1421).  However, this Proof byte slice, still generally requires go code to [parse and validate](https://github.com/tendermint/go-merkle/blob/develop/iavl_proof.go#L14-L42).
 
-It is important to provide access to this essential functionality in a light client library, so we can provide this security to any UI we wish to build.
+It is important to provide access to this essential functionality in a light client library, so we can provide this security to any UI we wish to build. We provide a few methods to allow this to work:
 
-**TODO**
+* There are two important methods to get information, implemented by `rpc.Node`:
+  * `Checker.Prove` method will parse the data into a format that can be used to prove a key-value slice leads to a root hash
+  * `Checker.SignedHeader` retrieves a block header, containing the AppHash, as well as the Precommit signatures that prove which validators signed off on this commit
+* `Certifier.Certify` uses some out-of-band knowledge of the validator set to check that these signatures are sufficient proof (> 2/3 votes)
+  * `rpc.StaticCertifier` is a simple implementation, using a static validator set, for test code or very simple apps
+  * **TODO**: special `TrackingCertifier`, which is seeded with some validator set and does occasional queries on the blockchain to update it safely.
+
+Note: here is some info on the [block structure](https://tendermint.com/docs/internals/block-structure) we parse to get this data
 
 ### Tracking Validators
 
-A very important part of verifying a proof is to ensure that it's roothash was committed to a valid block.  We can get the proof and a block header, and validate they match.  But then we need to prove that the block is properly signed by a validator set.  The first step is to verify the signatures, the second that these public keys actually have the authority to sign blocks (not just some random keys).
+Once there is a dynamic validator set, the issue of verifying a block becomes a bit more tricky.  This is still a work in progress, but so far I have yet to see an app that dynamically updates the validator set. In any case "coming soon".s
 
-If a chain has a static validator set, we just need to feed in this set upon initialization, and can verify a block header with a simple 2/3 check. If it can update, we need an easy way to track them, without having to process every block header.
-
-There is background information in a [github issue](https://github.com/tendermint/tendermint/issues/377), the [block structure](https://tendermint.com/docs/internals/block-structure), and the [concept of validators](https://tendermint.com/docs/internals/validators)
+There is background information in a [github issue](https://github.com/tendermint/tendermint/issues/377), and the [concept of validators](https://tendermint.com/docs/internals/validators)
 
 **TODO**: Link to Bucky's document about this algorithm
 
@@ -116,14 +121,12 @@ Some things are hard coded for simplicity, or as there are no other options avai
 Other concepts need maximum flexibility, as there are many options, most specific to the application itself. For this we need to provide our own "Read" functions somehow.  My approach is to define interfaces for the Readers and pass them into the constructors of any struct that will need to deserialize bytes. Maybe you have another approach, like dynamically registering with `init` in your package, as is done to extend the basecoin commands. This is open to discussion as to which approach is the simplest to use and most maintainable.
 
 * `Proof` is loaded by `rpc.Node` when running queries.  `rpc.Node` uses a `rpc.ProofReader` to define this behavior, which is set to `MerkleReader` in the constructor.  If needed, this can be made more configurable.
-*
-
-
+* **TODO**: `Signable` will need to be passed into the program somehow, and as most of the bindings (json, jni, etc) don't handle go structs so well, we provide a `SignableReader` that accepts json as `[]byte` and returns a concrete implementation of a `Signable`. This is app-specific, and since the byte layout doesn't matter until we sign the struct, we can expose a simple interface to pass in unsigned transaction. This would be mainly used by the bindings on input.
+* **TODO**: `Value` - when we get data back from the server, it is just a bunch of bytes, exactly as stored in the app, which is important to be able to validate the proofs.  However, once we validate it, most clients would rather just have a struct or json object and some stamp that it was, in fact, cryptographically proven. Thus, we can add a `ValueReader`, like the `SignableReader`, but this is executed by `rpc.Node` upon receiving the response to a query. Since an app can (and usually does) support multiple data formats, we also provide the key to help the Reader decipher the bytes.
 
 ###Interfaces referring to interfaces
 
-TODO
-
+TODO: why `lightclient.PubKey` implementing `crypto.PubKey` without importing `crypto` is impossible. digging deep with go interfaces.
 
 ## References
 
