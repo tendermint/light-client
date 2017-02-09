@@ -81,7 +81,7 @@ When querying data, we often get binary data back from the server.  We need a wa
 
 The data must be returned from the app as bytes that match the merkle proof, thus it is the responsibility of this library to parse it.  Since this is application-specific domain knowledge, we cannot program this, but rather allow the application designer to provide us this information in a special `ValueReader` interface, which knows how to read the application-specific values stored in the merkle tree, and convert them into a struct that can be json-encoded, or otherwise transformed for other binding.
 
-**TODO**: implement
+There is a simple implementation `mock.ByteValueReader` for testing, which just wraps the `[]byte` into a `Value` without doing any parsing.  For integration with your application, please provide your application-specific logic.
 
 ### Verifying Proofs
 
@@ -121,8 +121,8 @@ Some things are hard coded for simplicity, or as there are no other options avai
 Other concepts need maximum flexibility, as there are many options, most specific to the application itself. For this we need to provide our own "Read" functions somehow.  My approach is to define interfaces for the Readers and pass them into the constructors of any struct that will need to deserialize bytes. Maybe you have another approach, like dynamically registering with `init` in your package, as is done to extend the basecoin commands. This is open to discussion as to which approach is the simplest to use and most maintainable.
 
 * `Proof` is loaded by `rpc.Node` when running queries.  `rpc.Node` uses a `rpc.ProofReader` to define this behavior, which is set to `MerkleReader` in the constructor.  If needed, this can be made more configurable.
-* **TODO**: `Signable` will need to be passed into the program somehow, and as most of the bindings (json, jni, etc) don't handle go structs so well, we provide a `SignableReader` that accepts json as `[]byte` and returns a concrete implementation of a `Signable`. This is app-specific, and since the byte layout doesn't matter until we sign the struct, we can expose a simple interface to pass in unsigned transaction. This would be mainly used by the bindings on input.
-* **TODO**: `Value` - when we get data back from the server, it is just a bunch of bytes, exactly as stored in the app, which is important to be able to validate the proofs.  However, once we validate it, most clients would rather just have a struct or json object and some stamp that it was, in fact, cryptographically proven. Thus, we can add a `ValueReader`, like the `SignableReader`, but this is executed by `rpc.Node` upon receiving the response to a query. Since an app can (and usually does) support multiple data formats, we also provide the key to help the Reader decipher the bytes.
+* `Signable` will need to be passed into the program somehow, and as most of the bindings (json, jni, etc) don't handle go structs so well, we provide a `SignableReader` that accepts json as `[]byte` and returns a concrete implementation of a `Signable`. This is app-specific, and since the byte layout doesn't matter until we sign the struct, we can expose a simple interface to pass in unsigned transaction. This would be mainly used by the bindings on input.
+* `Value` - when we get data back from the server, it is just a bunch of bytes, exactly as stored in the app, which is important to be able to validate the proofs.  However, once we validate it, most clients would rather just have a struct or json object and some stamp that it was, in fact, cryptographically proven. Thus, we add a `ValueReader`, like the `SignableReader`, but this is executed by `rpc.Node` upon receiving the response to a query. Since an app can (and usually does) support multiple data formats, we also provide the key to help the Reader decipher the bytes.
 
 ###Interfaces referring to interfaces
 

@@ -22,7 +22,7 @@ func TestNodeQuery(t *testing.T) {
 	qr, err := n.Query("/key", k)
 	require.Nil(err)
 	assert.True(qr.Code.IsOK())
-	assert.Equal(v, qr.Value)
+	assert.Equal(v, qr.Value.Bytes())
 	assert.Nil(qr.Proof)
 
 	// and we get some proof, we can even decipher
@@ -30,7 +30,7 @@ func TestNodeQuery(t *testing.T) {
 	require.Nil(err)
 	assert.True(pr.Code.IsOK())
 	assert.Equal(k, pr.Key)
-	assert.Equal(v, pr.Value)
+	assert.Equal(v, pr.Value.Bytes())
 	assert.NotNil(pr.Proof)
 
 	p := pr.Proof

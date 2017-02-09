@@ -24,15 +24,14 @@ func (r TmBroadcastResult) IsOk() bool {
 	return r.Code.IsOK()
 }
 
-// TODO: how to handle proofs?
-// where do we parse them from bytes into Proof objects we can work with
+// TmQueryResult stores all info from a query or a proof
+// The Checker/Searcher is responsible for parsing the Value and Proof into
+// usable formats (not just opaque bytes) via their Reader
 type TmQueryResult struct {
-	Code TmCode `json:"code"`
-	// Index  int64    `json:"index,omitempty"` // ????
-	Key   []byte `json:"key"`
-	Value []byte `json:"value"`
-	Proof Proof  `json:"proof"`
-	// Proof  []byte `json:"proof"`
+	Code   TmCode `json:"code"`
+	Key    []byte `json:"key"`
+	Value  Value  `json:"value"`
+	Proof  Proof  `json:"proof"`
 	Height uint64 `json:"height"`
 	Log    string `json:"log"`
 }

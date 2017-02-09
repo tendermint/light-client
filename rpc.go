@@ -25,3 +25,22 @@ type Searcher interface {
 	// complex path.  It doesn't worry about proofs
 	Query(path string, data []byte) (TmQueryResult, error)
 }
+
+// Value represents a database value and is generally a structure
+// that can be json serialized.  Bytes() is needed to get the original
+// data bytes for validation of proofs
+//
+// TODO: add Fields() method to get field info???
+type Value interface {
+	Bytes() []byte
+}
+
+// ValueReader is an abstraction to let us parse application-specific values
+type ValueReader interface {
+	// ReadValue accepts a key, value pair to decode.  The value bytes must be
+	// retained in the returned Value implementation.
+	//
+	// key *may* be present and can be used as a hint of how to parse the data
+	// when your application handles multiple formats
+	ReadValue(key, value []byte) (Value, error)
+}

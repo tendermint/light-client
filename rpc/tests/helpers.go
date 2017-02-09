@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	logger "github.com/tendermint/go-logger"
+	"github.com/tendermint/light-client/mock"
 	"github.com/tendermint/light-client/rpc"
 
 	"github.com/tendermint/abci/example/dummy"
@@ -45,7 +46,7 @@ func GetClient() *rpc.HTTPClient {
 func GetNode() rpc.Node {
 	rpcAddr := GetConfig().GetString("rpc_laddr")
 	chainID := GetConfig().GetString("chain_id")
-	return rpc.NewNode(rpcAddr, chainID)
+	return rpc.NewNode(rpcAddr, chainID, mock.ValueReader())
 }
 
 // StartTendermint starts a test tendermint server in a go routine and returns when it is initialized

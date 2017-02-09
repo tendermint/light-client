@@ -16,6 +16,7 @@ type Node struct {
 	// this is needed to calculate sign bytes for votes
 	chainID string
 	lc.ProofReader
+	lc.ValueReader
 }
 
 // MerkleReader is currently the only implementation of ProofReader,
@@ -28,11 +29,12 @@ func (p merkleReader) ReadProof(data []byte) (lc.Proof, error) {
 	return merkle.ReadProof(data)
 }
 
-func NewNode(rpcAddr, chainID string) Node {
+func NewNode(rpcAddr, chainID string, valuer lc.ValueReader) Node {
 	return Node{
 		client:      NewClient(rpcAddr, "/websocket"),
 		chainID:     chainID,
 		ProofReader: MerkleReader,
+		ValueReader: valuer,
 	}
 }
 
@@ -93,11 +95,14 @@ func (n Node) queryResp(qr *ctypes.ResultABCIQuery, err error) (lc.TmQueryResult
 	res := lc.TmQueryResult{
 		Code:   lc.TmCode(r.Code),
 		Key:    r.Key,
-		Value:  r.Value,
 		Log:    r.Log,
 		Height: r.Height,
 	}
-	// load the proof if it exists
+	// parse the value if it exists
+	if len(r.Value) > 0 {
+		res.Value, err = n.ReadValue(r.Key, r.Value)
+	}
+	// parse the proof if it exists
 	if len(r.Proof) > 0 {
 		res.Proof, err = n.ReadProof(r.Proof)
 	}
