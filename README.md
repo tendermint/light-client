@@ -21,6 +21,10 @@ I refer to the tendermint consensus engine and rpc as a `node`, the abci app as 
 
 These external clients who have no strong trust relationship with any node, just the validator set as a whole. Beyond a nice mobile or desktop application, the cosmos hub is another important example of a `client`, that needs undeniable proof without syncing the full chain.
 
+## Code Documentation
+
+I try to provide extensive documentation in the code, to make it as easy to use as possible.  I highly recommend running `godoc -http:6060` locally and browsing to [interactive documentation](http://localhost:6060/pkg/github.com/tendermint/light-client/). If you have not downloaded the code locally, you can also browse the [generated godoc](./docs) thanks to the excellent [godoc2md](https://github.com/davecheney/godoc2md) tool
+
 ## Bindings
 
 First, the library will provide a nice API to call directly from other programs written in go and thus integrate nicely with headless clients, and provide an easy way to extend this functionality via a different interface.
