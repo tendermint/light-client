@@ -10,6 +10,6 @@ The package layout attempts to expose common domain types in the
 top-level with no other dependencies.  Main packages should select which
 dependencies they wish to have and wire them together with common glue code
 that only depends on the interface.
-More info here: https://medium.com/@benbjohnson/standard-package-layout-7cdbc8391fc1
+More info here: https://medium.com/%40benbjohnson/standard-package-layout-7cdbc8391fc1
 */
 package lightclient

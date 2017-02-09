@@ -55,9 +55,9 @@ func TestKeyManagement(t *testing.T) {
 	assert.Equal(i2.PubKey, keys[0].PubKey)
 
 	// deleting a key removes it
-	err = cstore.Delete("bad name")
+	err = cstore.Delete("bad name", "foo")
 	require.NotNil(err)
-	err = cstore.Delete(n1)
+	err = cstore.Delete(n1, p1)
 	require.Nil(err)
 	keys, err = cstore.List()
 	require.Nil(err)

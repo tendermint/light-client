@@ -32,13 +32,23 @@ type Signable interface {
 
 // Signer allows one to use a keystore
 type Signer interface {
-	// Get(name string) (KeyInfo, error)
 	Sign(name, passphrase string, tx Signable) error
+}
+
+// KeyManager allows simple CRUD on a keystore, as an aid to signing
+type KeyManager interface {
+	Create(name, passphrase string) error
+	List() ([]KeyInfo, error)
+	Get(name string) (KeyInfo, error)
+	Delete(name, passphrase string) error
 }
 
 // Poster combines KeyStore and Node to process a Signable and deliver it to tendermint
 // returning the results from the tendermint node, once the transaction is processed
 // only handles single signatures
+//
+// TODO: move this into some sort of util package that does mashups based
+// solely on interface types
 type Poster struct {
 	server Broadcaster
 	signer Signer

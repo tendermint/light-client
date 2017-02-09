@@ -30,6 +30,9 @@ type Certifier interface {
 // Auditor takes data, proof, block headers, and tracking of the validator
 // set and combines it all to give you complete certainty of the truth
 // of a given statement.
+//
+// TODO: move this into some sort of util package that does mashups based
+// solely on interface types
 type Auditor struct {
 	cert Certifier
 }
