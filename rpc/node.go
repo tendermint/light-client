@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	cmn "github.com/tendermint/go-common"
+	merkle "github.com/tendermint/go-merkle"
 	lc "github.com/tendermint/light-client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	ttypes "github.com/tendermint/tendermint/types"
@@ -14,12 +15,29 @@ type Node struct {
 	client *HTTPClient
 	// this is needed to calculate sign bytes for votes
 	chainID string
+	ProofReader
+}
+
+// ProofReader is an abstraction to let us parse proofs
+type ProofReader interface {
+	ReadProof(data []byte) (lc.Proof, error)
+}
+
+// MerkleReader is currently the only implementation of ProofReader,
+// using the IAVLProof from go-merkle
+var MerkleReader ProofReader = merkleReader{}
+
+type merkleReader struct{}
+
+func (p merkleReader) ReadProof(data []byte) (lc.Proof, error) {
+	return merkle.ReadProof(data)
 }
 
 func NewNode(rpcAddr, chainID string) Node {
 	return Node{
-		client:  NewClient(rpcAddr, "/websocket"),
-		chainID: chainID,
+		client:      NewClient(rpcAddr, "/websocket"),
+		chainID:     chainID,
+		ProofReader: MerkleReader,
 	}
 }
 
@@ -63,28 +81,32 @@ func (n Node) Broadcast(tx []byte) (res lc.TmBroadcastResult, err error) {
 // complex path.  It doesn't worry about proofs
 func (n Node) Query(path string, data []byte) (lc.TmQueryResult, error) {
 	qr, err := n.client.ABCIQuery(path, data, false)
-	return queryResp(qr), err
+	return n.queryResp(qr, err)
 }
 
 // Prove returns a merkle proof for the given key
 func (n Node) Prove(key []byte) (lc.TmQueryResult, error) {
 	qr, err := n.client.ABCIQuery("/key", key, true)
-	return queryResp(qr), err
+	return n.queryResp(qr, err)
 }
 
-func queryResp(qr *ctypes.ResultABCIQuery) lc.TmQueryResult {
-	if qr == nil {
-		return lc.TmQueryResult{}
+func (n Node) queryResp(qr *ctypes.ResultABCIQuery, err error) (lc.TmQueryResult, error) {
+	if qr == nil || err != nil {
+		return lc.TmQueryResult{}, err
 	}
 	r := qr.Response
-	return lc.TmQueryResult{
+	res := lc.TmQueryResult{
 		Code:   lc.TmCode(r.Code),
 		Key:    r.Key,
 		Value:  r.Value,
-		Proof:  r.Proof,
 		Log:    r.Log,
 		Height: r.Height,
 	}
+	// load the proof if it exists
+	if len(r.Proof) > 0 {
+		res.Proof, err = n.ReadProof(r.Proof)
+	}
+	return res, err
 }
 
 // SignedHeader gives us Header data along with the backing signatures

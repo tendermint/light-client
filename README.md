@@ -103,6 +103,28 @@ There is background information in a [github issue](https://github.com/tendermin
 
 **TODO**: Implement
 
+## Extensibility
+
+Of course, every application has its own transaction types, its own way of signing them, and its own data structures for which it wishes to present proofs. While we can work with interfaces that know how to serialize themselves (like `Signable`), this does not tell us how to *deserialize* the objects.  In fact, it is impossible to attach this information to an interface (as we allow many potentially unknown concrete types). We use two ways for this in the code:
+
+###Hard code dependencies
+
+Some things are hard coded for simplicity, or as there are no other options available.  I tried to abstract `crypto.PubKey` and `crypto.Signature` and quickly came to the issue that interface methods applying to interfaces cannot be implemented by other interfaces with the same footprint. I'll explain later, but for technical reasons it was quite difficult not to just use go-crypto, and anyway, this is supposed to be a general purpose implementation of any cryptographic algorithm, so I left it as a direct dependency.  If you wish to add new algorithms, you have to add them to go-crypto (by forking).
+
+###External configuration
+
+Other concepts need maximum flexibility, as there are many options, most specific to the application itself. For this we need to provide our own "Read" functions somehow.  My approach is to define interfaces for the Readers and pass them into the constructors of any struct that will need to deserialize bytes. Maybe you have another approach, like dynamically registering with `init` in your package, as is done to extend the basecoin commands. This is open to discussion as to which approach is the simplest to use and most maintainable.
+
+* `Proof` is loaded by `rpc.Node` when running queries.  `rpc.Node` uses a `rpc.ProofReader` to define this behavior, which is set to `MerkleReader` in the constructor.  If needed, this can be made more configurable.
+*
+
+
+
+###Interfaces referring to interfaces
+
+TODO
+
+
 ## References
 
 Some other projects that may inspire this:

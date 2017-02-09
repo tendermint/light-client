@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/go-merkle"
+	"github.com/tendermint/light-client/rpc"
 )
 
 func TestNodeQuery(t *testing.T) {
@@ -33,14 +33,13 @@ func TestNodeQuery(t *testing.T) {
 	assert.Equal(v, pr.Value)
 	assert.NotNil(pr.Proof)
 
-	proof, err := merkle.ReadProof(pr.Proof)
-	require.Nil(err)
-	root := proof.RootHash
+	p := pr.Proof
+	root := p.Root()
 	assert.NotNil(root)
 	// this proof validates our data
-	assert.True(proof.Verify(k, v, root))
+	assert.True(p.Verify(k, v, root))
 	// but not some mixed-up data
-	assert.False(proof.Verify(v, k, root))
+	assert.False(p.Verify(v, k, root))
 }
 
 func TestNodeHeaders(t *testing.T) {
@@ -60,8 +59,13 @@ func TestNodeHeaders(t *testing.T) {
 
 	// get a signed header
 	height := uint64(1) // TODO - better
-	head, err := n.SignedHeader(height)
+	block, err := n.SignedHeader(height)
 	require.Nil(err, "%+v", err)
-	assert.Equal(height, head.Header.Height)
-	assert.Equal(1, len(head.Votes))
+	assert.Equal(height, block.Header.Height)
+	assert.Equal(1, len(block.Votes))
+
+	// try to certify this header is proper
+	cert := rpc.StaticCertifier{Vals: vals}
+	err = cert.Certify(block)
+	assert.Nil(err, "%+v", err)
 }

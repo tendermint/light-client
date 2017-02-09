@@ -13,7 +13,7 @@ import (
 // Good for testing or really simple chains.  You will want a
 // better implementation when the validator set can actually change.
 type StaticCertifier struct {
-	vals []lc.TmValidator
+	Vals []lc.TmValidator
 }
 
 func (c StaticCertifier) assertCertifier() lc.Certifier {
@@ -50,9 +50,9 @@ func (c StaticCertifier) Certify(block lc.TmSignedHeader) error {
 // address.
 // FIXME: inefficient for large sets, but this is not for that
 func (c StaticCertifier) valByAddr(addr []byte) *lc.TmValidator {
-	for i := range c.vals {
-		if bytes.Equal(addr, c.vals[i].Address) {
-			return &c.vals[i]
+	for i := range c.Vals {
+		if bytes.Equal(addr, c.Vals[i].Address) {
+			return &c.Vals[i]
 		}
 	}
 	return nil
@@ -62,8 +62,8 @@ func (c StaticCertifier) valByAddr(addr []byte) *lc.TmValidator {
 // FIXME: could be cached for efficiency, but key is simplicity
 func (c StaticCertifier) totalVotes() int64 {
 	var votes int64
-	for i := range c.vals {
-		votes += c.vals[i].VotingPower
+	for i := range c.Vals {
+		votes += c.Vals[i].VotingPower
 	}
 	return votes
 }

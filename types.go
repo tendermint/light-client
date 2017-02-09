@@ -31,8 +31,8 @@ type TmQueryResult struct {
 	// Index  int64    `json:"index,omitempty"` // ????
 	Key   []byte `json:"key"`
 	Value []byte `json:"value"`
-	// Proof Proof  `json:"proof"`
-	Proof  []byte `json:"proof"`
+	Proof Proof  `json:"proof"`
+	// Proof  []byte `json:"proof"`
 	Height uint64 `json:"height"`
 	Log    string `json:"log"`
 }
