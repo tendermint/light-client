@@ -1,11 +1,27 @@
 package lightclient
 
-import crypto "github.com/tendermint/go-crypto"
+import (
+	"sort"
+
+	crypto "github.com/tendermint/go-crypto"
+)
 
 // KeyInfo is the public information about a key
 type KeyInfo struct {
 	Name   string
 	PubKey crypto.PubKey
+}
+
+// KeyInfos is a wrapper to allows alphabetical sorting of the keys
+type KeyInfos []KeyInfo
+
+func (k KeyInfos) Len() int           { return len(k) }
+func (k KeyInfos) Less(i, j int) bool { return k[i].Name < k[j].Name }
+func (k KeyInfos) Swap(i, j int)      { k[i], k[j] = k[j], k[i] }
+func (k KeyInfos) Sort() {
+	if k != nil {
+		sort.Sort(k)
+	}
 }
 
 // Signable represents any transaction we wish to send to tendermint core
@@ -38,41 +54,7 @@ type Signer interface {
 // KeyManager allows simple CRUD on a keystore, as an aid to signing
 type KeyManager interface {
 	Create(name, passphrase string) error
-	List() ([]KeyInfo, error)
+	List() (KeyInfos, error)
 	Get(name string) (KeyInfo, error)
 	Delete(name, passphrase string) error
-}
-
-// Poster combines KeyStore and Node to process a Signable and deliver it to tendermint
-// returning the results from the tendermint node, once the transaction is processed
-// only handles single signatures
-//
-// TODO: move this into some sort of util package that does mashups based
-// solely on interface types
-type Poster struct {
-	server Broadcaster
-	signer Signer
-}
-
-func NewPoster(server Broadcaster, signer Signer) Poster {
-	return Poster{server, signer}
-}
-
-// Post will sign the transaction with the given credentials and push it to
-// the tendermint server
-func (p Poster) Post(sign Signable, keyname, passphrase string) (res TmBroadcastResult, err error) {
-	var signed []byte
-
-	err = p.signer.Sign(keyname, passphrase, sign)
-	if err != nil {
-		return
-	}
-
-	signed, err = sign.SignedBytes()
-	if err != nil {
-		return
-	}
-
-	res, err = p.server.Broadcast(signed)
-	return
 }

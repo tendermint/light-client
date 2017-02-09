@@ -37,9 +37,10 @@ func (s Manager) Create(name, passphrase string) error {
 }
 
 // List loads the keys from the storage and enforces alphabetical order
-func (s Manager) List() ([]lightclient.KeyInfo, error) {
-	res, err := s.es.List()
-	lightclient.SortKeys(res).Sort()
+func (s Manager) List() (lightclient.KeyInfos, error) {
+	keys, err := s.es.List()
+	res := lightclient.KeyInfos(keys)
+	res.Sort()
 	return res, err
 }
 

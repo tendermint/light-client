@@ -25,30 +25,3 @@ type Searcher interface {
 	// complex path.  It doesn't worry about proofs
 	Query(path string, data []byte) (TmQueryResult, error)
 }
-
-// Node represents someway to reliably read and write to the
-// tendermint core (or a mock implenetation).
-// TODO: is this interface even needed????
-// Designed to be minimal, use the RPC directly for unverified info
-type Node interface {
-	Broadcaster
-	Checker
-
-	// Status and Validators give some info, nothing to be trusted though...
-	// Unless we find that eg. the ValidatorResult matches the ValidatorHash
-	// in a properly signed block header
-	// Status() (TmStatusResult, error)
-	// Validators() (TmValidatorResult, error)
-
-	// TODO: let's make this reactive if possible
-	// TODO: listen for a transaction being committed?
-	// TODO: listen for a new block?
-	// TODO: listen for change to a given key in the merkle store?
-
-	// 	NetInfo() (*ctypes.ResultNetInfo, error)
-	// 	DialSeeds(seeds []string) (*ctypes.ResultDialSeeds, error)
-	// 	Genesis() (*ctypes.ResultGenesis, error)
-	//  Block(height int) (*ctypes.ResultBlock, error)
-
-	// 	ABCIInfo() (*ctypes.ResultABCIInfo, error)
-}
