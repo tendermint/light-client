@@ -9,11 +9,12 @@ package proxy
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/proxy/types"
+	"github.com/tendermint/light-client/rpc"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -25,16 +26,12 @@ type KeyStore interface {
 	lc.Signer
 }
 
-// Node is all rpc stuff together, implemented by rpc.Node
-type Node interface {
-	lc.Broadcaster
-	lc.Checker
-	lc.Searcher
-}
-
 // RegisterDefault constructs all components and wires them up under
 // standard routes.
-func RegisterDefault(r *mux.Router, keys KeyStore, node Node,
+//
+// TODO: something more intelligent for getting validators,
+// this is pretty insecure right now
+func RegisterDefault(r *mux.Router, keys KeyStore, node rpc.Node,
 	txReader lc.SignableReader, valReader lc.ValueReader) {
 
 	key := NewKeyServer(keys)
@@ -45,6 +42,15 @@ func RegisterDefault(r *mux.Router, keys KeyStore, node Node,
 	st := r.PathPrefix("/txs").Subrouter()
 	tx.Register(st)
 
+	// query the node for the validator - soon at least cache locally
+	vals, err := node.Validators()
+	if err != nil {
+		panic(err)
+	}
+	cert := rpc.StaticCertifier{Vals: vals.Validators}
+
+	view := NewViewer(node, node, cert)
+	view.Register(r)
 }
 
 func readRequest(r *http.Request, o interface{}) error {
@@ -60,21 +66,26 @@ func readRequest(r *http.Request, o interface{}) error {
 	return validate(o)
 }
 
-// TODO: much better!!!
+// most errors are bad input, so 406... do better....
 func writeError(w http.ResponseWriter, err error) {
-	// TODO: better error handling
-	w.WriteHeader(500)
-	// resp := fmt.Sprintf("%+v", err)
-	resp := fmt.Sprintf("%v", err)
-	w.Write([]byte(resp))
+	res := types.GenericResponse{
+		Code: 406,
+		Log:  err.Error(),
+	}
+	writeCode(w, &res, 406)
 }
 
-func writeSuccess(w http.ResponseWriter, o interface{}) {
+func writeCode(w http.ResponseWriter, o interface{}, code int) {
 	// TODO: add indent
 	data, err := json.Marshal(o)
 	if err != nil {
 		writeError(w, err)
 	} else {
+		w.WriteHeader(code)
 		w.Write(data)
 	}
+}
+
+func writeSuccess(w http.ResponseWriter, o interface{}) {
+	writeCode(w, o, 200)
 }

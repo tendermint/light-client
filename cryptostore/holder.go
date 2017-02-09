@@ -92,10 +92,14 @@ func (s Manager) Import(name, newpass, transferpass string, data []byte) error {
 	return s.es.Put(name, newpass, key)
 }
 
-// Delete removes key forever
-//
-// TODO: make sure we have the passphrase before deleting it (for security)
+// Delete removes key forever, but we must present the
+// proper passphrase before deleting it (for security)
 func (s Manager) Delete(name, passphrase string) error {
+	// verify we have the proper password before deleting
+	_, _, err := s.es.Get(name, passphrase)
+	if err != nil {
+		return err
+	}
 	return s.es.Delete(name)
 }
 
