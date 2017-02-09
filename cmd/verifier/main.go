@@ -8,14 +8,17 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/tendermint/light-client/cmd/verifier/server"
 	"github.com/tendermint/light-client/cryptostore"
-	"github.com/tendermint/light-client/server"
 	"github.com/tendermint/light-client/storage/filestorage"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 /*
+Note: this command and all subpackage server are deprecated. Do not start using.
+I keep them for backwards compatibility for Matt, until there is a full replacement.
+
 Usage:
   verifier --socket=$SOCKET --keydir=$KEYDIR
 
