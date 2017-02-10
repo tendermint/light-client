@@ -39,7 +39,7 @@ func (v Viewer) QueryData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := v.Query(path, data)
+	res, err := v.Query("/"+path, data)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -47,6 +47,7 @@ func (v Viewer) QueryData(w http.ResponseWriter, r *http.Request) {
 
 	if !res.Code.IsOK() {
 		writeCode(w, renderQueryFail(res), 400)
+		return
 	}
 
 	resp, err := renderQuery(res, false)

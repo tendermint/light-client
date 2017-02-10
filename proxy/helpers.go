@@ -81,6 +81,7 @@ func writeCode(w http.ResponseWriter, o interface{}, code int) {
 	if err != nil {
 		writeError(w, err)
 	} else {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(code)
 		w.Write(data)
 	}
