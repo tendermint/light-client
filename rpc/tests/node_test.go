@@ -27,6 +27,7 @@ func TestNodeQuery(t *testing.T) {
 	assert.True(qr.Code.IsOK())
 	assert.Equal(v, qr.Value.Bytes())
 	assert.Nil(qr.Proof)
+	assert.False(qr.Height == 0)
 
 	// and we get some proof, we can even decipher
 	pr, err := n.Prove(k)
@@ -35,6 +36,7 @@ func TestNodeQuery(t *testing.T) {
 	assert.Equal(k, pr.Key)
 	assert.Equal(v, pr.Value.Bytes())
 	assert.NotNil(pr.Proof)
+	assert.False(pr.Height == 0)
 
 	p := pr.Proof
 	root := p.Root()
@@ -116,12 +118,15 @@ func TestNodeAuditing(t *testing.T) {
 	assert.NotNil(pr.Proof)
 	proot := pr.Proof.Root() // the roothash from the proof
 
-	// get the validator set (also find current height)
+	// get the height from the proof itself
+	height := pr.Height
+	assert.False(height == 0)
+
+	// get the validator set
 	vals, err := n.Validators()
 	require.Nil(err)
 	cert := rpc.StaticCertifier{Vals: vals.Validators}
 	auditor := util.NewAuditor(cert)
-	height := vals.BlockHeight
 
 	// we need to push some more blocks on here, so we can query...
 	// this whole need to wait one-two blocks to get a proof
@@ -132,16 +137,17 @@ func TestNodeAuditing(t *testing.T) {
 	require.Nil(err, "%+v", err)
 	assert.NotNil(pr2.Proof)
 
-	err = n.WaitForHeight(height + 1)
+	err = n.WaitForHeight(height)
 	require.Nil(err, "%+v", err)
 
+	// TODO: fix this, proof height should be the header with the apphash
 	// get a signed header of height+1 which should have apphash for height
-	oldblock, err := n.SignedHeader(height)
+	oldblock, err := n.SignedHeader(height - 1)
 	require.Nil(err, "%+v", err)
-	block, err := n.SignedHeader(height + 1)
+	block, err := n.SignedHeader(height)
 	require.Nil(err, "%+v", err)
 	// let's see if the root hash matches the proof
-	assert.Equal(proot, block.Header.AppHash)
+	require.Equal(proot, block.Header.AppHash)
 
 	// okay, now let's do a full audit...
 	err = auditor.Audit(k, v, pr.Proof, block)
@@ -156,18 +162,13 @@ func TestNodeAuditing(t *testing.T) {
 	err = auditor.Audit(k2, v2, pr2.Proof, block)
 	require.NotNil(err)
 
-	// wait, let's try to prove the new one as well
-	_, err = n.SignedHeader(height + 2)
-	require.NotNil(err)
-
-	// oops... we have to move the block along first... rrr....
-	err = n.WaitForHeight(height + 3)
+	// oops... we have to move the block along first...
+	height2 := pr2.Height
+	err = n.WaitForHeight(height2)
 	require.Nil(err, "%+v", err)
 
 	// now we can prove the new entry as well
-	// wtf?  +3?? I thought it would be +2?  If only the dummy app returned
-	// the height that relates to the proof...
-	block2, err := n.SignedHeader(height + 3)
+	block2, err := n.SignedHeader(height2)
 	require.Nil(err, "%+v", err)
 	err = auditor.Audit(k2, v2, pr2.Proof, block2)
 	require.Nil(err, "%+v", err)

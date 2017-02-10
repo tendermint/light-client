@@ -145,13 +145,14 @@ func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
 // In this current implementation, we must wait until height+1,
 // as the signatures are in the following block.
 func (n Node) WaitForHeight(height uint64) error {
+	h := int(height) + 1 // off-by-one shizzit
 	wait := 1
 	for wait > 0 {
 		s, err := n.client.Status()
 		if err != nil {
 			return err
 		}
-		wait = int(height) - s.LatestBlockHeight
+		wait = h - s.LatestBlockHeight
 		if wait > 10 {
 			return errors.Errorf("Waiting for %d block... aborting", wait)
 		} else if wait > 0 {
