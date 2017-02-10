@@ -5,6 +5,10 @@ import:
 - package: github.com/tendermint/go-rpc
   subpackages:
   - client
+- package: github.com/tendermint/merkleeyes
+  version: develop
+  subpackages:
+  - app
 - package: github.com/tendermint/abci
   version: develop
   subpackages:

@@ -102,6 +102,8 @@ imports:
   version: 2f3b7aafe21c80b19b6ee3210ecb3e3d07c7a471
 - name: github.com/tendermint/log15
   version: 9545b249b3aacafa97f79e0838b02b274adc6f5f
+- name: github.com/tendermint/merkleeyes
+  version: 7c1ec0ef86c42b7a461e3967efb6c35bd5652101
 - name: github.com/tendermint/tendermint
   version: d4b3dde8537bc62a6ea3c9830ac3669118141a84
   subpackages:

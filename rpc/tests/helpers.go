@@ -13,9 +13,9 @@ import (
 	"github.com/tendermint/light-client/mock"
 	"github.com/tendermint/light-client/rpc"
 
-	"github.com/tendermint/abci/example/dummy"
 	abci "github.com/tendermint/abci/types"
 	cfg "github.com/tendermint/go-config"
+	meapp "github.com/tendermint/merkleeyes/app"
 	"github.com/tendermint/tendermint/config/tendermint_test"
 	nm "github.com/tendermint/tendermint/node"
 	"github.com/tendermint/tendermint/proxy"
@@ -58,7 +58,7 @@ func StartTendermint() {
 	fmt.Println("Starting Tendermint...")
 	ready := make(chan struct{})
 
-	app := dummy.NewDummyApplication()
+	app := meapp.NewMerkleEyesApp("", 100)
 	go NewTendermint(ready, app)
 	<-ready
 	fmt.Println("Tendermint running!")
