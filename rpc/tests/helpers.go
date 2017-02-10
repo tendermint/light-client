@@ -18,6 +18,8 @@ import (
 	cfg "github.com/tendermint/go-config"
 	"github.com/tendermint/tendermint/config/tendermint_test"
 	nm "github.com/tendermint/tendermint/node"
+	"github.com/tendermint/tendermint/proxy"
+	"github.com/tendermint/tendermint/types"
 )
 
 var (
@@ -53,22 +55,23 @@ func GetNode() rpc.Node {
 // TODO: can one pass an Application in????
 func StartTendermint() {
 	// start a node
-	fmt.Println("Start Tendermint")
+	fmt.Println("Starting Tendermint...")
 	ready := make(chan struct{})
 
 	app := dummy.NewDummyApplication()
 	go NewTendermint(ready, app)
 	<-ready
+	fmt.Println("Tendermint running!")
 }
 
 // NewTendermint creates a new tendermint server and sleeps forever
 func NewTendermint(ready chan struct{}, app abci.Application) {
 	// Create & start node
 	config := GetConfig()
-	node := nm.NewNodeDefault(config)
-	// privValidator := ttypes.GenPrivValidator()
-	// node := nm.NewNode(config, privValidator,
-	// 	proxy.NewLocalClientCreator(app))
+	privValidatorFile := config.GetString("priv_validator_file")
+	privValidator := types.LoadOrGenPrivValidator(privValidatorFile)
+	papp := proxy.NewLocalClientCreator(app)
+	node := nm.NewNode(config, privValidator, papp)
 
 	// node.Start now does everything including the RPC server
 	node.Start()
