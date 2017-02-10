@@ -76,8 +76,8 @@ func writeError(w http.ResponseWriter, err error) {
 }
 
 func writeCode(w http.ResponseWriter, o interface{}, code int) {
-	// TODO: add indent
-	data, err := json.Marshal(o)
+	// two space indent to make it easier to read
+	data, err := json.MarshalIndent(o, "", "    ")
 	if err != nil {
 		writeError(w, err)
 	} else {
