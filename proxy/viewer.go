@@ -4,9 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	lc "github.com/tendermint/light-client"
@@ -80,10 +78,12 @@ func (v Viewer) ProveData(w http.ResponseWriter, r *http.Request) {
 		writeCode(w, renderQueryFail(p), 400)
 	}
 
-	// TODO: more intelligent here!
-	fmt.Println("Waiting for proof header")
-	time.Sleep(1500 * time.Millisecond)
-	fmt.Println("Done waiting")
+	// waiting until the signatures are ready (if needed)
+	err = v.WaitForHeight(p.Height)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
 
 	// get the next block height
 	// TODO: when there is no height?

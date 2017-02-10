@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/pkg/errors"
 	cmn "github.com/tendermint/go-common"
@@ -134,6 +135,35 @@ func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
 	res.Votes, err = n.processVotes(votes, h, res.Hash)
 
 	return res, err
+}
+
+// Wait for height will poll status at reasonable intervals until
+// we can safely call SignedHeader at the given block height.
+// This means that both the block header itself, as well as all
+// validator signatures are available
+//
+// In this current implementation, we must wait until height+1,
+// as the signatures are in the following block.
+func (n Node) WaitForHeight(height uint64) error {
+	wait := 1
+	for wait > 0 {
+		s, err := n.client.Status()
+		if err != nil {
+			return err
+		}
+		wait = int(height) - s.LatestBlockHeight
+		if wait > 10 {
+			return errors.Errorf("Waiting for %d block... aborting", wait)
+		} else if wait > 0 {
+			// estimate of wait time....
+			// wait half a second for the next block (in progress)
+			// plus one second for every full block
+			delay := time.Duration(wait-1)*time.Second + 500*time.Millisecond
+			time.Sleep(delay)
+		}
+	}
+	// guess we waited long enough
+	return nil
 }
 
 // UNSAFE - use wisely

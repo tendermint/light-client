@@ -127,10 +127,13 @@ func TestNodeAuditing(t *testing.T) {
 	// this whole need to wait one-two blocks to get a proof
 	k2, v2, tx2 := TestTxKV()
 	_, err = n.Broadcast(tx2)
-	require.Nil(err)
+	require.Nil(err, "%+v", err)
 	pr2, err := n.Prove(k2)
-	require.Nil(err)
+	require.Nil(err, "%+v", err)
 	assert.NotNil(pr2.Proof)
+
+	err = n.WaitForHeight(height + 1)
+	require.Nil(err, "%+v", err)
 
 	// get a signed header of height+1 which should have apphash for height
 	oldblock, err := n.SignedHeader(height)
@@ -158,12 +161,8 @@ func TestNodeAuditing(t *testing.T) {
 	require.NotNil(err)
 
 	// oops... we have to move the block along first... rrr....
-	for i := 0; i < 2; i++ {
-		_, _, dtx := TestTxKV()
-		dbr, err := n.Broadcast(dtx)
-		require.Nil(err)
-		require.True(dbr.IsOk())
-	}
+	err = n.WaitForHeight(height + 3)
+	require.Nil(err, "%+v", err)
 
 	// now we can prove the new entry as well
 	// wtf?  +3?? I thought it would be +2?  If only the dummy app returned

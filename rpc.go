@@ -18,6 +18,11 @@ type Checker interface {
 	// so we can validate it externally (matching with the list of
 	// known validators)
 	SignedHeader(height uint64) (TmSignedHeader, error)
+
+	// WaitForHeight is a useful helper to poll the server until the
+	// data is ready for SignedHeader.  Returns nil when the data
+	// is present, and error if it aborts.
+	WaitForHeight(height uint64) error
 }
 
 type Searcher interface {
