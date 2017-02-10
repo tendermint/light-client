@@ -36,14 +36,14 @@ type Signable interface {
 	// Returns error if called with invalid data or too many times
 	Sign(pubkey crypto.PubKey, sig crypto.Signature) error
 
-	// SignedBy will return the public key(s) that signed if the signature
+	// Signers will return the public key(s) that signed if the signature
 	// is valid, or an error if there is any issue with the signature,
 	// including if there are no signatures
-	SignedBy() ([]crypto.PubKey, error)
+	Signers() ([]crypto.PubKey, error)
 
-	// Signed returns the transaction data as well as all signatures
+	// SignBytes returns the transaction data as well as all signatures
 	// It should return an error if Sign was never called
-	SignedBytes() ([]byte, error)
+	SignBytes() ([]byte, error)
 }
 
 // SignableReader is an abstraction to let us parse Signables

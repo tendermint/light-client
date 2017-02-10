@@ -37,14 +37,14 @@ func (o *OneSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	return nil
 }
 
-func (o *OneSig) SignedBy() ([]crypto.PubKey, error) {
+func (o *OneSig) Signers() ([]crypto.PubKey, error) {
 	if o.PubKey == nil {
 		return nil, errors.New("OneSig never signed")
 	}
 	return []crypto.PubKey{o.PubKey}, nil
 }
 
-func (o *OneSig) SignedBytes() ([]byte, error) {
+func (o *OneSig) SignBytes() ([]byte, error) {
 	return wire.BinaryBytes(wrapper{o}), nil
 }
 
@@ -80,7 +80,7 @@ func (m *MultiSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	return nil
 }
 
-func (m *MultiSig) SignedBy() ([]crypto.PubKey, error) {
+func (m *MultiSig) Signers() ([]crypto.PubKey, error) {
 	if len(m.sigs) == 0 {
 		return nil, errors.New("MultiSig never signed")
 	}
@@ -91,6 +91,6 @@ func (m *MultiSig) SignedBy() ([]crypto.PubKey, error) {
 	return keys, nil
 }
 
-func (m *MultiSig) SignedBytes() ([]byte, error) {
+func (m *MultiSig) SignBytes() ([]byte, error) {
 	return wire.BinaryBytes(wrapper{m}), nil
 }

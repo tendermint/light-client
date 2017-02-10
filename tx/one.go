@@ -56,10 +56,10 @@ func (s *OneSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	return nil
 }
 
-// SignedBy will return the public key(s) that signed if the signature
+// Signers will return the public key(s) that signed if the signature
 // is valid, or an error if there is any issue with the signature,
 // including if there are no signatures
-func (s *OneSig) SignedBy() ([]crypto.PubKey, error) {
+func (s *OneSig) Signers() ([]crypto.PubKey, error) {
 	if s.pubkey == nil || s.sig == nil {
 		return nil, errors.New("Never signed")
 	}
@@ -71,9 +71,9 @@ func (s *OneSig) SignedBy() ([]crypto.PubKey, error) {
 	return []crypto.PubKey{s.pubkey}, nil
 }
 
-// SignedBytes serializes the Sig to send it to a tendermint app.
+// SignBytes serializes the Sig to send it to a tendermint app.
 // It returns an error if the Sig was never Signed.
-func (s *OneSig) SignedBytes() ([]byte, error) {
+func (s *OneSig) SignBytes() ([]byte, error) {
 	if s.sig == nil {
 		return nil, errors.New("Transaction was never signed")
 	}

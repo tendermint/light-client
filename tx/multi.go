@@ -56,10 +56,10 @@ func (s *MultiSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	return nil
 }
 
-// SignedBy will return the public key(s) that signed if the signature
+// Signers will return the public key(s) that signed if the signature
 // is valid, or an error if there is any issue with the signature,
 // including if there are no signatures
-func (s *MultiSig) SignedBy() ([]crypto.PubKey, error) {
+func (s *MultiSig) Signers() ([]crypto.PubKey, error) {
 	if len(s.sigs) == 0 {
 		return nil, errors.New("Never signed")
 	}
@@ -76,9 +76,9 @@ func (s *MultiSig) SignedBy() ([]crypto.PubKey, error) {
 	return keys, nil
 }
 
-// SignedBytes serializes the Sig to send it to a tendermint app.
+// SignBytes serializes the Sig to send it to a tendermint app.
 // It returns an error if the Sig was never Signed.
-func (s *MultiSig) SignedBytes() ([]byte, error) {
+func (s *MultiSig) SignBytes() ([]byte, error) {
 	if len(s.sigs) == 0 {
 		return nil, errors.New("Never signed")
 	}

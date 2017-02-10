@@ -71,7 +71,7 @@ func TestKeyManagement(t *testing.T) {
 	assert.NotNil(err)
 	err = cstore.Sign(n2, p2, tx)
 	assert.Nil(err, "%+v", err)
-	sigs, err := tx.SignedBy()
+	sigs, err := tx.Signers()
 	assert.Nil(err, "%+v", err)
 	if assert.Equal(1, len(sigs)) {
 		assert.Equal(i2.PubKey, sigs[0])
@@ -228,7 +228,7 @@ func ExampleStore() {
 
 	// and we can validate the signature with publically available info
 	binfo, _ := cstore.Get("Bob")
-	sigs, err := tx.SignedBy()
+	sigs, err := tx.Signers()
 	if err != nil {
 		fmt.Println("badly signed")
 	} else if bytes.Equal(sigs[0].Bytes(), binfo.PubKey.Bytes()) {
