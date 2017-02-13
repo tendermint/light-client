@@ -43,7 +43,7 @@ type Account struct {
 }
 
 type AccountData struct {
-	PubKey   tx.HexData `json:"pub_key"` // May be empty, if not known.
+	PubKey   tx.HexData `json:"pub_key,omitempty"` // May be empty, if not known.
 	Sequence int        `json:"sequence"`
 	Balance  bc.Coins   `json:"coins"`
 }
@@ -53,13 +53,18 @@ func (a Account) Bytes() []byte {
 }
 
 func renderAccount(acct *bc.Account, data []byte) Account {
+	var pubkey tx.HexData
+	if acct.PubKey != nil {
+		pubkey = tx.HexData(acct.PubKey.Bytes())
+	}
 	return Account{
 		Type: AccountType,
 		Value: AccountData{
-			PubKey:   tx.HexData(acct.PubKey.Bytes()),
 			Sequence: acct.Sequence,
 			Balance:  acct.Balance,
+			PubKey:   pubkey,
 		},
 		data: data,
 	}
+
 }
