@@ -16,6 +16,10 @@ import:
   - example/dummy
   - example/nil
   - types
+- package: github.com/tendermint/basecoin
+  version: develop
+  subpackages:
+  - types
 - package: github.com/tendermint/tendermint
   version: develop
   subpackages:

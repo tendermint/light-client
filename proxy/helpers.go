@@ -9,6 +9,7 @@ package proxy
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -68,9 +69,11 @@ func readRequest(r *http.Request, o interface{}) error {
 
 // most errors are bad input, so 406... do better....
 func writeError(w http.ResponseWriter, err error) {
+	fmt.Printf("Error: %+v\n", err)
 	res := types.GenericResponse{
 		Code: 406,
-		Log:  err.Error(),
+		// Log:  fmt.Sprintf("%+v", err),
+		Log: err.Error(),
 	}
 	writeCode(w, &res, 406)
 }
