@@ -20,7 +20,7 @@ type UpdateKeyRequest struct {
 // KeyResponse returns public info on one key
 type KeyResponse struct {
 	Name    string     `json:"name"`
-	PubKey  tx.HexData `json:"pub_key"` // TODO: return in [byte, string] format?
+	PubKey  tx.PubKey  `json:"pub_key"` // TODO: return in [byte, string] format?
 	Address tx.HexData `json:"address"`
 }
 
