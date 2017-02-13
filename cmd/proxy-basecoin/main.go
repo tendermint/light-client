@@ -9,7 +9,10 @@ own app.
 If you run the basecoin demo app locally (from the data dir),
 try the following:
 
-proxy-basecoin -chain=test_chain_id -rpc=localhost:46657
+# get the tm chain id:
+curl http://localhost:46657/status | jq .result[1].node_info.network
+
+proxy-basecoin -tmchain=test-chain-A8iHWI -chain=test_chain_id -rpc=localhost:46657
 
 curl http://localhost:8108/keys/
 curl -XPOST http://localhost:8108/keys/ -d '{"name": "alice", "passphrase": "1234567890"}'
@@ -75,10 +78,11 @@ import (
 )
 
 var (
-	port    = flag.Int("port", 8108, "port for proxy server")
-	rpcAddr = flag.String("rpc", "", "url for tendermint rpc server")
-	chainID = flag.String("chain", "", "id of the blockchain")
-	keydir  = flag.String("keydir", ".keys", "directory to store private keys")
+	port      = flag.Int("port", 8108, "port for proxy server")
+	rpcAddr   = flag.String("rpc", "", "url for tendermint rpc server")
+	chainID   = flag.String("chain", "", "id of the basecoin app (from basecoin genesis.json)")
+	tmChainID = flag.String("tmchain", "", "chain id from tendermint (for signing blocks)")
+	keydir    = flag.String("keydir", ".keys", "directory to store private keys")
 )
 
 // TODO: add cors and unix-socket support like over in verifier
@@ -90,7 +94,11 @@ func main() {
 	sr := basecoin.BasecoinTx{ChainID: *chainID}
 
 	if *chainID == "" {
-		fmt.Println("You must specify -chain with the chain_id")
+		fmt.Println("You must specify -chain with the basecoin chain_id")
+		return
+	}
+	if *tmChainID == "" {
+		fmt.Println("You must specify -tmchain with the tendermint chain_id")
 		return
 	}
 	if *rpcAddr == "" {
@@ -105,7 +113,7 @@ func main() {
 		cryptostore.SecretBox,
 		filestorage.New(*keydir),
 	)
-	node := rpc.NewNode(*rpcAddr, *chainID, vr)
+	node := rpc.NewNode(*rpcAddr, *tmChainID, vr)
 	proxy.RegisterDefault(r, cstore, node, sr, vr)
 
 	// TODO: add some awesome middlewares...
