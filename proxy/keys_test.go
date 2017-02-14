@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	wire "github.com/tendermint/go-wire"
 	"github.com/tendermint/light-client/cryptostore"
 	"github.com/tendermint/light-client/proxy"
 	"github.com/tendermint/light-client/proxy/types"
@@ -112,7 +113,7 @@ func listKeys(h http.Handler) (*types.KeyListResponse, int, error) {
 	}
 
 	data := types.KeyListResponse{}
-	err = json.Unmarshal(rr.Body.Bytes(), &data)
+	err = wire.ReadJSONBytes(rr.Body.Bytes(), &data)
 	return &data, rr.Code, err
 }
 
@@ -129,7 +130,7 @@ func getKey(h http.Handler, name string) (*types.KeyResponse, int, error) {
 	}
 
 	data := types.KeyResponse{}
-	err = json.Unmarshal(rr.Body.Bytes(), &data)
+	err = wire.ReadJSONBytes(rr.Body.Bytes(), &data)
 	return &data, rr.Code, err
 }
 
@@ -156,7 +157,7 @@ func createKey(h http.Handler, name, passphrase string) (*types.KeyResponse, int
 	}
 
 	data := types.KeyResponse{}
-	err = json.Unmarshal(rr.Body.Bytes(), &data)
+	err = wire.ReadJSONBytes(rr.Body.Bytes(), &data)
 	return &data, rr.Code, err
 }
 
@@ -183,6 +184,6 @@ func deleteKey(h http.Handler, name, passphrase string) (*types.GenericResponse,
 	}
 
 	data := types.GenericResponse{}
-	err = json.Unmarshal(rr.Body.Bytes(), &data)
+	err = wire.ReadJSONBytes(rr.Body.Bytes(), &data)
 	return &data, rr.Code, err
 }

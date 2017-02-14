@@ -59,10 +59,9 @@ imports:
   subpackages:
   - client
   - example/dummy
-  - example/nil
   - types
 - name: github.com/tendermint/basecoin
-  version: f0388bc0a840ddc745313aec6dacec6ac6d2cf1a
+  version: 7c481f8c724c09a295b27b47f99b64f5ae3f31c7
   subpackages:
   - types
 - name: github.com/tendermint/ed25519

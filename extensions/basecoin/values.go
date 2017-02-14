@@ -38,14 +38,8 @@ const AccountType = "account"
 
 type Account struct {
 	Type  string      `json:"type"`
-	Value AccountData `json:"value"` // TODO: custom encoding?
+	Value *bc.Account `json:"value"` // TODO: custom encoding?
 	data  []byte      `json:"-"`
-}
-
-type AccountData struct {
-	PubKey   tx.PubKey `json:"pub_key,omitempty"` // May be empty, if not known.
-	Sequence int       `json:"sequence"`
-	Balance  bc.Coins  `json:"coins"`
 }
 
 func (a Account) Bytes() []byte {
@@ -54,13 +48,9 @@ func (a Account) Bytes() []byte {
 
 func renderAccount(acct *bc.Account, data []byte) Account {
 	return Account{
-		Type: AccountType,
-		Value: AccountData{
-			Sequence: acct.Sequence,
-			Balance:  acct.Balance,
-			PubKey:   tx.PubKey{acct.PubKey},
-		},
-		data: data,
+		Type:  AccountType,
+		Value: acct,
+		data:  data,
 	}
 
 }

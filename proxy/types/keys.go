@@ -1,6 +1,6 @@
 package types
 
-import "github.com/tendermint/light-client/tx"
+import crypto "github.com/tendermint/go-crypto"
 
 // CreateKeyRequest is sent to create a new key
 type CreateKeyRequest struct {
@@ -19,9 +19,9 @@ type UpdateKeyRequest struct {
 
 // KeyResponse returns public info on one key
 type KeyResponse struct {
-	Name    string     `json:"name"`
-	PubKey  tx.PubKey  `json:"pub_key"` // TODO: return in [byte, string] format?
-	Address tx.HexData `json:"address"`
+	Name    string        `json:"name"`
+	PubKey  crypto.PubKey `json:"pub_key"` // TODO: return in [byte, string] format?
+	Address []byte        `json:"address"`
 }
 
 // KeyListResponse returns info on all keys in the store
