@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	cmn "github.com/tendermint/go-common"
 	merkle "github.com/tendermint/go-merkle"
 	lc "github.com/tendermint/light-client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -266,8 +265,22 @@ func verifyHeaderInfo(header *ttypes.BlockMeta, h int) (lc.TmSignedHeader, error
 	return res, nil
 }
 
+// processVotes is very similar to tendermint/types/validator_set.go:VerifyCommit
+// and we should track changes there.  However, that code requires access to the
+// cannonical validator set.  And here, we just want to get the data, so we can
+// pass to a Certifier for processing. There will be various strategies for
+// syncing the validator set in a Certifier, so we don't want to hard-code it here.
+//
+// also note that `err = b.Block.LastCommit.ValidateBasic()`
+// in getPrecommits does a number of checks already, like they are all for the
+// same block
 func (n Node) processVotes(votes []*ttypes.Vote, h int, blockHash []byte) (lc.TmVotes, error) {
 	res := make([]lc.TmVote, len(votes))
+
+	// verify height and blockhash for the first vote (the rest are the same)
+	if votes[0].Height != h {
+		return nil, errors.New("Votes have incorrect height")
+	}
 
 	i := 0
 	for _, v := range votes {
@@ -275,25 +288,15 @@ func (n Node) processVotes(votes []*ttypes.Vote, h int, blockHash []byte) (lc.Tm
 		if v == nil {
 			continue
 		}
-		// verify height and blockhash
-		if v.Height != h {
-			return nil, errors.New("Vote had incorrect height")
-		}
 		if !bytes.Equal(blockHash, v.BlockID.Hash) {
-			return nil, errors.New("Vote had incorrect block hash")
+			// Precommits has all votes.  but we can skip those for other blocks
+			// FIXME: do we need to compare with the full BlockID???
+			continue
 		}
-
-		// calculate the signature bytes
-		// TODO: clean this up (modified from go-wire/util.go:JsonBytes)
-		w, cnt, err := new(bytes.Buffer), new(int), new(error)
-		v.WriteSignBytes(n.chainID, w, cnt, err)
-		if *err != nil {
-			cmn.PanicSanity(*err)
-		}
-
+		sign := ttypes.SignBytes(n.chainID, v)
 		// and store the info we care about
 		res[i] = lc.TmVote{
-			SignBytes:        w.Bytes(),
+			SignBytes:        sign,
 			ValidatorAddress: v.ValidatorAddress,
 			Signature:        v.Signature,
 			Height:           uint64(v.Height),
