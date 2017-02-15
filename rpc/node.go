@@ -125,7 +125,7 @@ func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
 	}
 
 	// validate and process it
-	res, err := n.validateCommitInfo(ci)
+	res, err := validateCommitInfo(n.chainID, ci)
 	if err != nil {
 		return lc.TmSignedHeader{}, err
 	}
@@ -154,7 +154,7 @@ func (n Node) ExportSignedHeader(height uint64) ([]byte, error) {
 	}
 
 	// validate and process it
-	res, err := n.validateCommitInfo(ci)
+	res, err := validateCommitInfo(n.chainID, ci)
 	if err != nil {
 		return nil, err
 	}
@@ -172,15 +172,30 @@ func (n Node) ExportSignedHeader(height uint64) ([]byte, error) {
 // ImportSignedHeader takes serialized data from ExportSignedHeader
 // and verifies and processes it the same as SignedHeader.
 //
+// This is just a convenience wrapper around the same-named function
+// that passes in the chainID from the node.
+//
 // The result can be used just as the result from SignedHeader, and
 // passed to a Certifier
 func (n Node) ImportSignedHeader(data []byte) (lc.TmSignedHeader, error) {
+	return ImportSignedHeader(n.chainID, data)
+}
+
+// ImportSignedHeader takes serialized data from ExportSignedHeader
+// and verifies and processes it the same as SignedHeader.
+//
+// Use this where you have no Node (rpcclient), but you still need the
+// chainID.
+//
+// The result can be used just as the result from SignedHeader, and
+// passed to a Certifier
+func ImportSignedHeader(chainID string, data []byte) (lc.TmSignedHeader, error) {
 	ci, err := loadCommitInfo(data)
 	if err != nil {
 		return lc.TmSignedHeader{}, err
 	}
 	// validate and process it
-	return n.validateCommitInfo(ci)
+	return validateCommitInfo(chainID, ci)
 }
 
 // Wait for height will poll status at reasonable intervals until
@@ -301,7 +316,7 @@ func (n Node) getCommit(h int) (*ttypes.Commit, error) {
 	return commit, nil
 }
 
-func (n Node) validateCommitInfo(ci commitInfo) (lc.TmSignedHeader, error) {
+func validateCommitInfo(chainID string, ci commitInfo) (lc.TmSignedHeader, error) {
 	// now we validate it all and put it into our format for the
 	res, err := validateHeaderInfo(ci.Header)
 	if err != nil {
@@ -312,7 +327,7 @@ func (n Node) validateCommitInfo(ci commitInfo) (lc.TmSignedHeader, error) {
 	if err != nil {
 		return res, err
 	}
-	res.Votes, err = n.processVotes(ci.Commit.Precommits, res.Height(), res.Hash)
+	res.Votes, err = processVotes(chainID, ci.Commit.Precommits, res.Height(), res.Hash)
 	return res, err
 }
 
@@ -352,9 +367,9 @@ func validateHeaderInfo(header *ttypes.BlockMeta) (lc.TmSignedHeader, error) {
 // syncing the validator set in a Certifier, so we don't want to hard-code it here.
 //
 // also note that `err = b.Block.LastCommit.ValidateBasic()`
-// in getCommit does a number of checks already, like they are all for the
-// same block
-func (n Node) processVotes(votes []*ttypes.Vote, height uint64, blockHash []byte) (lc.TmVotes, error) {
+// in validateCommitInfo does a number of checks already,
+// like they are all for the same block
+func processVotes(chainID string, votes []*ttypes.Vote, height uint64, blockHash []byte) (lc.TmVotes, error) {
 	res := make([]lc.TmVote, len(votes))
 	h := int(height)
 
@@ -374,7 +389,7 @@ func (n Node) processVotes(votes []*ttypes.Vote, height uint64, blockHash []byte
 			// FIXME: do we need to compare with the full BlockID???
 			continue
 		}
-		sign := ttypes.SignBytes(n.chainID, v)
+		sign := ttypes.SignBytes(chainID, v)
 		// and store the info we care about
 		res[i] = lc.TmVote{
 			SignBytes:        sign,
