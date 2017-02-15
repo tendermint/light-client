@@ -55,6 +55,7 @@ on the public keys stored in the KeyManager, along with logic to sort themselves
 * [type TmHeader](#TmHeader)
 * [type TmQueryResult](#TmQueryResult)
 * [type TmSignedHeader](#TmSignedHeader)
+  * [func (sh TmSignedHeader) Height() uint64](#TmSignedHeader.Height)
 * [type TmStatusResult](#TmStatusResult)
 * [type TmValidator](#TmValidator)
 * [type TmValidatorResult](#TmValidatorResult)
@@ -112,7 +113,7 @@ TODO: some implementation to track the validator set (various algorithms)
 
 
 
-## <a name="Checker">type</a> [Checker](/src/target/rpc.go?s=482:814#L3)
+## <a name="Checker">type</a> [Checker](/src/target/rpc.go?s=482:1020#L3)
 ``` go
 type Checker interface {
     // Prove returns a merkle proof for the given key
@@ -122,6 +123,11 @@ type Checker interface {
     // so we can validate it externally (matching with the list of
     // known validators)
     SignedHeader(height uint64) (TmSignedHeader, error)
+
+    // WaitForHeight is a useful helper to poll the server until the
+    // data is ready for SignedHeader.  Returns nil when the data
+    // is present, and error if it aborts.
+    WaitForHeight(height uint64) error
 }
 ```
 Checker provides access to calls to get data from the tendermint core
@@ -197,12 +203,13 @@ func (k KeyInfos) Swap(i, j int)
 
 
 
-## <a name="KeyManager">type</a> [KeyManager](/src/target/transactions.go?s=1740:1908#L50)
+## <a name="KeyManager">type</a> [KeyManager](/src/target/transactions.go?s=1743:1956#L50)
 ``` go
 type KeyManager interface {
     Create(name, passphrase string) error
     List() (KeyInfos, error)
     Get(name string) (KeyInfo, error)
+    Update(name, oldpass, newpass string) error
     Delete(name, passphrase string) error
 }
 ```
@@ -259,7 +266,7 @@ ProofReader is an abstraction to let us parse proofs
 
 
 
-## <a name="Searcher">type</a> [Searcher](/src/target/rpc.go?s=816:1011#L13)
+## <a name="Searcher">type</a> [Searcher](/src/target/rpc.go?s=1022:1217#L18)
 ``` go
 type Searcher interface {
     // Query gets data from the Blockchain state, possibly with a
@@ -276,11 +283,11 @@ type Searcher interface {
 
 
 
-## <a name="Signable">type</a> [Signable](/src/target/transactions.go?s=683:1411#L19)
+## <a name="Signable">type</a> [Signable](/src/target/transactions.go?s=683:1414#L19)
 ``` go
 type Signable interface {
-    // Bytes is the immutable data, which needs to be signed
-    Bytes() []byte
+    // SignBytes is the immutable data, which needs to be signed
+    SignBytes() []byte
 
     // Sign will add a signature and pubkey.
     //
@@ -288,14 +295,14 @@ type Signable interface {
     // Returns error if called with invalid data or too many times
     Sign(pubkey crypto.PubKey, sig crypto.Signature) error
 
-    // SignedBy will return the public key(s) that signed if the signature
+    // Signers will return the public key(s) that signed if the signature
     // is valid, or an error if there is any issue with the signature,
     // including if there are no signatures
-    SignedBy() ([]crypto.PubKey, error)
+    Signers() ([]crypto.PubKey, error)
 
-    // Signed returns the transaction data as well as all signatures
+    // TxBytes returns the transaction data as well as all signatures
     // It should return an error if Sign was never called
-    SignedBytes() ([]byte, error)
+    TxBytes() ([]byte, error)
 }
 ```
 Signable represents any transaction we wish to send to tendermint core
@@ -310,7 +317,7 @@ These methods allow us to sign arbitrary Tx with the KeyStore
 
 
 
-## <a name="SignableReader">type</a> [SignableReader](/src/target/transactions.go?s=1475:1553#L40)
+## <a name="SignableReader">type</a> [SignableReader](/src/target/transactions.go?s=1478:1556#L40)
 ``` go
 type SignableReader interface {
     ReadSignable(data []byte) (Signable, error)
@@ -327,7 +334,7 @@ SignableReader is an abstraction to let us parse Signables
 
 
 
-## <a name="Signer">type</a> [Signer](/src/target/transactions.go?s=1594:1669#L45)
+## <a name="Signer">type</a> [Signer](/src/target/transactions.go?s=1597:1672#L45)
 ``` go
 type Signer interface {
     Sign(name, passphrase string, tx Signable) error
@@ -411,7 +418,7 @@ func (c TmCode) IsOK() bool
 
 
 
-## <a name="TmHeader">type</a> [TmHeader](/src/target/types.go?s=1397:2015#L43)
+## <a name="TmHeader">type</a> [TmHeader](/src/target/types.go?s=1540:2158#L48)
 ``` go
 type TmHeader struct {
     ChainID string    `json:"chain_id"`
@@ -485,7 +492,16 @@ Votes must also be pre-verified, signatures checked, etc.
 
 
 
-## <a name="TmStatusResult">type</a> [TmStatusResult](/src/target/types.go?s=3116:3366#L92)
+### <a name="TmSignedHeader.Height">func</a> (TmSignedHeader) [Height](/src/target/types.go?s=1395:1435#L43)
+``` go
+func (sh TmSignedHeader) Height() uint64
+```
+Height has been verified to be the same for the header and all votes
+
+
+
+
+## <a name="TmStatusResult">type</a> [TmStatusResult](/src/target/types.go?s=3257:3507#L97)
 ``` go
 type TmStatusResult struct {
     LatestBlockHash   []byte `json:"latest_block_hash"`
@@ -503,7 +519,7 @@ type TmStatusResult struct {
 
 
 
-## <a name="TmValidator">type</a> [TmValidator](/src/target/types.go?s=3418:3607#L100)
+## <a name="TmValidator">type</a> [TmValidator](/src/target/types.go?s=3559:3748#L105)
 ``` go
 type TmValidator struct {
     Address []byte `json:"address"`
@@ -523,7 +539,7 @@ TmValidator more or less from tendermint/types
 
 
 
-## <a name="TmValidatorResult">type</a> [TmValidatorResult](/src/target/types.go?s=3609:3689#L107)
+## <a name="TmValidatorResult">type</a> [TmValidatorResult](/src/target/types.go?s=3750:3830#L112)
 ``` go
 type TmValidatorResult struct {
     BlockHeight uint64
@@ -539,7 +555,7 @@ type TmValidatorResult struct {
 
 
 
-## <a name="TmVote">type</a> [TmVote](/src/target/types.go?s=2220:2757#L58)
+## <a name="TmVote">type</a> [TmVote](/src/target/types.go?s=2363:2898#L63)
 ``` go
 type TmVote struct {
     // SignBytes are the cannonical bytes the signature refers to
@@ -552,7 +568,7 @@ type TmVote struct {
     Signature        crypto.Signature `json:"signature"`
     ValidatorAddress []byte           `json:"validator_address"`
 
-    // Height and BlockHash is embedded in SignBytes
+    // Height and BlockHash is embedded in TxBytes
     Height    uint64 `json:"height"`
     BlockHash []byte `json:"block_hash"`
 }
@@ -570,7 +586,7 @@ The client can decide if these validators are to be trusted.
 
 
 
-## <a name="TmVotes">type</a> [TmVotes](/src/target/types.go?s=2839:2860#L75)
+## <a name="TmVotes">type</a> [TmVotes](/src/target/types.go?s=2980:3001#L80)
 ``` go
 type TmVotes []TmVote
 ```
@@ -585,7 +601,7 @@ TmVotes is a slice of TmVote structs, but let's add some control access here
 
 
 
-### <a name="TmVotes.ForBlock">func</a> (TmVotes) [ForBlock](/src/target/types.go?s=2929:2972#L78)
+### <a name="TmVotes.ForBlock">func</a> (TmVotes) [ForBlock](/src/target/types.go?s=3070:3113#L83)
 ``` go
 func (v TmVotes) ForBlock(hash []byte) bool
 ```
@@ -594,7 +610,7 @@ ForBlock returns true only if all votes are for the given block
 
 
 
-## <a name="Value">type</a> [Value](/src/target/rpc.go?s=1242:1282#L24)
+## <a name="Value">type</a> [Value](/src/target/rpc.go?s=1448:1488#L29)
 ``` go
 type Value interface {
     Bytes() []byte
@@ -615,7 +631,7 @@ TODO: add Fields() method to get field info???
 
 
 
-## <a name="ValueReader">type</a> [ValueReader](/src/target/rpc.go?s=1361:1694#L29)
+## <a name="ValueReader">type</a> [ValueReader](/src/target/rpc.go?s=1567:1900#L34)
 ``` go
 type ValueReader interface {
     // ReadValue accepts a key, value pair to decode.  The value bytes must be

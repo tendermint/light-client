@@ -81,7 +81,7 @@ type TmVote struct {
 	Signature        crypto.Signature `json:"signature"`
 	ValidatorAddress []byte           `json:"validator_address"`
 
-	// Height and BlockHash is embedded in SignBytes
+	// Height and BlockHash is embedded in TxBytes
 	Height    uint64 `json:"height"`
 	BlockHash []byte `json:"block_hash"`
 }

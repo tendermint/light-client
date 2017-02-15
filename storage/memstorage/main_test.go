@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	crypto "github.com/tendermint/go-crypto"
 	lightclient "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/mock"
 )
 
 func TestBasicCRUD(t *testing.T) {
@@ -14,9 +14,7 @@ func TestBasicCRUD(t *testing.T) {
 
 	name := "foo"
 	key := []byte("secret-key-here")
-	pubkey := mock.PubKey{
-		Val: []byte("pubkey"),
-	}
+	pubkey := crypto.GenPrivKeyEd25519().PubKey()
 	info := lightclient.KeyInfo{
 		Name:   name,
 		PubKey: pubkey,

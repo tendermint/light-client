@@ -59,7 +59,7 @@ func (s Manager) Sign(name, passphrase string, tx lightclient.Signable) error {
 	if err != nil {
 		return err
 	}
-	sig := key.Sign(tx.Bytes())
+	sig := key.Sign(tx.SignBytes())
 	pubkey := key.PubKey()
 	return tx.Sign(pubkey, sig)
 }

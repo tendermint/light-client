@@ -28,32 +28,20 @@ If you are importing this from production code, please think twice.
   * [func (b ByteValueReader) ReadValue(key, value []byte) (lc.Value, error)](#ByteValueReader.ReadValue)
 * [type MultiSig](#MultiSig)
   * [func NewMultiSig(data []byte) *MultiSig](#NewMultiSig)
-  * [func (m *MultiSig) Bytes() []byte](#MultiSig.Bytes)
   * [func (m *MultiSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error](#MultiSig.Sign)
-  * [func (m *MultiSig) SignedBy() ([]crypto.PubKey, error)](#MultiSig.SignedBy)
-  * [func (m *MultiSig) SignedBytes() ([]byte, error)](#MultiSig.SignedBytes)
+  * [func (m *MultiSig) SignBytes() []byte](#MultiSig.SignBytes)
+  * [func (m *MultiSig) Signers() ([]crypto.PubKey, error)](#MultiSig.Signers)
+  * [func (m *MultiSig) TxBytes() ([]byte, error)](#MultiSig.TxBytes)
 * [type OneSig](#OneSig)
   * [func NewSig(data []byte) *OneSig](#NewSig)
-  * [func (o *OneSig) Bytes() []byte](#OneSig.Bytes)
   * [func (o *OneSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error](#OneSig.Sign)
-  * [func (o *OneSig) SignedBy() ([]crypto.PubKey, error)](#OneSig.SignedBy)
-  * [func (o *OneSig) SignedBytes() ([]byte, error)](#OneSig.SignedBytes)
-* [type PubKey](#PubKey)
-  * [func LoadPubKey(data []byte) (PubKey, error)](#LoadPubKey)
-  * [func (p PubKey) Address() []byte](#PubKey.Address)
-  * [func (p PubKey) Bytes() []byte](#PubKey.Bytes)
-  * [func (p PubKey) Equals(pk crypto.PubKey) bool](#PubKey.Equals)
-  * [func (p PubKey) KeyString() string](#PubKey.KeyString)
-  * [func (p PubKey) VerifyBytes(msg []byte, sig crypto.Signature) bool](#PubKey.VerifyBytes)
-* [type Signature](#Signature)
-  * [func (s Signature) Bytes() []byte](#Signature.Bytes)
-  * [func (s Signature) Equals(cs crypto.Signature) bool](#Signature.Equals)
-  * [func (s Signature) IsZero() bool](#Signature.IsZero)
-  * [func (s Signature) String() string](#Signature.String)
+  * [func (o *OneSig) SignBytes() []byte](#OneSig.SignBytes)
+  * [func (o *OneSig) Signers() ([]crypto.PubKey, error)](#OneSig.Signers)
+  * [func (o *OneSig) TxBytes() ([]byte, error)](#OneSig.TxBytes)
 
 
 #### <a name="pkg-files">Package files</a>
-[crypto.go](/src/github.com/tendermint/light-client/mock/crypto.go) [docs.go](/src/github.com/tendermint/light-client/mock/docs.go) [reader.go](/src/github.com/tendermint/light-client/mock/reader.go) [signable.go](/src/github.com/tendermint/light-client/mock/signable.go) [value.go](/src/github.com/tendermint/light-client/mock/value.go) 
+[docs.go](/src/github.com/tendermint/light-client/mock/docs.go) [reader.go](/src/github.com/tendermint/light-client/mock/reader.go) [signable.go](/src/github.com/tendermint/light-client/mock/signable.go) [value.go](/src/github.com/tendermint/light-client/mock/value.go) 
 
 
 
@@ -127,7 +115,7 @@ func (b ByteValueReader) ReadValue(key, value []byte) (lc.Value, error)
 
 
 
-## <a name="MultiSig">type</a> [MultiSig](/src/target/signable.go?s=1214:1266#L45)
+## <a name="MultiSig">type</a> [MultiSig](/src/target/signable.go?s=1213:1265#L45)
 ``` go
 type MultiSig struct {
     Data []byte
@@ -145,7 +133,7 @@ It supports an arbitrary number of signatures
 
 
 
-### <a name="NewMultiSig">func</a> [NewMultiSig](/src/target/signable.go?s=1339:1378#L55)
+### <a name="NewMultiSig">func</a> [NewMultiSig](/src/target/signable.go?s=1338:1377#L55)
 ``` go
 func NewMultiSig(data []byte) *MultiSig
 ```
@@ -153,30 +141,30 @@ func NewMultiSig(data []byte) *MultiSig
 
 
 
-### <a name="MultiSig.Bytes">func</a> (\*MultiSig) [Bytes](/src/target/signable.go?s=1486:1519#L63)
-``` go
-func (m *MultiSig) Bytes() []byte
-```
-
-
-
-### <a name="MultiSig.Sign">func</a> (\*MultiSig) [Sign](/src/target/signable.go?s=1540:1613#L67)
+### <a name="MultiSig.Sign">func</a> (\*MultiSig) [Sign](/src/target/signable.go?s=1543:1616#L67)
 ``` go
 func (m *MultiSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error
 ```
 
 
 
-### <a name="MultiSig.SignedBy">func</a> (\*MultiSig) [SignedBy](/src/target/signable.go?s=1685:1739#L73)
+### <a name="MultiSig.SignBytes">func</a> (\*MultiSig) [SignBytes](/src/target/signable.go?s=1485:1522#L63)
 ``` go
-func (m *MultiSig) SignedBy() ([]crypto.PubKey, error)
+func (m *MultiSig) SignBytes() []byte
 ```
 
 
 
-### <a name="MultiSig.SignedBytes">func</a> (\*MultiSig) [SignedBytes](/src/target/signable.go?s=1940:1988#L84)
+### <a name="MultiSig.Signers">func</a> (\*MultiSig) [Signers](/src/target/signable.go?s=1688:1741#L73)
 ``` go
-func (m *MultiSig) SignedBytes() ([]byte, error)
+func (m *MultiSig) Signers() ([]crypto.PubKey, error)
+```
+
+
+
+### <a name="MultiSig.TxBytes">func</a> (\*MultiSig) [TxBytes](/src/target/signable.go?s=1942:1986#L84)
+``` go
+func (m *MultiSig) TxBytes() ([]byte, error)
 ```
 
 
@@ -206,136 +194,30 @@ func NewSig(data []byte) *OneSig
 
 
 
-### <a name="OneSig.Bytes">func</a> (\*OneSig) [Bytes](/src/target/signable.go?s=521:552#L17)
-``` go
-func (o *OneSig) Bytes() []byte
-```
-
-
-
-### <a name="OneSig.Sign">func</a> (\*OneSig) [Sign](/src/target/signable.go?s=573:644#L21)
+### <a name="OneSig.Sign">func</a> (\*OneSig) [Sign](/src/target/signable.go?s=577:648#L21)
 ``` go
 func (o *OneSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error
 ```
 
 
 
-### <a name="OneSig.SignedBy">func</a> (\*OneSig) [SignedBy](/src/target/signable.go?s=764:816#L30)
+### <a name="OneSig.SignBytes">func</a> (\*OneSig) [SignBytes](/src/target/signable.go?s=521:556#L17)
 ``` go
-func (o *OneSig) SignedBy() ([]crypto.PubKey, error)
+func (o *OneSig) SignBytes() []byte
 ```
 
 
 
-### <a name="OneSig.SignedBytes">func</a> (\*OneSig) [SignedBytes](/src/target/signable.go?s=934:980#L37)
+### <a name="OneSig.Signers">func</a> (\*OneSig) [Signers](/src/target/signable.go?s=768:819#L30)
 ``` go
-func (o *OneSig) SignedBytes() ([]byte, error)
+func (o *OneSig) Signers() ([]crypto.PubKey, error)
 ```
 
 
 
-## <a name="PubKey">type</a> [PubKey](/src/target/crypto.go?s=195:229#L2)
+### <a name="OneSig.TxBytes">func</a> (\*OneSig) [TxBytes](/src/target/signable.go?s=937:979#L37)
 ``` go
-type PubKey struct {
-    Val []byte
-}
-```
-PubKey lets us wrap some bytes to provide crypto PubKey for those
-methods that just act on it.
-
-
-
-
-
-
-
-### <a name="LoadPubKey">func</a> [LoadPubKey](/src/target/crypto.go?s=792:836#L35)
-``` go
-func LoadPubKey(data []byte) (PubKey, error)
-```
-
-
-
-
-### <a name="PubKey.Address">func</a> (PubKey) [Address](/src/target/crypto.go?s=400:432#L15)
-``` go
-func (p PubKey) Address() []byte
-```
-Address is just the pubkey with some constant prepended
-
-
-
-
-### <a name="PubKey.Bytes">func</a> (PubKey) [Bytes](/src/target/crypto.go?s=291:321#L10)
-``` go
-func (p PubKey) Bytes() []byte
-```
-
-
-
-### <a name="PubKey.Equals">func</a> (PubKey) [Equals](/src/target/crypto.go?s=648:693#L28)
-``` go
-func (p PubKey) Equals(pk crypto.PubKey) bool
-```
-
-
-
-### <a name="PubKey.KeyString">func</a> (PubKey) [KeyString](/src/target/crypto.go?s=480:514#L19)
-``` go
-func (p PubKey) KeyString() string
-```
-
-
-
-### <a name="PubKey.VerifyBytes">func</a> (PubKey) [VerifyBytes](/src/target/crypto.go?s=554:620#L23)
-``` go
-func (p PubKey) VerifyBytes(msg []byte, sig crypto.Signature) bool
-```
-
-
-
-## <a name="Signature">type</a> [Signature](/src/target/crypto.go?s=980:1017#L41)
-``` go
-type Signature struct {
-    Val []byte
-}
-```
-Signature lets us wrap some bytes to provide crypto signature for those
-methods that just act on it.
-
-
-
-
-
-
-
-
-
-
-### <a name="Signature.Bytes">func</a> (Signature) [Bytes](/src/target/crypto.go?s=1085:1118#L49)
-``` go
-func (s Signature) Bytes() []byte
-```
-
-
-
-### <a name="Signature.Equals">func</a> (Signature) [Equals](/src/target/crypto.go?s=1274:1325#L61)
-``` go
-func (s Signature) Equals(cs crypto.Signature) bool
-```
-
-
-
-### <a name="Signature.IsZero">func</a> (Signature) [IsZero](/src/target/crypto.go?s=1138:1170#L53)
-``` go
-func (s Signature) IsZero() bool
-```
-
-
-
-### <a name="Signature.String">func</a> (Signature) [String](/src/target/crypto.go?s=1200:1234#L57)
-``` go
-func (s Signature) String() string
+func (o *OneSig) TxBytes() ([]byte, error)
 ```
 
 

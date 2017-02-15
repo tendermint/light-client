@@ -30,6 +30,7 @@ the bridge between RPC calls and higher-level functionality.
 
 ## <a name="pkg-index">Index</a>
 * [Variables](#pkg-variables)
+* [func ImportSignedHeader(chainID string, data []byte) (lc.TmSignedHeader, error)](#ImportSignedHeader)
 * [type HTTPClient](#HTTPClient)
   * [func NewClient(remote, wsEndpoint string) *HTTPClient](#NewClient)
   * [func (c *HTTPClient) ABCIInfo() (*ctypes.ResultABCIInfo, error)](#HTTPClient.ABCIInfo)
@@ -52,10 +53,13 @@ the bridge between RPC calls and higher-level functionality.
 * [type Node](#Node)
   * [func NewNode(rpcAddr, chainID string, valuer lc.ValueReader) Node](#NewNode)
   * [func (n Node) Broadcast(tx []byte) (res lc.TmBroadcastResult, err error)](#Node.Broadcast)
+  * [func (n Node) ExportSignedHeader(height uint64) ([]byte, error)](#Node.ExportSignedHeader)
+  * [func (n Node) ImportSignedHeader(data []byte) (lc.TmSignedHeader, error)](#Node.ImportSignedHeader)
   * [func (n Node) Prove(key []byte) (lc.TmQueryResult, error)](#Node.Prove)
   * [func (n Node) Query(path string, data []byte) (lc.TmQueryResult, error)](#Node.Query)
   * [func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error)](#Node.SignedHeader)
   * [func (n Node) Validators() (lc.TmValidatorResult, error)](#Node.Validators)
+  * [func (n Node) WaitForHeight(height uint64) error](#Node.WaitForHeight)
 * [type StaticCertifier](#StaticCertifier)
   * [func (c StaticCertifier) Certify(block lc.TmSignedHeader) error](#StaticCertifier.Certify)
 
@@ -71,6 +75,21 @@ var MerkleReader lc.ProofReader = merkleReader{}
 ```
 MerkleReader is currently the only implementation of ProofReader,
 using the IAVLProof from go-merkle
+
+
+
+## <a name="ImportSignedHeader">func</a> [ImportSignedHeader](/src/target/node.go?s=5014:5093#L182)
+``` go
+func ImportSignedHeader(chainID string, data []byte) (lc.TmSignedHeader, error)
+```
+ImportSignedHeader takes serialized data from ExportSignedHeader
+and verifies and processes it the same as SignedHeader.
+
+Use this where you have no Node (rpcclient), but you still need the
+chainID.
+
+The result can be used just as the result from SignedHeader, and
+passed to a Certifier
 
 
 
@@ -221,7 +240,7 @@ func (c *HTTPClient) Validators() (*ctypes.ResultValidators, error)
 
 
 
-## <a name="Node">type</a> [Node](/src/target/node.go?s=289:430#L4)
+## <a name="Node">type</a> [Node](/src/target/node.go?s=296:437#L5)
 ``` go
 type Node struct {
     lc.ProofReader
@@ -235,7 +254,7 @@ type Node struct {
 
 
 
-### <a name="NewNode">func</a> [NewNode](/src/target/node.go?s=716:781#L22)
+### <a name="NewNode">func</a> [NewNode](/src/target/node.go?s=723:788#L23)
 ``` go
 func NewNode(rpcAddr, chainID string, valuer lc.ValueReader) Node
 ```
@@ -243,7 +262,7 @@ func NewNode(rpcAddr, chainID string, valuer lc.ValueReader) Node
 
 
 
-### <a name="Node.Broadcast">func</a> (Node) [Broadcast](/src/target/node.go?s=1310:1382#L48)
+### <a name="Node.Broadcast">func</a> (Node) [Broadcast](/src/target/node.go?s=1317:1389#L49)
 ``` go
 func (n Node) Broadcast(tx []byte) (res lc.TmBroadcastResult, err error)
 ```
@@ -256,7 +275,37 @@ we return the result of DeliverTx
 
 
 
-### <a name="Node.Prove">func</a> (Node) [Prove](/src/target/node.go?s=1999:2056#L75)
+### <a name="Node.ExportSignedHeader">func</a> (Node) [ExportSignedHeader](/src/target/node.go?s=3733:3796#L137)
+``` go
+func (n Node) ExportSignedHeader(height uint64) ([]byte, error)
+```
+ExportSignedHeader downloads and verifies the same info as
+SignedHeader, but returns a serialized version of the proof to
+be stored for later use.
+
+The result should be considered opaque bytes, but can be passed into
+ImportSignedHeader to get data ready for a Certifier
+
+
+
+
+### <a name="Node.ImportSignedHeader">func</a> (Node) [ImportSignedHeader](/src/target/node.go?s=4583:4655#L170)
+``` go
+func (n Node) ImportSignedHeader(data []byte) (lc.TmSignedHeader, error)
+```
+ImportSignedHeader takes serialized data from ExportSignedHeader
+and verifies and processes it the same as SignedHeader.
+
+This is just a convenience wrapper around the same-named function
+that passes in the chainID from the node.
+
+The result can be used just as the result from SignedHeader, and
+passed to a Certifier
+
+
+
+
+### <a name="Node.Prove">func</a> (Node) [Prove](/src/target/node.go?s=2006:2063#L76)
 ``` go
 func (n Node) Prove(key []byte) (lc.TmQueryResult, error)
 ```
@@ -265,7 +314,7 @@ Prove returns a merkle proof for the given key
 
 
 
-### <a name="Node.Query">func</a> (Node) [Query](/src/target/node.go?s=1793:1864#L69)
+### <a name="Node.Query">func</a> (Node) [Query](/src/target/node.go?s=1800:1871#L70)
 ``` go
 func (n Node) Query(path string, data []byte) (lc.TmQueryResult, error)
 ```
@@ -275,7 +324,7 @@ complex path.  It doesn't worry about proofs
 
 
 
-### <a name="Node.SignedHeader">func</a> (Node) [SignedHeader](/src/target/node.go?s=2933:3001#L107)
+### <a name="Node.SignedHeader">func</a> (Node) [SignedHeader](/src/target/node.go?s=2940:3008#L108)
 ``` go
 func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error)
 ```
@@ -288,7 +337,7 @@ It does not check if the keys signing the votes are actual validators
 
 
 
-### <a name="Node.Validators">func</a> (Node) [Validators](/src/target/node.go?s=3611:3667#L136)
+### <a name="Node.Validators">func</a> (Node) [Validators](/src/target/node.go?s=6456:6512#L228)
 ``` go
 func (n Node) Validators() (lc.TmValidatorResult, error)
 ```
@@ -299,6 +348,21 @@ node we call.  There is no guarantee it is correct.
 
 This is intended for use in test cases, or to query many nodes
 to find consensus before trusting it.
+
+
+
+
+### <a name="Node.WaitForHeight">func</a> (Node) [WaitForHeight](/src/target/node.go?s=5600:5648#L198)
+``` go
+func (n Node) WaitForHeight(height uint64) error
+```
+Wait for height will poll status at reasonable intervals until
+we can safely call SignedHeader at the given block height.
+This means that both the block header itself, as well as all
+validator signatures are available
+
+In this current implementation, we must wait until height+1,
+as the signatures are in the following block.
 
 
 

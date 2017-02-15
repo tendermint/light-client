@@ -24,7 +24,7 @@ func (o *OneSig) assertSignable() lightclient.Signable {
 	return o
 }
 
-func (o *OneSig) Bytes() []byte {
+func (o *OneSig) SignBytes() []byte {
 	return o.Data
 }
 
@@ -44,7 +44,7 @@ func (o *OneSig) Signers() ([]crypto.PubKey, error) {
 	return []crypto.PubKey{o.PubKey}, nil
 }
 
-func (o *OneSig) SignBytes() ([]byte, error) {
+func (o *OneSig) TxBytes() ([]byte, error) {
 	return wire.BinaryBytes(wrapper{o}), nil
 }
 
@@ -70,7 +70,7 @@ func (m *MultiSig) assertSignable() lightclient.Signable {
 	return m
 }
 
-func (m *MultiSig) Bytes() []byte {
+func (m *MultiSig) SignBytes() []byte {
 	return m.Data
 }
 
@@ -91,6 +91,6 @@ func (m *MultiSig) Signers() ([]crypto.PubKey, error) {
 	return keys, nil
 }
 
-func (m *MultiSig) SignBytes() ([]byte, error) {
+func (m *MultiSig) TxBytes() ([]byte, error) {
 	return wire.BinaryBytes(wrapper{m}), nil
 }

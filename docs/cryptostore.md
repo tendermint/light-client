@@ -168,18 +168,17 @@ another key already stored under this name
 
 
 
-### <a name="Manager.Delete">func</a> (Manager) [Delete](/src/target/holder.go?s=2723:2777#L88)
+### <a name="Manager.Delete">func</a> (Manager) [Delete](/src/target/holder.go?s=2728:2782#L87)
 ``` go
 func (s Manager) Delete(name, passphrase string) error
 ```
-Delete removes key forever
-
-TODO: make sure we have the passphrase before deleting it (for security)
-
+Delete removes key forever, but we must present the
+proper passphrase before deleting it (for security)
 
 
 
-### <a name="Manager.Export">func</a> (Manager) [Export](/src/target/holder.go?s=2008:2083#L63)
+
+### <a name="Manager.Export">func</a> (Manager) [Export](/src/target/holder.go?s=2012:2087#L63)
 ``` go
 func (s Manager) Export(name, oldpass, transferpass string) ([]byte, error)
 ```
@@ -202,7 +201,7 @@ Get returns the public information about one key
 
 
 
-### <a name="Manager.Import">func</a> (Manager) [Import](/src/target/holder.go?s=2407:2485#L76)
+### <a name="Manager.Import">func</a> (Manager) [Import](/src/target/holder.go?s=2411:2489#L76)
 ``` go
 func (s Manager) Import(name, newpass, transferpass string, data []byte) error
 ```
@@ -234,7 +233,7 @@ If no key for this name, or the passphrase doesn't match, returns an error
 
 
 
-### <a name="Manager.Update">func</a> (Manager) [Update](/src/target/holder.go?s=3018:3078#L96)
+### <a name="Manager.Update">func</a> (Manager) [Update](/src/target/holder.go?s=3152:3212#L100)
 ``` go
 func (s Manager) Update(name, oldpass, newpass string) error
 ```

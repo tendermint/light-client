@@ -27,7 +27,7 @@
 
 
 
-## <a name="GetClient">func</a> [GetClient](/src/target/helpers.go?s=948:980#L30)
+## <a name="GetClient">func</a> [GetClient](/src/target/helpers.go?s=1034:1066#L32)
 ``` go
 func GetClient() *rpc.HTTPClient
 ```
@@ -35,7 +35,7 @@ GetClient gets a rpc client pointing to the test tendermint rpc
 
 
 
-## <a name="GetConfig">func</a> [GetConfig](/src/target/helpers.go?s=689:716#L20)
+## <a name="GetConfig">func</a> [GetConfig](/src/target/helpers.go?s=775:802#L22)
 ``` go
 func GetConfig() cfg.Config
 ```
@@ -43,7 +43,7 @@ GetConfig returns a config for the test cases as a singleton
 
 
 
-## <a name="GetNode">func</a> [GetNode](/src/target/helpers.go?s=1151:1174#L36)
+## <a name="GetNode">func</a> [GetNode](/src/target/helpers.go?s=1237:1260#L38)
 ``` go
 func GetNode() rpc.Node
 ```
@@ -51,7 +51,7 @@ GetNodeClient gets a Node object pointing to this test tendermint rpc
 
 
 
-## <a name="NewTendermint">func</a> [NewTendermint](/src/target/helpers.go?s=1729:1790#L55)
+## <a name="NewTendermint">func</a> [NewTendermint](/src/target/helpers.go?s=1861:1922#L58)
 ``` go
 func NewTendermint(ready chan struct{}, app abci.Application)
 ```
@@ -59,13 +59,13 @@ NewTendermint creates a new tendermint server and sleeps forever
 
 
 
-## <a name="RandAsciiBytes">func</a> [RandAsciiBytes](/src/target/app_helpers.go?s=343:376#L7)
+## <a name="RandAsciiBytes">func</a> [RandAsciiBytes](/src/target/app_helpers.go?s=842:875#L29)
 ``` go
 func RandAsciiBytes(n int) []byte
 ```
 
 
-## <a name="StartTendermint">func</a> [StartTendermint](/src/target/helpers.go?s=1477:1499#L44)
+## <a name="StartTendermint">func</a> [StartTendermint](/src/target/helpers.go?s=1563:1585#L46)
 ``` go
 func StartTendermint()
 ```
@@ -74,7 +74,7 @@ TODO: can one pass an Application in????
 
 
 
-## <a name="TestTxKV">func</a> [TestTxKV](/src/target/app_helpers.go?s=124:164#L1)
+## <a name="TestTxKV">func</a> [TestTxKV](/src/target/app_helpers.go?s=203:243#L2)
 ``` go
 func TestTxKV() ([]byte, []byte, []byte)
 ```

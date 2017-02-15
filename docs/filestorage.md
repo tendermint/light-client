@@ -40,7 +40,7 @@ const (
 
 
 
-## <a name="FileStore">type</a> [FileStore](/src/target/main.go?s=603:643#L20)
+## <a name="FileStore">type</a> [FileStore](/src/target/main.go?s=560:600#L19)
 ``` go
 type FileStore struct {
     // contains filtered or unexported fields
@@ -52,7 +52,7 @@ type FileStore struct {
 
 
 
-### <a name="New">func</a> [New](/src/target/main.go?s=844:874#L28)
+### <a name="New">func</a> [New](/src/target/main.go?s=801:831#L27)
 ``` go
 func New(dir string) FileStore
 ```
@@ -65,7 +65,7 @@ be created if it doesn't exist already.
 
 
 
-### <a name="FileStore.Delete">func</a> (FileStore) [Delete](/src/target/main.go?s=2882:2926#L102)
+### <a name="FileStore.Delete">func</a> (FileStore) [Delete](/src/target/main.go?s=2839:2883#L101)
 ``` go
 func (s FileStore) Delete(name string) error
 ```
@@ -75,7 +75,7 @@ The calling function should provide some security checks first.
 
 
 
-### <a name="FileStore.Get">func</a> (FileStore) [Get](/src/target/main.go?s=1714:1786#L59)
+### <a name="FileStore.Get">func</a> (FileStore) [Get](/src/target/main.go?s=1671:1743#L58)
 ``` go
 func (s FileStore) Get(name string) ([]byte, lightclient.KeyInfo, error)
 ```
@@ -86,7 +86,7 @@ files don't exist or are in the incorrect format
 
 
 
-### <a name="FileStore.List">func</a> (FileStore) [List](/src/target/main.go?s=2072:2128#L73)
+### <a name="FileStore.List">func</a> (FileStore) [List](/src/target/main.go?s=2029:2085#L72)
 ``` go
 func (s FileStore) List() ([]lightclient.KeyInfo, error)
 ```
@@ -96,7 +96,7 @@ KeyInfo for all keys located in this directory.
 
 
 
-### <a name="FileStore.Put">func</a> (FileStore) [Put](/src/target/main.go?s=1261:1340#L43)
+### <a name="FileStore.Put">func</a> (FileStore) [Put](/src/target/main.go?s=1218:1297#L42)
 ``` go
 func (s FileStore) Put(name string, key []byte, info lightclient.KeyInfo) error
 ```

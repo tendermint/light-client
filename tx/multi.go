@@ -36,8 +36,8 @@ func (s *MultiSig) assertSignable() lightclient.Signable {
 	return s
 }
 
-// Bytes returns the original data passed into `NewSig`
-func (s *MultiSig) Bytes() []byte {
+// SignBytes returns the original data passed into `NewSig`
+func (s *MultiSig) SignBytes() []byte {
 	return s.data
 }
 
@@ -76,9 +76,9 @@ func (s *MultiSig) Signers() ([]crypto.PubKey, error) {
 	return keys, nil
 }
 
-// SignBytes serializes the Sig to send it to a tendermint app.
+// TxBytes serializes the Sig to send it to a tendermint app.
 // It returns an error if the Sig was never Signed.
-func (s *MultiSig) SignBytes() ([]byte, error) {
+func (s *MultiSig) TxBytes() ([]byte, error) {
 	if len(s.sigs) == 0 {
 		return nil, errors.New("Never signed")
 	}

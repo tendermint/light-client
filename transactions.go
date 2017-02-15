@@ -27,8 +27,8 @@ func (k KeyInfos) Sort() {
 // Signable represents any transaction we wish to send to tendermint core
 // These methods allow us to sign arbitrary Tx with the KeyStore
 type Signable interface {
-	// Bytes is the immutable data, which needs to be signed
-	Bytes() []byte
+	// SignBytes is the immutable data, which needs to be signed
+	SignBytes() []byte
 
 	// Sign will add a signature and pubkey.
 	//
@@ -41,9 +41,9 @@ type Signable interface {
 	// including if there are no signatures
 	Signers() ([]crypto.PubKey, error)
 
-	// SignBytes returns the transaction data as well as all signatures
+	// TxBytes returns the transaction data as well as all signatures
 	// It should return an error if Sign was never called
-	SignBytes() ([]byte, error)
+	TxBytes() ([]byte, error)
 }
 
 // SignableReader is an abstraction to let us parse Signables

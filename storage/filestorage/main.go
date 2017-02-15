@@ -15,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 	crypto "github.com/tendermint/go-crypto"
 	lightclient "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/mock"
 )
 
 const (
@@ -135,15 +134,7 @@ func readInfo(path string) (info lightclient.KeyInfo, err error) {
 	if err != nil {
 		return
 	}
-	// now the tricky part... let's see if we can unmarshall the data
-	// using a known type!
-
-	// first, try with a real crypto stuff
 	info.PubKey, err = crypto.PubKeyFromBytes(data)
-	if err != nil {
-		// if not, let's try with mock data....
-		info.PubKey, err = mock.LoadPubKey(data)
-	}
 	return
 }
 

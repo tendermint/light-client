@@ -32,8 +32,8 @@ func (s *OneSig) assertSignable() lightclient.Signable {
 	return s
 }
 
-// Bytes returns the original data passed into `NewSig`
-func (s *OneSig) Bytes() []byte {
+// SignBytes returns the original data passed into `NewSig`
+func (s *OneSig) SignBytes() []byte {
 	return s.data
 }
 
@@ -71,9 +71,9 @@ func (s *OneSig) Signers() ([]crypto.PubKey, error) {
 	return []crypto.PubKey{s.pubkey}, nil
 }
 
-// SignBytes serializes the Sig to send it to a tendermint app.
+// TxBytes serializes the Sig to send it to a tendermint app.
 // It returns an error if the Sig was never Signed.
-func (s *OneSig) SignBytes() ([]byte, error) {
+func (s *OneSig) TxBytes() ([]byte, error) {
 	if s.sig == nil {
 		return nil, errors.New("Transaction was never signed")
 	}

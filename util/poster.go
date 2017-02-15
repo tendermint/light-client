@@ -25,7 +25,7 @@ func (p Poster) Post(sign lc.Signable, keyname, passphrase string) (res lc.TmBro
 		return
 	}
 
-	signed, err = sign.SignBytes()
+	signed, err = sign.TxBytes()
 	if err != nil {
 		return
 	}

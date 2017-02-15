@@ -43,8 +43,8 @@ func (s *SendTx) assertSignable() lc.Signable {
 	return s
 }
 
-// Bytes returned the unsigned bytes, needing a signature
-func (s *SendTx) Bytes() []byte {
+// SignBytes returned the unsigned bytes, needing a signature
+func (s *SendTx) SignBytes() []byte {
 	return s.tx.SignBytes(s.chainID)
 }
 
@@ -72,9 +72,9 @@ func (s *SendTx) Signers() ([]crypto.PubKey, error) {
 	return s.signers, nil
 }
 
-// SignBytes returns the transaction data as well as all signatures
+// TxBytes returns the transaction data as well as all signatures
 // It should return an error if Sign was never called
-func (s *SendTx) SignBytes() ([]byte, error) {
+func (s *SendTx) TxBytes() ([]byte, error) {
 	// TODO: verify it is signed
 
 	// Code and comment from: basecoin/cmd/commands/tx.go
