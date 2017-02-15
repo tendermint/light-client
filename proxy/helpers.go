@@ -8,11 +8,11 @@ configure the server for your application.
 package proxy
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
-	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proxy/types"
 	"github.com/tendermint/light-client/rpc"
@@ -60,8 +60,7 @@ func readRequest(r *http.Request, o interface{}) error {
 	if err != nil {
 		return errors.Wrap(err, "Read Request")
 	}
-	err = wire.ReadJSONBytes(data, o)
-	// err = json.Unmarshal(data, o)
+	err = json.Unmarshal(data, o)
 	if err != nil {
 		return errors.Wrap(err, "Parse")
 	}
@@ -70,7 +69,7 @@ func readRequest(r *http.Request, o interface{}) error {
 
 // most errors are bad input, so 406... do better....
 func writeError(w http.ResponseWriter, err error) {
-	fmt.Printf("\nError: %+v\n\n", err)
+	fmt.Printf("Error: %+v\n", err)
 	res := types.GenericResponse{
 		Code: 406,
 		// Log:  fmt.Sprintf("%+v", err),
@@ -80,15 +79,15 @@ func writeError(w http.ResponseWriter, err error) {
 }
 
 func writeCode(w http.ResponseWriter, o interface{}, code int) {
-	// data, err := json.MarshalIndent(o, "", "    ")
-	// if err != nil {
-	// 	writeError(w, err)
-	// 	return
-	// }
-	data := wire.JSONBytesPretty(o)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(data)
+	// two space indent to make it easier to read
+	data, err := json.MarshalIndent(o, "", "    ")
+	if err != nil {
+		writeError(w, err)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(code)
+		w.Write(data)
+	}
 }
 
 func writeSuccess(w http.ResponseWriter, o interface{}) {

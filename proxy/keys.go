@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proxy/types"
+	"github.com/tendermint/light-client/tx"
 )
 
 type KeyServer struct {
@@ -139,7 +140,7 @@ func (k KeyServer) Register(r *mux.Router) {
 func renderKey(key lc.KeyInfo) types.KeyResponse {
 	return types.KeyResponse{
 		Name:    key.Name,
-		PubKey:  key.PubKey,
+		PubKey:  tx.JSONPubKey{key.PubKey},
 		Address: key.PubKey.Address(),
 	}
 }

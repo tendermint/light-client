@@ -1,6 +1,8 @@
 package basecoin
 
 import (
+	"encoding/json"
+
 	"github.com/pkg/errors"
 	bc "github.com/tendermint/basecoin/types"
 	crypto "github.com/tendermint/go-crypto"
@@ -15,7 +17,8 @@ type BasecoinTx struct {
 // Turn json into a signable object
 func (t BasecoinTx) ReadSignable(data []byte) (lc.Signable, error) {
 	var tx bc.SendTx
-	err := wire.ReadJSONBytes(data, &tx)
+	err := json.Unmarshal(data, &tx)
+	// err := wire.ReadJSONBytes(data, &tx)
 	if err != nil {
 		return nil, errors.Wrap(err, "Read JSON Tx")
 	}

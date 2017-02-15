@@ -20,7 +20,7 @@ func TestSendTxJSON(t *testing.T) {
       "address": "4d8908785ec867139ca02e71a717c01fa506b96a",
       "coins": [{"denom": "ETH", "amount": 21}],
       "sequence": 1,
-      "pub_key": [1, "d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"]
+      "pub_key": "01d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"
     }],
     "outputs": [{
       "address": "9f31a3ac6b1468402aac5593ae9e82a041457f5f",
