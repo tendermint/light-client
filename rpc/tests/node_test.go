@@ -174,3 +174,61 @@ func TestNodeAuditing(t *testing.T) {
 	require.Nil(err, "%+v", err)
 
 }
+
+// TestNodeExportImportVotes tests storing all proof of a data
+// point as bytes and validating it later (with no rpc calls the
+// second time)
+func TestNodeExportImportVotes(t *testing.T) {
+	assert, require := assert.New(t), require.New(t)
+	n := GetNode()
+
+	// send some data
+	k, v, tx := TestTxKV()
+	br, err := n.Broadcast(tx)
+	require.Nil(err)
+	require.True(br.Code.IsOK())
+
+	// let's query for this data now
+	pr, err := n.Prove(k)
+	require.Nil(err)
+	assert.True(pr.Code.IsOK())
+	assert.Equal(k, pr.Key)
+	assert.Equal(v, pr.Value.Bytes())
+	assert.NotNil(pr.Proof)
+	// get the height from the proof itself
+	height := pr.Height
+	assert.False(height == 0)
+
+	// get the validator set
+	vals, err := n.Validators()
+	require.Nil(err)
+	cert := rpc.StaticCertifier{Vals: vals.Validators}
+	auditor := util.NewAuditor(cert)
+
+	err = n.WaitForHeight(height)
+	require.Nil(err, "%+v", err)
+
+	oldsigs, err := n.ExportSignedHeader(height - 1)
+	require.Nil(err, "%+v", err)
+	sigs, err := n.ExportSignedHeader(height)
+	require.Nil(err, "%+v", err)
+
+	// blah, blah, more data...
+	_, _, tx2 := TestTxKV()
+	br, err = n.Broadcast(tx2)
+	require.Nil(err)
+	require.True(br.Code.IsOK())
+
+	// we can try to import them and audit them sometime later....
+	oldblock, err := n.ImportSignedHeader(oldsigs)
+	require.Nil(err, "%+v", err)
+	block, err := n.ImportSignedHeader(sigs)
+	require.Nil(err, "%+v", err)
+
+	// make sure one bytes verify the proof, and the other don't
+	err = auditor.Audit(k, v, pr.Proof, block)
+	require.Nil(err, "%+v", err)
+	// will fail for the wrong block header... or wrong values... or wrong proof
+	err = auditor.Audit(k, v, pr.Proof, oldblock)
+	require.NotNil(err)
+}
