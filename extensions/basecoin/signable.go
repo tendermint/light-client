@@ -13,8 +13,23 @@ type TxType struct {
 }
 
 type BasecoinTx struct {
-	ChainID string
+	chainID string
+	appMap  map[string]TxReader
 }
+
+func NewBasecoinTx(chainID string) BasecoinTx {
+	return BasecoinTx{
+		chainID: chainID,
+		appMap:  map[string]TxReader{},
+	}
+}
+
+// AppDataReader takes a plugin name and txType and some json
+// and serializes it into a binary format
+type AppDataReader func(name, txType string, json []byte) ([]byte, error)
+
+// TxReader handles parsing and serializing one particular type
+type TxReader func(json []byte) ([]byte, error)
 
 func (t BasecoinTx) assertSignableReader() lc.SignableReader {
 	return t
@@ -34,4 +49,18 @@ func (t BasecoinTx) ReadSignable(data []byte) (lc.Signable, error) {
 		return t.readAppTx(tx.Data)
 	}
 	return nil, errors.Errorf("Unknown type: %s", tx.Type)
+}
+
+func (t BasecoinTx) RegisterParser(name, txType string, reader TxReader) {
+	key := name + "/" + txType
+	t.appMap[key] = reader
+}
+
+func (t BasecoinTx) appData(name, txType string, json []byte) ([]byte, error) {
+	key := name + "/" + txType
+	reader, ok := t.appMap[key]
+	if !ok {
+		return nil, errors.Errorf("No registered parser for %s/%s", name, txType)
+	}
+	return reader(json)
 }

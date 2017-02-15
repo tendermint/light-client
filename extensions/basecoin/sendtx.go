@@ -21,7 +21,7 @@ func (s *SendTx) assertSignable() lc.Signable {
 func (t BasecoinTx) readSendTx(data []byte) (lc.Signable, error) {
 	tx, err := parseSendTx(data)
 	send := SendTx{
-		chainID: t.ChainID,
+		chainID: t.chainID,
 		tx:      tx,
 	}
 	return &send, err

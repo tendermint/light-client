@@ -19,9 +19,9 @@ func (a *AppTx) assertSignable() lc.Signable {
 }
 
 func (t BasecoinTx) readAppTx(data []byte) (lc.Signable, error) {
-	tx, err := parseAppTx(data)
+	tx, err := parseAppTx(data, t.appData)
 	app := AppTx{
-		chainID: t.ChainID,
+		chainID: t.chainID,
 		tx:      tx,
 	}
 	return &app, err

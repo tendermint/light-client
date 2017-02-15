@@ -20,14 +20,14 @@ func parseSendTx(data []byte) (*bc.SendTx, error) {
 	return &stx, nil
 }
 
-func parseAppTx(data []byte) (*bc.AppTx, error) {
+func parseAppTx(data []byte, appData AppDataReader) (*bc.AppTx, error) {
 	var tx txApp
 	err := json.Unmarshal(data, &tx)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse apptx")
 	}
-	atx := tx.toBasecoin()
-	return &atx, nil
+	atx, err := tx.toBasecoin(appData)
+	return &atx, err
 }
 
 // WARNING/NOTE: does not handle serializing sigs, as we don't take them over json
@@ -86,19 +86,21 @@ func (t txSend) toBasecoin() bc.SendTx {
 }
 
 type txApp struct {
-	Gas   int64      `json:"gas"`   // Gas
-	Fee   bc.Coin    `json:"fee"`   // Fee
-	Name  string     `json:"type"`  // Which plugin
-	Input txInput    `json:"input"` // Hmmm do we want coins?
-	Data  tx.HexData `json:"data"`
+	Gas     int64           `json:"gas"`   // Gas
+	Fee     bc.Coin         `json:"fee"`   // Fee
+	Name    string          `json:"name"`  // Which plugin
+	Input   txInput         `json:"input"` // Hmmm do we want coins?
+	Type    string          `json:"type"`  // which tx type for this plugin
+	AppData json.RawMessage `json:"appdata"`
 }
 
-func (t txApp) toBasecoin() bc.AppTx {
+func (t txApp) toBasecoin(appData AppDataReader) (bc.AppTx, error) {
+	data, err := appData(t.Name, t.Type, t.AppData)
 	return bc.AppTx{
 		Gas:   t.Gas,
 		Fee:   t.Fee,
 		Name:  t.Name,
 		Input: t.Input.toBasecoin(),
-		Data:  t.Data,
-	}
+		Data:  data,
+	}, err
 }
