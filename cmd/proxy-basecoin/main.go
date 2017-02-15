@@ -38,27 +38,55 @@ curl http://localhost:8108/query/store/626173652f612f1B1BE55F969F54064628A63B955
 # TODO: currently fails, complaining about validator sigs
 curl http://localhost:8108/proof/626173652f612f1B1BE55F969F54064628A63B9559E7C21C925165
 
-# post a tx (not yet implemented)
+# post a tx
 # use addressed returned from your keys call above
 # input is alice, output is bob
 curl -XPOST http://localhost:8108/txs/ -d '{
   "name": "alice",
   "passphrase": "1234567890",
   "data": {
-    "gas": 22,
-    "fee": {"denom": "ETH", "amount": 1},
-    "inputs": [{
-      "address": "4d8908785ec867139ca02e71a717c01fa506b96a",
-      "coins": [{"denom": "ETH", "amount": 21}],
-      "sequence": 1,
-      "pub_key": [1, "d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"]
-    }],
-    "outputs": [{
-      "address": "9f31a3ac6b1468402aac5593ae9e82a041457f5f",
-      "coins": [{"denom": "ETH", "amount": 20}]
-    }]
+    "type": "sendtx",
+    "data": {
+      "gas": 22,
+      "fee": {"denom": "ETH", "amount": 1},
+      "inputs": [{
+        "address": "4d8908785ec867139ca02e71a717c01fa506b96a",
+        "coins": [{"denom": "ETH", "amount": 21}],
+        "sequence": 1,
+        "pub_key": "01d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"
+      }],
+      "outputs": [{
+        "address": "9f31a3ac6b1468402aac5593ae9e82a041457f5f",
+        "coins": [{"denom": "ETH", "amount": 20}]
+      }]
+    }
   }
 }'
+
+# and try a special escrow type.... using the trader plugins
+curl -XPOST http://localhost:8108/txs/ -d '{
+  "name": "alice",
+  "passphrase": "1234567890",
+  "data": {
+    "type": "apptx",
+    "data": {
+      "name": "escrow",
+      "gas": 22,
+      "fee": {"denom": "ETH", "amount": 1},
+      "input": {
+        "address": "4d8908785ec867139ca02e71a717c01fa506b96a",
+        "coins": [{"denom": "ETH", "amount": 21}],
+        "sequence": 2,
+      },
+      "type": "create",
+      "appdata": {
+        "recipient": "9f31a3ac6b1468402aac5593ae9e82a041457f5f",
+        "arbiter": "12468402aac55931a3ac6b1468e82a04145"
+      },
+    }
+  }
+}'
+
 
 */
 package main

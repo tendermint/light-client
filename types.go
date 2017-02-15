@@ -49,6 +49,11 @@ type TmSignedHeader struct {
 	LastHeight uint64 // the most recent block commited to the chain
 }
 
+// Height has been verified to be the same for the header and all votes
+func (sh TmSignedHeader) Height() uint64 {
+	return sh.Header.Height
+}
+
 // TmHeader is the info in block headers (from tendermint/types/block.go)
 type TmHeader struct {
 	ChainID string    `json:"chain_id"`

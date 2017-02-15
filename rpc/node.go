@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	merkle "github.com/tendermint/go-merkle"
+	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	ttypes "github.com/tendermint/tendermint/types"
@@ -117,23 +118,69 @@ func (n Node) queryResp(qr *ctypes.ResultABCIQuery, err error) (lc.TmQueryResult
 func (n Node) SignedHeader(height uint64) (lc.TmSignedHeader, error) {
 	h := int(height)
 
-	bi, lh, err := n.getHeader(h)
+	// get data from rpc
+	ci, err := n.getCommitInfo(h)
 	if err != nil {
 		return lc.TmSignedHeader{}, err
 	}
-	res, err := verifyHeaderInfo(bi, h)
-	if err != nil {
-		return res, err
-	}
-	res.LastHeight = uint64(lh)
 
-	votes, err := n.getPrecommits(h)
+	// validate and process it
+	res, err := n.validateCommitInfo(ci)
 	if err != nil {
-		return res, err
+		return lc.TmSignedHeader{}, err
 	}
-	res.Votes, err = n.processVotes(votes, h, res.Hash)
 
+	// make sure the height is what we wanted
+	if res.Height() != height {
+		err = errors.Errorf("Returned header for height %d, not %d",
+			res.Height(), h)
+	}
 	return res, err
+}
+
+// ExportSignedHeader downloads and verifies the same info as
+// SignedHeader, but returns a serialized version of the proof to
+// be stored for later use.
+//
+// The result should be considered opaque bytes, but can be passed into
+// ImportSignedHeader to get data ready for a Certifier
+func (n Node) ExportSignedHeader(height uint64) ([]byte, error) {
+	h := int(height)
+
+	// get data from rpc
+	ci, err := n.getCommitInfo(h)
+	if err != nil {
+		return nil, err
+	}
+
+	// validate and process it
+	res, err := n.validateCommitInfo(ci)
+	if err != nil {
+		return nil, err
+	}
+
+	// make sure the height is what we wanted
+	if res.Height() != height {
+		err = errors.Errorf("Returned header for height %d, not %d",
+			res.Height(), h)
+	}
+
+	// serialize data for later use
+	return ci.Bytes(), err
+}
+
+// ImportSignedHeader takes serialized data from ExportSignedHeader
+// and verifies and processes it the same as SignedHeader.
+//
+// The result can be used just as the result from SignedHeader, and
+// passed to a Certifier
+func (n Node) ImportSignedHeader(data []byte) (lc.TmSignedHeader, error) {
+	ci, err := loadCommitInfo(data)
+	if err != nil {
+		return lc.TmSignedHeader{}, err
+	}
+	// validate and process it
+	return n.validateCommitInfo(ci)
 }
 
 // Wait for height will poll status at reasonable intervals until
@@ -196,6 +243,31 @@ func (n Node) Validators() (lc.TmValidatorResult, error) {
 	return res, nil
 }
 
+type commitInfo struct {
+	Header    *ttypes.BlockMeta
+	MaxHeight int
+	Commit    *ttypes.Commit
+}
+
+func (c commitInfo) Bytes() []byte {
+	return wire.BinaryBytes(c)
+}
+
+func loadCommitInfo(data []byte) (res commitInfo, err error) {
+	err = wire.ReadBinaryBytes(data, &res)
+	return
+}
+
+func (n Node) getCommitInfo(h int) (res commitInfo, err error) {
+	// we get the raw data first...
+	res.Header, res.MaxHeight, err = n.getHeader(h)
+	if err != nil {
+		return
+	}
+	res.Commit, err = n.getCommit(h)
+	return
+}
+
 // get header returns the header info along with the most recent height
 func (n Node) getHeader(h int) (*ttypes.BlockMeta, int, error) {
 	bis, err := n.client.BlockchainInfo(h, h)
@@ -212,12 +284,12 @@ func (n Node) getHeader(h int) (*ttypes.BlockMeta, int, error) {
 	return bis.BlockMetas[0], bis.LastHeight, nil
 }
 
-// getPrecommits returns all precommit votes that prove the given
+// getCommit returns all the commit that proves the given
 // block was approved by the validators.
 //
 // The current API requires we query block at h+1 to see the votes
 // for block h
-func (n Node) getPrecommits(h int) ([]*ttypes.Vote, error) {
+func (n Node) getCommit(h int) (*ttypes.Commit, error) {
 	b, err := n.client.Block(h + 1)
 	if err != nil {
 		return nil, err
@@ -225,20 +297,28 @@ func (n Node) getPrecommits(h int) ([]*ttypes.Vote, error) {
 	if b.Block == nil || b.Block.LastCommit == nil {
 		return nil, errors.Errorf("No commit data for block %d", h+1)
 	}
-	votes := b.Block.LastCommit.Precommits
-	err = b.Block.LastCommit.ValidateBasic()
-	return votes, err
+	commit := b.Block.LastCommit
+	return commit, nil
 }
 
-func verifyHeaderInfo(header *ttypes.BlockMeta, h int) (lc.TmSignedHeader, error) {
+func (n Node) validateCommitInfo(ci commitInfo) (lc.TmSignedHeader, error) {
+	// now we validate it all and put it into our format for the
+	res, err := validateHeaderInfo(ci.Header)
+	if err != nil {
+		return res, err
+	}
+	res.LastHeight = uint64(ci.MaxHeight)
+	err = ci.Commit.ValidateBasic()
+	if err != nil {
+		return res, err
+	}
+	res.Votes, err = n.processVotes(ci.Commit.Precommits, res.Height(), res.Hash)
+	return res, err
+}
+
+func validateHeaderInfo(header *ttypes.BlockMeta) (lc.TmSignedHeader, error) {
 	var res lc.TmSignedHeader
 	head := header.Header
-	// make sure the height is what we wanted
-	if head.Height != h {
-		return res,
-			errors.Errorf("Returned header for height %d, not %d",
-				header.Header.Height, h)
-	}
 
 	// make sure the hash matches
 	calc := head.Hash()
@@ -272,10 +352,11 @@ func verifyHeaderInfo(header *ttypes.BlockMeta, h int) (lc.TmSignedHeader, error
 // syncing the validator set in a Certifier, so we don't want to hard-code it here.
 //
 // also note that `err = b.Block.LastCommit.ValidateBasic()`
-// in getPrecommits does a number of checks already, like they are all for the
+// in getCommit does a number of checks already, like they are all for the
 // same block
-func (n Node) processVotes(votes []*ttypes.Vote, h int, blockHash []byte) (lc.TmVotes, error) {
+func (n Node) processVotes(votes []*ttypes.Vote, height uint64, blockHash []byte) (lc.TmVotes, error) {
 	res := make([]lc.TmVote, len(votes))
+	h := int(height)
 
 	// verify height and blockhash for the first vote (the rest are the same)
 	if votes[0].Height != h {
