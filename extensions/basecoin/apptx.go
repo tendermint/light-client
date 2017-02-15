@@ -1,8 +1,6 @@
 package basecoin
 
 import (
-	"encoding/json"
-
 	"github.com/pkg/errors"
 	bc "github.com/tendermint/basecoin/types"
 	crypto "github.com/tendermint/go-crypto"
@@ -21,16 +19,12 @@ func (a *AppTx) assertSignable() lc.Signable {
 }
 
 func (t BasecoinTx) readAppTx(data []byte) (lc.Signable, error) {
-	var tx bc.AppTx
-	err := json.Unmarshal(data, &tx)
-	if err != nil {
-		return nil, errors.Wrap(err, "Read JSON Tx")
-	}
-	send := AppTx{
+	tx, err := parseAppTx(data)
+	app := AppTx{
 		chainID: t.ChainID,
-		tx:      &tx,
+		tx:      tx,
 	}
-	return &send, nil
+	return &app, err
 }
 
 // SignBytes returned the unsigned bytes, needing a signature
