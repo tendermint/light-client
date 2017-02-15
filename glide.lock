@@ -61,7 +61,7 @@ imports:
   - example/dummy
   - types
 - name: github.com/tendermint/basecoin
-  version: dedcf13559964a0eccbf3ead57f57252fa7d0cfe
+  version: 948397e3c95d77cd93c7ccfbc30789a9639424d5
   subpackages:
   - types
 - name: github.com/tendermint/ed25519
