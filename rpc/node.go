@@ -336,16 +336,17 @@ func validateHeaderInfo(header *ttypes.BlockMeta) (lc.TmSignedHeader, error) {
 	head := header.Header
 
 	// make sure the hash matches
+	hash := header.BlockID.Hash
 	calc := head.Hash()
-	if !bytes.Equal(header.Hash, calc) {
+	if !bytes.Equal(hash, calc) {
 		return res,
 			errors.Errorf("Calculated header hash: %X, claimed header hash: %X",
-				calc, header.Hash)
+				calc, hash)
 	}
 
 	// this header looks good, transform the data!
 	res = lc.TmSignedHeader{
-		Hash: header.Hash,
+		Hash: hash,
 		Header: lc.TmHeader{
 			ChainID:        head.ChainID,
 			Height:         uint64(head.Height),

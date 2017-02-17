@@ -119,7 +119,7 @@ func main() {
 
 	// TODO: make these actually do something
 	vr := basecoin.BasecoinValues{}
-	sr := basecoin.BasecoinTx{ChainID: *chainID}
+	sr := basecoin.NewBasecoinTx(*chainID)
 
 	if *chainID == "" {
 		fmt.Println("You must specify -chain with the basecoin chain_id")
