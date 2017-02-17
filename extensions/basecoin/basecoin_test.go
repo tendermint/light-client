@@ -1,6 +1,7 @@
 package basecoin_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -37,7 +38,7 @@ func TestBasecoinSetOption(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 	// node must parse basecoin values
 	n := tests.GetNode()
-	n.ValueReader = basecoin.BasecoinValues{}
+	n.ValueReader = basecoin.NewBasecoinValues()
 
 	// store the keys somewhere
 	keys := cryptostore.New(
@@ -88,7 +89,7 @@ func TestBasecoinSendTx(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 	// node must parse basecoin values
 	n := tests.GetNode()
-	n.ValueReader = basecoin.BasecoinValues{}
+	n.ValueReader = basecoin.NewBasecoinValues()
 
 	// store the keys somewhere
 	keys := cryptostore.New(
@@ -182,7 +183,8 @@ func TestBasecoinAppTx(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 	// node must parse basecoin values
 	n := tests.GetNode()
-	val := basecoin.BasecoinValues{}
+	val := basecoin.NewBasecoinValues()
+	val.RegisterPlugin(counter.Value{})
 	// TODO: register plugin parser
 	n.ValueReader = val
 
@@ -263,5 +265,18 @@ func TestBasecoinAppTx(t *testing.T) {
 	// used up by fees
 	assert.Equal(bc.Coins{{Denom: "gold", Amount: 5412}}, qav.Balance)
 
-	// TODO: query counter state!
+	// query counter state!
+	cntkey := []byte("CounterPlugin.State")
+	cq, err := n.Query("/key", cntkey)
+	require.Nil(err)
+	require.NotNil(cq.Value)
+	// make sure it's parsed
+	cstate, ok := cq.Value.(counter.Counter)
+	require.True(ok)
+	require.Equal(1, cstate.Counter)
+	require.Equal(bc.Coins{{Denom: "gold", Amount: 5}}, cstate.TotalFees)
+
+	// and make sure it is nice json
+	_, err = json.Marshal(cq.Value)
+	require.Nil(err)
 }

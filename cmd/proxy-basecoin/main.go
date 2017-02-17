@@ -118,7 +118,7 @@ func main() {
 	flag.Parse()
 
 	// TODO: make these actually do something
-	vr := basecoin.BasecoinValues{}
+	vr := basecoin.NewBasecoinValues()
 	sr := basecoin.NewBasecoinTx(*chainID)
 
 	if *chainID == "" {
