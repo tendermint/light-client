@@ -43,10 +43,9 @@ type TmQueryResult struct {
 // which lets us return the Header in a non-binary format.
 // Votes must also be pre-verified, signatures checked, etc.
 type TmSignedHeader struct {
-	Hash       []byte
-	Header     TmHeader // contains height
-	Votes      TmVotes
-	LastHeight uint64 // the most recent block commited to the chain
+	Hash   []byte
+	Header TmHeader // contains height
+	Votes  TmVotes
 }
 
 // Height has been verified to be the same for the header and all votes

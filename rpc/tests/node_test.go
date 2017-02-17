@@ -67,7 +67,6 @@ func TestNodeHeaders(t *testing.T) {
 	block, err := n.SignedHeader(height)
 	require.Nil(err, "%+v", err)
 	assert.Equal(height, block.Header.Height)
-	assert.Equal(vals.BlockHeight, block.LastHeight)
 	assert.Equal(1, len(block.Votes))
 
 	// try to certify this header is proper

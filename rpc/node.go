@@ -201,12 +201,11 @@ func ImportSignedHeader(chainID string, data []byte) (lc.TmSignedHeader, error) 
 // Wait for height will poll status at reasonable intervals until
 // we can safely call SignedHeader at the given block height.
 // This means that both the block header itself, as well as all
-// validator signatures are available
+// validator signatures are available.
 //
-// In this current implementation, we must wait until height+1,
-// as the signatures are in the following block.
+// Thanks to /commit this is now available with less waiting
 func (n Node) WaitForHeight(height uint64) error {
-	h := int(height) + 1 // off-by-one shizzit
+	h := int(height)
 	wait := 1
 	for wait > 0 {
 		s, err := n.client.Status()
@@ -259,9 +258,8 @@ func (n Node) Validators() (lc.TmValidatorResult, error) {
 }
 
 type commitInfo struct {
-	Header    *ttypes.BlockMeta
-	MaxHeight int
-	Commit    *ttypes.Commit
+	Header *ttypes.Header
+	Commit *ttypes.Commit
 }
 
 func (c commitInfo) Bytes() []byte {
@@ -275,78 +273,42 @@ func loadCommitInfo(data []byte) (res commitInfo, err error) {
 
 func (n Node) getCommitInfo(h int) (res commitInfo, err error) {
 	// we get the raw data first...
-	res.Header, res.MaxHeight, err = n.getHeader(h)
+	var ci *ctypes.ResultCommit
+	ci, err = n.client.Commit(h)
 	if err != nil {
 		return
 	}
-	res.Commit, err = n.getCommit(h)
+
+	if ci.Header == nil || ci.Commit == nil {
+		return res, errors.Errorf("Missing commit info for block %d", h)
+	}
+
+	// let's make sure the info makes sense
+	res.Header = ci.Header
+	res.Commit = ci.Commit
 	return
 }
 
-// get header returns the header info along with the most recent height
-func (n Node) getHeader(h int) (*ttypes.BlockMeta, int, error) {
-	bis, err := n.client.BlockchainInfo(h, h)
-	if err != nil {
-		return nil, 0, err
-	}
-	if bis.LastHeight < h {
-		return nil, 0, errors.Errorf("Last height %d less than queries height %d", bis.LastHeight, h)
-	}
-	if len(bis.BlockMetas) != 1 {
-		return nil, bis.LastHeight, errors.Errorf("Cannot get header for height %d", h)
-	}
-	// this is the header we actually want
-	return bis.BlockMetas[0], bis.LastHeight, nil
-}
-
-// getCommit returns all the commit that proves the given
-// block was approved by the validators.
-//
-// The current API requires we query block at h+1 to see the votes
-// for block h
-func (n Node) getCommit(h int) (*ttypes.Commit, error) {
-	b, err := n.client.Block(h + 1)
-	if err != nil {
-		return nil, err
-	}
-	if b.Block == nil || b.Block.LastCommit == nil {
-		return nil, errors.Errorf("No commit data for block %d", h+1)
-	}
-	commit := b.Block.LastCommit
-	return commit, nil
-}
-
 func validateCommitInfo(chainID string, ci commitInfo) (lc.TmSignedHeader, error) {
-	// now we validate it all and put it into our format for the
-	res, err := validateHeaderInfo(ci.Header)
+	res := parseHeaderInfo(ci.Header)
+	err := ci.Commit.ValidateBasic()
 	if err != nil {
 		return res, err
 	}
-	res.LastHeight = uint64(ci.MaxHeight)
-	err = ci.Commit.ValidateBasic()
+
+	// make sure these votes actually tie to this header
+	err = matchHeaderCommit(res, ci.Commit)
 	if err != nil {
 		return res, err
 	}
-	res.Votes, err = processVotes(chainID, ci.Commit.Precommits, res.Height(), res.Hash)
+
+	res.Votes, err = processVotes(chainID, ci.Commit)
 	return res, err
 }
 
-func validateHeaderInfo(header *ttypes.BlockMeta) (lc.TmSignedHeader, error) {
-	var res lc.TmSignedHeader
-	head := header.Header
-
-	// make sure the hash matches
-	hash := header.BlockID.Hash
-	calc := head.Hash()
-	if !bytes.Equal(hash, calc) {
-		return res,
-			errors.Errorf("Calculated header hash: %X, claimed header hash: %X",
-				calc, hash)
-	}
-
-	// this header looks good, transform the data!
-	res = lc.TmSignedHeader{
-		Hash: hash,
+func parseHeaderInfo(head *ttypes.Header) lc.TmSignedHeader {
+	res := lc.TmSignedHeader{
+		Hash: head.Hash(),
 		Header: lc.TmHeader{
 			ChainID:        head.ChainID,
 			Height:         uint64(head.Height),
@@ -358,7 +320,24 @@ func validateHeaderInfo(header *ttypes.BlockMeta) (lc.TmSignedHeader, error) {
 			AppHash:        head.AppHash,
 		},
 	}
-	return res, nil
+	return res
+}
+
+// make sure the commit votes actually match the header
+func matchHeaderCommit(header lc.TmSignedHeader, commit *ttypes.Commit) error {
+	hash := commit.BlockID.Hash
+	if !bytes.Equal(hash, header.Hash) {
+		return errors.Errorf("Calculated header hash: %X, signed header hash: %X",
+			header.Hash, hash)
+	}
+
+	height := commit.Precommits[0].Height
+	if uint64(height) != header.Height() {
+		return errors.Errorf("Got headers for height %d, but votes for height %d",
+			header.Height(), height)
+	}
+
+	return nil
 }
 
 // processVotes is very similar to tendermint/types/validator_set.go:VerifyCommit
@@ -370,14 +349,10 @@ func validateHeaderInfo(header *ttypes.BlockMeta) (lc.TmSignedHeader, error) {
 // also note that `err = b.Block.LastCommit.ValidateBasic()`
 // in validateCommitInfo does a number of checks already,
 // like they are all for the same block
-func processVotes(chainID string, votes []*ttypes.Vote, height uint64, blockHash []byte) (lc.TmVotes, error) {
+func processVotes(chainID string, commit *ttypes.Commit) (lc.TmVotes, error) {
+	blockID := commit.BlockID
+	votes := commit.Precommits
 	res := make([]lc.TmVote, len(votes))
-	h := int(height)
-
-	// verify height and blockhash for the first vote (the rest are the same)
-	if votes[0].Height != h {
-		return nil, errors.New("Votes have incorrect height")
-	}
 
 	i := 0
 	for _, v := range votes {
@@ -385,9 +360,9 @@ func processVotes(chainID string, votes []*ttypes.Vote, height uint64, blockHash
 		if v == nil {
 			continue
 		}
-		if !bytes.Equal(blockHash, v.BlockID.Hash) {
-			// Precommits has all votes.  but we can skip those for other blocks
-			// FIXME: do we need to compare with the full BlockID???
+		if !blockID.Equals(v.BlockID) {
+			// Precommits has all votes, even those that do not support
+			// the desired header, but we can skip those for other blocks
 			continue
 		}
 		sign := ttypes.SignBytes(chainID, v)
