@@ -11,7 +11,7 @@ import (
 type SendTx struct {
 	chainID string
 	signers []crypto.PubKey
-	tx      *bc.SendTx
+	Tx      *bc.SendTx
 }
 
 func (s *SendTx) assertSignable() lc.Signable {
@@ -22,14 +22,14 @@ func (t BasecoinTx) readSendTx(data []byte) (lc.Signable, error) {
 	tx, err := parseSendTx(data)
 	send := SendTx{
 		chainID: t.chainID,
-		tx:      tx,
+		Tx:      tx,
 	}
 	return &send, err
 }
 
 // SignBytes returned the unsigned bytes, needing a signature
 func (s *SendTx) SignBytes() []byte {
-	return s.tx.SignBytes(s.chainID)
+	return s.Tx.SignBytes(s.chainID)
 }
 
 // Sign will add a signature and pubkey.
@@ -38,7 +38,7 @@ func (s *SendTx) SignBytes() []byte {
 // Returns error if called with invalid data or too many times
 func (s *SendTx) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	addr := pubkey.Address()
-	set := s.tx.SetSignature(addr, sig)
+	set := s.Tx.SetSignature(addr, sig)
 	if !set {
 		return errors.Errorf("Cannot add signature for address %X", addr)
 	}
@@ -66,6 +66,6 @@ func (s *SendTx) TxBytes() ([]byte, error) {
 	// How many times have I lost an hour over this trick?!
 	txBytes := wire.BinaryBytes(struct {
 		bc.Tx `json:"unwrap"`
-	}{s.tx})
+	}{s.Tx})
 	return txBytes, nil
 }

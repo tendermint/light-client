@@ -11,7 +11,7 @@ import (
 type AppTx struct {
 	chainID string
 	signer  crypto.PubKey
-	tx      *bc.AppTx
+	Tx      *bc.AppTx
 }
 
 func (a *AppTx) assertSignable() lc.Signable {
@@ -22,14 +22,14 @@ func (t BasecoinTx) readAppTx(data []byte) (lc.Signable, error) {
 	tx, err := parseAppTx(data, t.appData)
 	app := AppTx{
 		chainID: t.chainID,
-		tx:      tx,
+		Tx:      tx,
 	}
 	return &app, err
 }
 
 // SignBytes returned the unsigned bytes, needing a signature
 func (a *AppTx) SignBytes() []byte {
-	return a.tx.SignBytes(a.chainID)
+	return a.Tx.SignBytes(a.chainID)
 }
 
 // Sign will add a signature and pubkey.
@@ -40,7 +40,7 @@ func (a *AppTx) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	if a.signer != nil {
 		return errors.New("AppTx already signed")
 	}
-	a.tx.SetSignature(sig)
+	a.Tx.SetSignature(sig)
 	a.signer = pubkey
 	return nil
 }
@@ -65,6 +65,6 @@ func (a *AppTx) TxBytes() ([]byte, error) {
 	// How many times have I lost an hour over this trick?!
 	txBytes := wire.BinaryBytes(struct {
 		bc.Tx `json:"unwrap"`
-	}{a.tx})
+	}{a.Tx})
 	return txBytes, nil
 }

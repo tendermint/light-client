@@ -9,8 +9,10 @@ install: get_vendor_deps
 build:
 	go build ./cmd/...
 
+# note that we start tendermint nodes in rpc/tests and extensions/basecoin
+# we cannot currently run these tests in parallel
 test: build
-	go test `glide novendor`
+	go test -p 1 `glide novendor`
 
 # run list_pkg manually to make DOC_PKGS -> Makefile won that fight
 list_pkg:

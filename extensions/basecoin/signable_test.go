@@ -1,4 +1,4 @@
-package basecoin
+package basecoin_test
 
 import (
 	"encoding/hex"
@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	bc "github.com/tendermint/basecoin/types"
 	crypto "github.com/tendermint/go-crypto"
+	"github.com/tendermint/light-client/extensions/basecoin"
 )
 
 func TestSendTxJSON(t *testing.T) {
@@ -33,13 +34,13 @@ func TestSendTxJSON(t *testing.T) {
       }]
     }
   }`)
-	sr := NewBasecoinTx("foo")
+	sr := basecoin.NewBasecoinTx("foo")
 	sig, err := sr.ReadSignable(raw)
 	require.Nil(err)
-	stx, ok := sig.(*SendTx)
+	stx, ok := sig.(*basecoin.SendTx)
 	require.True(ok)
 
-	tx := stx.tx
+	tx := stx.Tx
 	require.NotNil(tx)
 	assert.EqualValues(22, tx.Gas)
 	assert.Equal("ETH", tx.Fee.Denom)
@@ -108,16 +109,16 @@ func TestAppTxJSON(t *testing.T) {
       }
     }
   }`)
-	sr := NewBasecoinTx("foo")
+	sr := basecoin.NewBasecoinTx("foo")
 	// note: we must register all tx types we wish to support
 	sr.RegisterParser("demo", "create", demoParse)
 
 	sig, err := sr.ReadSignable(raw)
 	require.Nil(err)
-	atx, ok := sig.(*AppTx)
+	atx, ok := sig.(*basecoin.AppTx)
 	require.True(ok)
 
-	tx := atx.tx
+	tx := atx.Tx
 	require.NotNil(tx)
 	assert.EqualValues(78, tx.Gas)
 	assert.Equal("ATOM", tx.Fee.Denom)

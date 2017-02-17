@@ -15,7 +15,6 @@ import (
 
 	abci "github.com/tendermint/abci/types"
 	cfg "github.com/tendermint/go-config"
-	meapp "github.com/tendermint/merkleeyes/app"
 	"github.com/tendermint/tendermint/config/tendermint_test"
 	nm "github.com/tendermint/tendermint/node"
 	"github.com/tendermint/tendermint/proxy"
@@ -53,19 +52,17 @@ func GetNode() rpc.Node {
 
 // StartTendermint starts a test tendermint server in a go routine and returns when it is initialized
 // TODO: can one pass an Application in????
-func StartTendermint() {
+func StartTendermint(app abci.Application) *nm.Node {
 	// start a node
 	fmt.Println("Starting Tendermint...")
-	ready := make(chan struct{})
 
-	app := meapp.NewMerkleEyesApp("", 100)
-	go NewTendermint(ready, app)
-	<-ready
+	node := NewTendermint(app)
 	fmt.Println("Tendermint running!")
+	return node
 }
 
 // NewTendermint creates a new tendermint server and sleeps forever
-func NewTendermint(ready chan struct{}, app abci.Application) {
+func NewTendermint(app abci.Application) *nm.Node {
 	// Create & start node
 	config := GetConfig()
 	privValidatorFile := config.GetString("priv_validator_file")
@@ -75,9 +72,5 @@ func NewTendermint(ready chan struct{}, app abci.Application) {
 
 	// node.Start now does everything including the RPC server
 	node.Start()
-	ready <- struct{}{}
-
-	// Sleep forever
-	ch := make(chan struct{})
-	<-ch
+	return node
 }
