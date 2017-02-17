@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/tendermint/basecoin/app"
+	"github.com/tendermint/basecoin/plugins/counter"
 	"github.com/tendermint/light-client/rpc/tests"
 	eyes "github.com/tendermint/merkleeyes/client"
 )
@@ -33,7 +34,10 @@ func TestMain(m *testing.M) {
 	cli := eyes.NewLocalClient("", 100)
 	bcapp = app.NewBasecoin(cli)
 	bcapp.SetOption("base/chainID", ChainID)
-	// TODO: add plugins?
+
+	// add counter plugins
+	cntr := counter.New()
+	bcapp.RegisterPlugin(cntr)
 
 	node := tests.StartTendermint(bcapp)
 	code := m.Run()
