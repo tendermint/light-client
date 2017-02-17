@@ -12,6 +12,7 @@ import (
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/cryptostore"
 	"github.com/tendermint/light-client/extensions/basecoin"
+	"github.com/tendermint/light-client/extensions/basecoin/counter"
 	"github.com/tendermint/light-client/rpc/tests"
 	"github.com/tendermint/light-client/storage/memstorage"
 )
@@ -118,6 +119,7 @@ func TestBasecoinSendTx(t *testing.T) {
 
 	// now, let's generate a tx
 	sr := basecoin.NewBasecoinTx(ChainID)
+	sr.RegisterParser("counter", "counter", counter.ReadCounterTx)
 	raw := fmt.Sprintf(`{
     "type": "sendtx",
     "data": {
@@ -173,4 +175,93 @@ func TestBasecoinSendTx(t *testing.T) {
 	require.NotNil(q.Value)
 	qav = q.Value.(basecoin.Account).Value
 	assert.Equal(bc.Coins{{Denom: "ATOM", Amount: 213}}, qav.Balance)
+}
+
+// TestBasecoinAppTx executes an AppTx on the counter app
+func TestBasecoinAppTx(t *testing.T) {
+	assert, require := assert.New(t), require.New(t)
+	// node must parse basecoin values
+	n := tests.GetNode()
+	val := basecoin.BasecoinValues{}
+	// TODO: register plugin parser
+	n.ValueReader = val
+
+	// register the plugin for the sender
+	sr := basecoin.NewBasecoinTx(ChainID)
+	sr.RegisterParser("counter", "counter", counter.ReadCounterTx)
+
+	// store the keys somewhere
+	keys := cryptostore.New(
+		cryptostore.GenEd25519,
+		cryptostore.SecretBox,
+		memstorage.New(),
+	)
+	name, pass := "connie", "a-count-ant"
+	k := makeUser(t, keys, name, pass)
+	addr := k.PubKey.Address()
+
+	// set some data with SetOption
+	acct := bc.Account{
+		PubKey:  k.PubKey,
+		Balance: bc.Coins{{Denom: "gold", Amount: 5432}},
+	}
+	setAcct(t, bcapp, &acct)
+
+	// now, let's generate a tx
+	raw := fmt.Sprintf(`{
+    "type": "apptx",
+    "data": {
+      "name": "counter",
+      "gas": 22,
+      "fee": {
+        "denom": "gold",
+        "amount": 2
+      },
+      "input": {
+        "address": "%X",
+        "coins": [{
+          "denom": "gold",
+          "amount": 20
+        }],
+        "sequence": 1,
+        "pub_key": "%X"
+      },
+      "type": "counter",
+      "appdata": {
+        "valid": true,
+        "fee": [{
+          "denom": "gold",
+          "amount": 5
+        }]
+      }
+    }
+  }`, addr, k.PubKey.Bytes())
+	sig, err := sr.ReadSignable([]byte(raw))
+	require.Nil(err, "%+v", err)
+	_, ok := sig.(*basecoin.AppTx)
+	require.True(ok)
+
+	// sign and send it
+	keys.Sign(name, pass, sig)
+	tx, err := sig.TxBytes()
+	require.Nil(err)
+	bres, err := n.Broadcast(tx)
+	require.Nil(err, "%+v", err)
+	require.True(bres.IsOk(), "%#v", bres)
+
+	// wait for one more block...
+	q, err := n.Query("/account", addr)
+	require.Nil(err)
+	n.WaitForHeight(q.Height + 1)
+
+	// and the both fees were deducted
+	q, err = n.Query("/account", addr)
+	require.Nil(err)
+	require.NotNil(q.Value)
+	qav := q.Value.(basecoin.Account).Value
+	// TODO: fix counter, currently we lose all input, even if not
+	// used up by fees
+	assert.Equal(bc.Coins{{Denom: "gold", Amount: 5412}}, qav.Balance)
+
+	// TODO: query counter state!
 }
