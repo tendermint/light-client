@@ -42,6 +42,18 @@ func TestAppCalls(t *testing.T) {
 	appHash := block.BlockMeta.Header.AppHash
 	assert.True(len(appHash) > 0)
 
+	// and get the corresponding commit with the same apphash
+	commit, err := c.Commit(3)
+	assert.Nil(err) // now it's good :)
+	cappHash := commit.Header.AppHash
+	assert.Equal(appHash, cappHash)
+	assert.NotNil(commit.Commit)
+
+	// compare the commits (note Commit(2) has commit from Block(3))
+	commit2, err := c.Commit(2)
+	assert.Nil(err) // now it's good :)
+	assert.Equal(block.Block.LastCommit, commit2.Commit)
+
 	// and we got a proof that works!
 	pres, err := c.ABCIQuery("/key", k, true)
 	if assert.Nil(err) && assert.True(pres.Response.Code.IsOK()) {

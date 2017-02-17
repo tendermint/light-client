@@ -119,6 +119,15 @@ func (c *HTTPClient) Block(height int) (*ctypes.ResultBlock, error) {
 	return (*tmResult).(*ctypes.ResultBlock), nil
 }
 
+func (c *HTTPClient) Commit(height int) (*ctypes.ResultCommit, error) {
+	tmResult := new(ctypes.TMResult)
+	_, err := c.rpc.Call("commit", []interface{}{height}, tmResult)
+	if err != nil {
+		return nil, errors.Wrap(err, "Commit")
+	}
+	return (*tmResult).(*ctypes.ResultCommit), nil
+}
+
 func (c *HTTPClient) Validators() (*ctypes.ResultValidators, error) {
 	tmResult := new(ctypes.TMResult)
 	_, err := c.rpc.Call("validators", nil, tmResult)
