@@ -11,19 +11,35 @@ It currently only spins up one node, it would be interesting to expand it
 to multiple nodes to see the real effects of validating partially signed
 blocks.
 */
-package tests
+package basecoin_test
 
 import (
 	"os"
 	"testing"
 
-	meapp "github.com/tendermint/merkleeyes/app"
+	"github.com/tendermint/basecoin/app"
+	"github.com/tendermint/basecoin/plugins/counter"
+	"github.com/tendermint/light-client/rpc/tests"
+	eyes "github.com/tendermint/merkleeyes/client"
 )
 
+// bcapp can be used in test cases directly,
+// to SetOption as needed for preparing data
+var bcapp *app.Basecoin
+
+const ChainID = "lc-test-chain-id"
+
 func TestMain(m *testing.M) {
-	// start a tendermint node (and merkleeyes) in the background to test against
-	app := meapp.NewMerkleEyesApp("", 100)
-	node := StartTendermint(app)
+	// start a tendermint node (and basecoin) in the background to test against
+	cli := eyes.NewLocalClient("", 100)
+	bcapp = app.NewBasecoin(cli)
+	bcapp.SetOption("base/chainID", ChainID)
+
+	// add counter plugins
+	cntr := counter.New()
+	bcapp.RegisterPlugin(cntr)
+
+	node := tests.StartTendermint(bcapp)
 	code := m.Run()
 
 	// and shut down proper at the end

@@ -3,16 +3,17 @@ package server
 import (
 	"net/http"
 
-	"github.com/tendermint/light-client/keystore"
+	"github.com/tendermint/light-client/cryptostore"
+	"github.com/tendermint/light-client/mock"
 )
 
 type KeyServer struct {
-	store keystore.Store
+	manager cryptostore.Manager
 }
 
-func NewKeyStore(keydir string) *KeyServer {
+func New(manager cryptostore.Manager) *KeyServer {
 	return &KeyServer{
-		store: keystore.New(keydir),
+		manager: manager,
 	}
 }
 
@@ -24,7 +25,7 @@ func (k *KeyServer) GenerateKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = k.store.CreateKey(req.Name, req.Passphrase)
+	err = k.manager.Create(req.Name, req.Passphrase)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -35,42 +36,25 @@ func (k *KeyServer) GenerateKey(w http.ResponseWriter, r *http.Request) {
 }
 
 func (k *KeyServer) GenerateSignature(w http.ResponseWriter, r *http.Request) {
-	req := SignMessageRequest{}
+	req := GenerateSignatureRequest{}
 	err := readRequest(r, &req)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	sig, pubkey, err := k.store.GenerateSignature(req.Data, req.KeyName, req.Passphrase)
+	tx := mock.NewSig(req.Data)
+	err = k.manager.Sign(req.KeyName, req.Passphrase, tx)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
+	pk := tx.PubKey
 	resp := GenerateSignatureResponse{
-		Signature: sig,
-		PubKey:    pubkey,
-	}
-	writeSuccess(w, &resp)
-}
-
-func (k *KeyServer) SignMessage(w http.ResponseWriter, r *http.Request) {
-	req := SignMessageRequest{}
-	err := readRequest(r, &req)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-
-	signed, err := k.store.SignMessage(req.Data, req.KeyName, req.Passphrase)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-
-	resp := SignMessageResponse{
-		Signed: signed,
+		Signature: tx.Sig.Bytes(),
+		PubKey:    pk.Bytes(),
+		Address:   pk.Address(),
 	}
 	writeSuccess(w, &resp)
 }
@@ -91,14 +75,5 @@ type GenerateSignatureRequest struct {
 type GenerateSignatureResponse struct {
 	Signature []byte `json:"signature"`
 	PubKey    []byte `json:"pubkey"`
-}
-
-type SignMessageRequest struct {
-	KeyName    string `json:"name"`
-	Passphrase string `json:"password"`
-	Data       []byte `json:"data"`
-}
-
-type SignMessageResponse struct {
-	Signed []byte `json:"signed"`
+	Address   []byte `json:"address"`
 }

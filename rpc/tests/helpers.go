@@ -10,11 +10,15 @@ import (
 	"fmt"
 
 	logger "github.com/tendermint/go-logger"
+	"github.com/tendermint/light-client/mock"
 	"github.com/tendermint/light-client/rpc"
 
+	abci "github.com/tendermint/abci/types"
 	cfg "github.com/tendermint/go-config"
 	"github.com/tendermint/tendermint/config/tendermint_test"
 	nm "github.com/tendermint/tendermint/node"
+	"github.com/tendermint/tendermint/proxy"
+	"github.com/tendermint/tendermint/types"
 )
 
 var (
@@ -33,31 +37,40 @@ func GetConfig() cfg.Config {
 	return config
 }
 
-// GetClient gets a rpc client pointing to the test node
+// GetClient gets a rpc client pointing to the test tendermint rpc
 func GetClient() *rpc.HTTPClient {
 	rpcAddr := GetConfig().GetString("rpc_laddr")
-	return rpc.New(rpcAddr, "/websocket")
+	return rpc.NewClient(rpcAddr, "/websocket")
 }
 
-// StartNode starts a test node in a go routine and returns when it is initialized
+// GetNodeClient gets a Node object pointing to this test tendermint rpc
+func GetNode() rpc.Node {
+	rpcAddr := GetConfig().GetString("rpc_laddr")
+	chainID := GetConfig().GetString("chain_id")
+	return rpc.NewNode(rpcAddr, chainID, mock.ValueReader())
+}
+
+// StartTendermint starts a test tendermint server in a go routine and returns when it is initialized
 // TODO: can one pass an Application in????
-func StartNode() {
+func StartTendermint(app abci.Application) *nm.Node {
 	// start a node
-	fmt.Println("StartNode")
-	ready := make(chan struct{})
-	go NewNode(ready)
-	<-ready
+	fmt.Println("Starting Tendermint...")
+
+	node := NewTendermint(app)
+	fmt.Println("Tendermint running!")
+	return node
 }
 
-// NewNode creates a new node and sleeps forever
-func NewNode(ready chan struct{}) {
+// NewTendermint creates a new tendermint server and sleeps forever
+func NewTendermint(app abci.Application) *nm.Node {
 	// Create & start node
-	node := nm.NewNodeDefault(GetConfig())
+	config := GetConfig()
+	privValidatorFile := config.GetString("priv_validator_file")
+	privValidator := types.LoadOrGenPrivValidator(privValidatorFile)
+	papp := proxy.NewLocalClientCreator(app)
+	node := nm.NewNode(config, privValidator, papp)
+
 	// node.Start now does everything including the RPC server
 	node.Start()
-	ready <- struct{}{}
-
-	// Sleep forever
-	ch := make(chan struct{})
-	<-ch
+	return node
 }
