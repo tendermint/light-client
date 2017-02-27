@@ -6,6 +6,14 @@ Basecoin comes with a [nice simple cli](https://github.com/tendermint/basecoin-e
 
 If you're still with me, then you should take a deeper look at this repo.  The purpose here is to build a helper library to perform most common actions one would want to do with a client, make it extensible to easily support custom transaction and data types, and provide bindings to other languages.
 
+## Important Note
+
+The current code will work with tendermint 0.9 and basecoin 0.2.
+
+However, I realized this was much more difficult than it needed to be, and ended up integrating an even more powerful rpc client in tendermint itself, as well as a more flexible json un/marshaler through a new repository `go-data`, along with changes to `go-crypto` and `basecoin` to support it.
+
+So, feel free to use and read this code, but be aware that I will do a major rewrite to make use of those other libraries, so don't code to much on the current API.
+
 ### More reasons
 
 If I develop a desktop/mobile client I don't want either:
