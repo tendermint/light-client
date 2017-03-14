@@ -1,8 +1,8 @@
 package tx
 
 import (
+	keys "github.com/tendermint/go-keys"
 	wire "github.com/tendermint/go-wire"
-	lc "github.com/tendermint/light-client"
 )
 
 const (
@@ -10,7 +10,7 @@ const (
 	typeMultiSig = byte(0x02)
 )
 
-type wrapper struct{ lc.Signable }
+type wrapper struct{ keys.Signable }
 
 func init() {
 	wire.RegisterInterface(
@@ -20,7 +20,7 @@ func init() {
 	)
 }
 
-func ReadSignableBinary(data []byte) (lc.Signable, error) {
+func ReadSignableBinary(data []byte) (keys.Signable, error) {
 	res := wrapper{}
 	err := wire.ReadBinaryBytes(data, &res)
 	return res.Signable, err

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	keys "github.com/tendermint/go-keys"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proxy/types"
 	"github.com/tendermint/light-client/util"
@@ -14,7 +15,7 @@ type TxSigner struct {
 	util.Poster
 }
 
-func NewTxSigner(server lc.Broadcaster, signer lc.Signer,
+func NewTxSigner(server lc.Broadcaster, signer keys.Signer,
 	reader lc.SignableReader) TxSigner {
 
 	return TxSigner{

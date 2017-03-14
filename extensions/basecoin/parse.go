@@ -5,7 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	bc "github.com/tendermint/basecoin/types"
-	"github.com/tendermint/light-client/tx"
+	crypto "github.com/tendermint/go-crypto"
+	data "github.com/tendermint/go-data"
 )
 
 /**** TODO: all this ugliness must go away when we refactor json parsing ***/
@@ -32,10 +33,10 @@ func parseAppTx(data []byte, appData AppDataReader) (*bc.AppTx, error) {
 
 // WARNING/NOTE: does not handle serializing sigs, as we don't take them over json
 type txInput struct {
-	Address  tx.HexData    `json:"address"`  // Hash of the PubKey
-	Coins    bc.Coins      `json:"coins"`    //
-	Sequence int           `json:"sequence"` // Must be 1 greater than the last committed TxInput
-	PubKey   tx.JSONPubKey `json:"pub_key"`  // Is present iff Sequence == 1
+	Address  data.Bytes     `json:"address"`  // Hash of the PubKey
+	Coins    bc.Coins       `json:"coins"`    //
+	Sequence int            `json:"sequence"` // Must be 1 greater than the last committed TxInput
+	PubKey   crypto.PubKeyS `json:"pub_key"`  // Is present iff Sequence == 1
 }
 
 func (t txInput) toBasecoin() bc.TxInput {
@@ -43,12 +44,12 @@ func (t txInput) toBasecoin() bc.TxInput {
 		Address:  t.Address,
 		Coins:    t.Coins,
 		Sequence: t.Sequence,
-		PubKey:   t.PubKey.PubKey,
+		PubKey:   t.PubKey,
 	}
 }
 
 type txOutput struct {
-	Address tx.HexData `json:"address"` // Hash of the PubKey
+	Address data.Bytes `json:"address"` // Hash of the PubKey
 	Coins   bc.Coins   `json:"coins"`   //
 }
 

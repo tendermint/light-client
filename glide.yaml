@@ -1,33 +1,43 @@
 package: github.com/tendermint/light-client
 import:
+- package: github.com/tendermint/go-crypto
+  version: master
+- package: github.com/tendermint/go-data
+  version: master
 - package: github.com/tendermint/go-config
-- package: github.com/tendermint/go-p2p
+  version: master
 - package: github.com/tendermint/go-rpc
+  version: master
   subpackages:
   - client
+- package: github.com/tendermint/go-keys
+  version: master
+  subpackages:
+  - cryptostore
+  - server
+  - storage/filestorage
+  - storage/memstorage
 - package: github.com/tendermint/merkleeyes
-  version: develop
+  version: master
   subpackages:
   - app
 - package: github.com/tendermint/abci
-  version: develop
+  version: master
   subpackages:
   - client
   - example/dummy
   - types
 - package: github.com/tendermint/basecoin
-  version: develop
+  version: master
   subpackages:
   - types
 - package: github.com/tendermint/tendermint
-  version: develop
+  version: ^0.9.0
   subpackages:
   - config/tendermint_test
   - node
   - rpc/core/types
   - types
-- package: gopkg.in/alecthomas/kingpin.v2
-  version: ^2.2.3
 - package: github.com/gorilla/mux
   version: ^1.2.0
 - package: github.com/gorilla/handlers

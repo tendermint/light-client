@@ -3,8 +3,8 @@ package tx
 import (
 	"github.com/pkg/errors"
 	crypto "github.com/tendermint/go-crypto"
+	keys "github.com/tendermint/go-keys"
 	wire "github.com/tendermint/go-wire"
-	lightclient "github.com/tendermint/light-client"
 )
 
 // MultiSig lets us wrap arbitrary data with a go-crypto signature
@@ -32,7 +32,7 @@ func LoadMulti(serialized []byte) (*MultiSig, error) {
 }
 
 // assertSignable is just to make sure we stay in sync with the Signable interface
-func (s *MultiSig) assertSignable() lightclient.Signable {
+func (s *MultiSig) assertSignable() keys.Signable {
 	return s
 }
 

@@ -26,7 +26,10 @@ func TestSendTxJSON(t *testing.T) {
         "address": "4d8908785ec867139ca02e71a717c01fa506b96a",
         "coins": [{"denom": "ETH", "amount": 21}],
         "sequence": 1,
-        "pub_key": "01d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"
+        "pub_key": {
+          "type": "ed25519",
+          "data": "d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"
+        }
       }],
       "outputs": [{
         "address": "9f31a3ac6b1468402aac5593ae9e82a041457f5f",
@@ -63,12 +66,12 @@ func validateInput(t *testing.T, in bc.TxInput) {
 	require := require.New(t)
 	addr, err := hex.DecodeString("4d8908785ec867139ca02e71a717c01fa506b96a")
 	require.Nil(err)
-	assert.Equal(addr, in.Address)
+	assert.EqualValues(addr, in.Address)
 	assert.Equal(1, len(in.Coins))
 	assert.EqualValues(21, in.Coins[0].Amount)
 	require.NotNil(in.PubKey)
 	// ensure type byte reflected proper
-	pk, ok := in.PubKey.(crypto.PubKeyEd25519)
+	pk, ok := in.PubKey.PubKey.(crypto.PubKeyEd25519)
 	assert.True(ok)
 	// check the first byte - d7 - decoded proper
 	assert.Equal(pk[0], byte(215))
@@ -100,7 +103,10 @@ func TestAppTxJSON(t *testing.T) {
         "address": "4d8908785ec867139ca02e71a717c01fa506b96a",
         "coins": [{"denom": "ATOM", "amount": 21}],
         "sequence": 1,
-        "pub_key": "01d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"
+        "pub_key": {
+          "type": "ed25519",
+          "data": "d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"
+        }
       },
       "type": "create",
       "appdata": {
@@ -114,7 +120,7 @@ func TestAppTxJSON(t *testing.T) {
 	sr.RegisterParser("demo", "create", demoParse)
 
 	sig, err := sr.ReadSignable(raw)
-	require.Nil(err)
+	require.Nil(err, "%+v", err)
 	atx, ok := sig.(*basecoin.AppTx)
 	require.True(ok)
 

@@ -98,11 +98,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/tendermint/light-client/cryptostore"
+	"github.com/tendermint/go-keys/cryptostore"
+	"github.com/tendermint/go-keys/storage/filestorage"
 	"github.com/tendermint/light-client/extensions/basecoin"
 	"github.com/tendermint/light-client/proxy"
 	"github.com/tendermint/light-client/rpc"
-	"github.com/tendermint/light-client/storage/filestorage"
 )
 
 var (
@@ -137,7 +137,6 @@ func main() {
 	// set up all the pieces based on config
 	r := mux.NewRouter()
 	cstore := cryptostore.New(
-		cryptostore.GenEd25519,
 		cryptostore.SecretBox,
 		filestorage.New(*keydir),
 	)

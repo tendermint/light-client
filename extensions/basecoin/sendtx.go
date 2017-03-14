@@ -4,8 +4,8 @@ import (
 	"github.com/pkg/errors"
 	bc "github.com/tendermint/basecoin/types"
 	crypto "github.com/tendermint/go-crypto"
+	keys "github.com/tendermint/go-keys"
 	wire "github.com/tendermint/go-wire"
-	lc "github.com/tendermint/light-client"
 )
 
 type SendTx struct {
@@ -14,11 +14,11 @@ type SendTx struct {
 	Tx      *bc.SendTx
 }
 
-func (s *SendTx) assertSignable() lc.Signable {
+func (s *SendTx) assertSignable() keys.Signable {
 	return s
 }
 
-func (t BasecoinTx) readSendTx(data []byte) (lc.Signable, error) {
+func (t BasecoinTx) readSendTx(data []byte) (keys.Signable, error) {
 	tx, err := parseSendTx(data)
 	send := SendTx{
 		chainID: t.chainID,

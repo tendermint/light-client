@@ -1,6 +1,7 @@
 package mock
 
 import (
+	keys "github.com/tendermint/go-keys"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
 )
@@ -10,7 +11,7 @@ const (
 	typeMultiSig = byte(0x82)
 )
 
-type wrapper struct{ lc.Signable }
+type wrapper struct{ keys.Signable }
 
 func init() {
 	wire.RegisterInterface(
@@ -29,7 +30,7 @@ func Reader() lc.SignableReader {
 	return reader{}
 }
 
-func (r reader) ReadSignable(data []byte) (lc.Signable, error) {
+func (r reader) ReadSignable(data []byte) (keys.Signable, error) {
 	res := wrapper{}
 	err := wire.ReadBinaryBytes(data, &res)
 	return res.Signable, err

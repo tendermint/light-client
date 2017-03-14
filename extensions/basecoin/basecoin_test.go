@@ -9,26 +9,27 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/basecoin/app"
 	bc "github.com/tendermint/basecoin/types"
-	wire "github.com/tendermint/go-wire"
-	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/cryptostore"
+	data "github.com/tendermint/go-data"
+	keys "github.com/tendermint/go-keys"
+	"github.com/tendermint/go-keys/cryptostore"
+	"github.com/tendermint/go-keys/storage/memstorage"
 	"github.com/tendermint/light-client/extensions/basecoin"
 	"github.com/tendermint/light-client/extensions/basecoin/counter"
 	"github.com/tendermint/light-client/rpc/tests"
-	"github.com/tendermint/light-client/storage/memstorage"
 )
 
-func makeUser(t *testing.T, keys cryptostore.Manager, name, pass string) lc.KeyInfo {
-	err := keys.Create(name, pass)
-	require.Nil(t, err)
-	k, err := keys.Get(name)
+const DefaultAlgo = "ed25519"
+
+func makeUser(t *testing.T, keys cryptostore.Manager, name, pass string) keys.Info {
+	k, err := keys.Create(name, pass, DefaultAlgo)
 	require.Nil(t, err)
 	return k
 }
 
 func setAcct(t *testing.T, bcapp *app.Basecoin, acct *bc.Account) {
-	acctjson := string(wire.JSONBytes(acct))
-	log := bcapp.SetOption("base/account", acctjson)
+	acctjson, err := data.ToJSON(acct)
+	require.Nil(t, err, "%+v", err)
+	log := bcapp.SetOption("base/account", string(acctjson))
 	require.Equal(t, "Success", log)
 }
 
@@ -42,7 +43,6 @@ func TestBasecoinSetOption(t *testing.T) {
 
 	// store the keys somewhere
 	keys := cryptostore.New(
-		cryptostore.GenEd25519,
 		cryptostore.SecretBox,
 		memstorage.New(),
 	)
@@ -93,7 +93,6 @@ func TestBasecoinSendTx(t *testing.T) {
 
 	// store the keys somewhere
 	keys := cryptostore.New(
-		cryptostore.GenEd25519,
 		cryptostore.SecretBox,
 		memstorage.New(),
 	)
@@ -121,6 +120,8 @@ func TestBasecoinSendTx(t *testing.T) {
 	// now, let's generate a tx
 	sr := basecoin.NewBasecoinTx(ChainID)
 	sr.RegisterParser("counter", "counter", counter.ReadCounterTx)
+	key_data, err := data.ToJSON(k1.PubKey)
+	require.Nil(err)
 	raw := fmt.Sprintf(`{
     "type": "sendtx",
     "data": {
@@ -130,14 +131,14 @@ func TestBasecoinSendTx(t *testing.T) {
         "address": "%X",
         "coins": [{"denom": "ATOM", "amount": 21}],
         "sequence": 1,
-        "pub_key": "%X"
+        "pub_key": %s
       }],
       "outputs": [{
         "address": "%X",
         "coins": [{"denom": "ATOM", "amount": 20}]
       }]
     }
-  }`, addr1, k1.PubKey.Bytes(), addr2)
+  }`, addr1, key_data, addr2)
 	sig, err := sr.ReadSignable([]byte(raw))
 	require.Nil(err)
 	_, ok := sig.(*basecoin.SendTx)
@@ -194,7 +195,6 @@ func TestBasecoinAppTx(t *testing.T) {
 
 	// store the keys somewhere
 	keys := cryptostore.New(
-		cryptostore.GenEd25519,
 		cryptostore.SecretBox,
 		memstorage.New(),
 	)
@@ -209,6 +209,8 @@ func TestBasecoinAppTx(t *testing.T) {
 	}
 	setAcct(t, bcapp, &acct)
 
+	key_data, err := data.ToJSON(k.PubKey)
+	require.Nil(err)
 	// now, let's generate a tx
 	raw := fmt.Sprintf(`{
     "type": "apptx",
@@ -226,7 +228,7 @@ func TestBasecoinAppTx(t *testing.T) {
           "amount": 20
         }],
         "sequence": 1,
-        "pub_key": "%X"
+        "pub_key": %s
       },
       "type": "counter",
       "appdata": {
@@ -237,7 +239,7 @@ func TestBasecoinAppTx(t *testing.T) {
         }]
       }
     }
-  }`, addr, k.PubKey.Bytes())
+  }`, addr, key_data)
 	sig, err := sr.ReadSignable([]byte(raw))
 	require.Nil(err, "%+v", err)
 	_, ok := sig.(*basecoin.AppTx)

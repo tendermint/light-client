@@ -1,5 +1,7 @@
 package lightclient
 
+import keys "github.com/tendermint/go-keys"
+
 // Broadcaster provides a way to send a signed transaction to a tendermint node
 type Broadcaster interface {
 	// Broadcast sends into to the chain
@@ -48,4 +50,8 @@ type ValueReader interface {
 	// key *may* be present and can be used as a hint of how to parse the data
 	// when your application handles multiple formats
 	ReadValue(key, value []byte) (Value, error)
+}
+
+type SignableReader interface {
+	ReadSignable(data []byte) (keys.Signable, error)
 }

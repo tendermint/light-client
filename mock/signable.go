@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	crypto "github.com/tendermint/go-crypto"
+	keys "github.com/tendermint/go-keys"
 	wire "github.com/tendermint/go-wire"
-	lightclient "github.com/tendermint/light-client"
 )
 
 // OneSig is a Signable implementation that can be used to
@@ -20,7 +20,7 @@ func NewSig(data []byte) *OneSig {
 	return &OneSig{Data: data}
 }
 
-func (o *OneSig) assertSignable() lightclient.Signable {
+func (o *OneSig) assertSignable() keys.Signable {
 	return o
 }
 
@@ -66,7 +66,7 @@ func NewMultiSig(data []byte) *MultiSig {
 	return &MultiSig{Data: data}
 }
 
-func (m *MultiSig) assertSignable() lightclient.Signable {
+func (m *MultiSig) assertSignable() keys.Signable {
 	return m
 }
 

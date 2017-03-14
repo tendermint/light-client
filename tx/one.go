@@ -3,8 +3,8 @@ package tx
 import (
 	"github.com/pkg/errors"
 	crypto "github.com/tendermint/go-crypto"
+	keys "github.com/tendermint/go-keys"
 	wire "github.com/tendermint/go-wire"
-	lightclient "github.com/tendermint/light-client"
 )
 
 // OneSig lets us wrap arbitrary data with a go-crypto signature
@@ -28,7 +28,7 @@ func Load(serialized []byte) (*OneSig, error) {
 }
 
 // assertSignable is just to make sure we stay in sync with the Signable interface
-func (s *OneSig) assertSignable() lightclient.Signable {
+func (s *OneSig) assertSignable() keys.Signable {
 	return s
 }
 
