@@ -12,13 +12,9 @@ import (
 /**** TODO: all this ugliness must go away when we refactor json parsing ***/
 
 func parseSendTx(data []byte) (*bc.SendTx, error) {
-	var tx txSend
+	var tx bc.SendTx
 	err := json.Unmarshal(data, &tx)
-	if err != nil {
-		return nil, errors.Wrap(err, "parse sendtx")
-	}
-	stx := tx.toBasecoin()
-	return &stx, nil
+	return &tx, errors.Wrap(err, "parse sendtx")
 }
 
 func parseAppTx(data []byte, appData AppDataReader) (*bc.AppTx, error) {
