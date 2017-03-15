@@ -1,7 +1,5 @@
 package lightclient
 
-import keys "github.com/tendermint/go-keys"
-
 // Broadcaster provides a way to send a signed transaction to a tendermint node
 type Broadcaster interface {
 	// Broadcast sends into to the chain
@@ -31,27 +29,4 @@ type Searcher interface {
 	// Query gets data from the Blockchain state, possibly with a
 	// complex path.  It doesn't worry about proofs
 	Query(path string, data []byte) (TmQueryResult, error)
-}
-
-// Value represents a database value and is generally a structure
-// that can be json serialized.  Bytes() is needed to get the original
-// data bytes for validation of proofs
-//
-// TODO: add Fields() method to get field info???
-type Value interface {
-	Bytes() []byte
-}
-
-// ValueReader is an abstraction to let us parse application-specific values
-type ValueReader interface {
-	// ReadValue accepts a key, value pair to decode.  The value bytes must be
-	// retained in the returned Value implementation.
-	//
-	// key *may* be present and can be used as a hint of how to parse the data
-	// when your application handles multiple formats
-	ReadValue(key, value []byte) (Value, error)
-}
-
-type SignableReader interface {
-	ReadSignable(data []byte) (keys.Signable, error)
 }
