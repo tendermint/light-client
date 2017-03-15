@@ -56,31 +56,13 @@ func (t txOutput) toBasecoin() bc.TxOutput {
 	}
 }
 
-type txSend struct {
-	Gas     int64      `json:"gas"` // Gas
-	Fee     bc.Coin    `json:"fee"` // Fee
-	Inputs  []txInput  `json:"inputs"`
-	Outputs []txOutput `json:"outputs"`
-}
-
-func (t txSend) toBasecoin() bc.SendTx {
-	ins := make([]bc.TxInput, len(t.Inputs))
-	for i := range t.Inputs {
-		ins[i] = t.Inputs[i].toBasecoin()
-	}
-
-	outs := make([]bc.TxOutput, len(t.Outputs))
-	for i := range t.Outputs {
-		outs[i] = t.Outputs[i].toBasecoin()
-	}
-
-	return bc.SendTx{
-		Gas:     t.Gas,
-		Fee:     t.Fee,
-		Inputs:  ins,
-		Outputs: outs,
-	}
-}
+// type AppTx struct {
+//   Gas   int64           `json:"gas"`   // Gas
+//   Fee   Coin            `json:"fee"`   // Fee
+//   Name  string          `json:"type"`  // Which plugin
+//   Input TxInput         `json:"input"` // Hmmm do we want coins?
+//   Data  json.RawMessage `json:"data"`
+// }
 
 type txApp struct {
 	Gas     int64           `json:"gas"`   // Gas

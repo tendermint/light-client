@@ -7,24 +7,23 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	abci "github.com/tendermint/abci/types"
 	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/proxy/types"
-	"github.com/tendermint/light-client/util"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 type Viewer struct {
-	lc.Checker
-	lc.Searcher
-	lc.ValueReader
-	util.Auditor
+	client.Client
+	// lc.ValueReader
+	lc.Certifier
 }
 
-func NewViewer(checker lc.Checker, searcher lc.Searcher,
-	cert lc.Certifier) Viewer {
+func NewViewer(cl client.Client, cert lc.Certifier) Viewer {
 	return Viewer{
-		Checker:  checker,
-		Searcher: searcher,
-		Auditor:  util.NewAuditor(cert),
+		Client:    cl,
+		Certifier: cert,
 	}
 }
 
@@ -39,18 +38,19 @@ func (v Viewer) QueryData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := v.Query("/"+path, data)
+	res, err := v.ABCIQuery("/"+path, data, false)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	if !res.Code.IsOK() {
-		writeCode(w, renderQueryFail(res), 400)
+	q := res.Response
+	if q.Code != 0 {
+		writeCode(w, renderQueryFail(q), 400)
 		return
 	}
 
-	resp, err := renderQuery(res, false)
+	resp, err := renderQuery(q, false)
 	if err == nil {
 		writeSuccess(w, resp)
 	} else {
@@ -70,17 +70,19 @@ func (v Viewer) ProveData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the proof
-	p, err := v.Prove(key)
+	pr, err := v.ABCIQuery("/key", key, true)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	if !p.Code.IsOK() {
+	p := pr.Response
+	if p.Code != 0 {
 		writeCode(w, renderQueryFail(p), 400)
 	}
 
 	// waiting until the signatures are ready (if needed)
-	err = v.WaitForHeight(p.Height)
+	h := int(p.Height)
+	err = client.WaitForHeight(v, h, nil)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -88,12 +90,27 @@ func (v Viewer) ProveData(w http.ResponseWriter, r *http.Request) {
 
 	// get the next block height
 	// TODO: when there is no height?
-	block, err := v.SignedHeader(p.Height)
+	com, err := v.Commit(h)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	err = v.Audit(p.Key, p.Value.Bytes(), p.Proof, block)
+	check := lc.NewCheckpoint(com)
+
+	// let's see if this is valid
+	err = v.Certify(check)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	// now use the checkpoint to validate proof
+	proof, err := certifiers.MerkleReader.ReadProof(p.Proof)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	err = check.CheckAppState(p.Key, p.Value, proof)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -114,7 +131,7 @@ func (v Viewer) Register(r *mux.Router) {
 	r.HandleFunc("/proof/{key}", v.ProveData).Methods("GET")
 }
 
-func renderQuery(r lc.TmQueryResult, proven bool) (*types.QueryResponse, error) {
+func renderQuery(r abci.ResponseQuery, proven bool) (*types.QueryResponse, error) {
 	value, err := json.Marshal(r.Value)
 	if err != nil {
 		return nil, err
@@ -127,9 +144,9 @@ func renderQuery(r lc.TmQueryResult, proven bool) (*types.QueryResponse, error) 
 	}, nil
 }
 
-func renderQueryFail(r lc.TmQueryResult) *types.GenericResponse {
+func renderQueryFail(r abci.ResponseQuery) *types.GenericResponse {
 	return &types.GenericResponse{
-		Code: r.Code,
+		Code: int32(r.Code),
 		Log:  r.Log,
 	}
 }

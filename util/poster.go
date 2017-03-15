@@ -2,7 +2,8 @@ package util
 
 import (
 	keys "github.com/tendermint/go-keys"
-	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // Poster combines KeyStore and Node to process a Signable and deliver it to tendermint
@@ -10,29 +11,28 @@ import (
 //
 // Only handles single signatures
 type Poster struct {
-	server lc.Broadcaster
+	server client.ABCIClient
 	signer keys.Signer
 }
 
-func NewPoster(server lc.Broadcaster, signer keys.Signer) Poster {
+func NewPoster(server client.ABCIClient, signer keys.Signer) Poster {
 	return Poster{server, signer}
 }
 
 // Post will sign the transaction with the given credentials and push it to
 // the tendermint server
-func (p Poster) Post(sign keys.Signable, keyname, passphrase string) (res lc.TmBroadcastResult, err error) {
+func (p Poster) Post(sign keys.Signable, keyname, passphrase string) (*ctypes.ResultBroadcastTxCommit, error) {
 	var signed []byte
 
-	err = p.signer.Sign(keyname, passphrase, sign)
+	err := p.signer.Sign(keyname, passphrase, sign)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	signed, err = sign.TxBytes()
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	res, err = p.server.Broadcast(signed)
-	return
+	return p.server.BroadcastTxCommit(signed)
 }

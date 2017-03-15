@@ -16,8 +16,9 @@ import (
 	keys "github.com/tendermint/go-keys"
 	keyserver "github.com/tendermint/go-keys/server"
 	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/proxy/types"
-	"github.com/tendermint/light-client/rpc"
+	"github.com/tendermint/tendermint/rpc/client"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -34,8 +35,8 @@ type KeyStore interface {
 //
 // TODO: something more intelligent for getting validators,
 // this is pretty insecure right now
-func RegisterDefault(r *mux.Router, ks KeyStore, node rpc.Node,
-	txReader lc.SignableReader, valReader lc.ValueReader) {
+func RegisterDefault(r *mux.Router, ks KeyStore, node client.Client,
+	txReader lc.SignableReader, valReader lc.ValueReader, chainID string) {
 
 	key := keyserver.New(ks, "ed25519")
 	sk := r.PathPrefix("/keys").Subrouter()
@@ -50,9 +51,12 @@ func RegisterDefault(r *mux.Router, ks KeyStore, node rpc.Node,
 	if err != nil {
 		panic(err)
 	}
-	cert := rpc.StaticCertifier{Vals: vals.Validators}
+	cert := certifiers.NewStatic(
+		chainID,
+		vals.Validators,
+	)
 
-	view := NewViewer(node, node, cert)
+	view := NewViewer(node, cert)
 	view.Register(r)
 }
 

@@ -102,7 +102,7 @@ import (
 	"github.com/tendermint/go-keys/storage/filestorage"
 	"github.com/tendermint/light-client/extensions/basecoin"
 	"github.com/tendermint/light-client/proxy"
-	"github.com/tendermint/light-client/rpc"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 var (
@@ -140,8 +140,8 @@ func main() {
 		cryptostore.SecretBox,
 		filestorage.New(*keydir),
 	)
-	node := rpc.NewNode(*rpcAddr, *tmChainID, vr)
-	proxy.RegisterDefault(r, cstore, node, sr, vr)
+	node := client.NewHTTP(*rpcAddr, "/websocket")
+	proxy.RegisterDefault(r, cstore, node, sr, vr, *tmChainID)
 
 	// TODO: add some awesome middlewares...
 

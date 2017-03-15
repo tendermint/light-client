@@ -8,6 +8,8 @@ import (
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proxy/types"
 	"github.com/tendermint/light-client/util"
+	"github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 type TxSigner struct {
@@ -15,7 +17,7 @@ type TxSigner struct {
 	util.Poster
 }
 
-func NewTxSigner(server lc.Broadcaster, signer keys.Signer,
+func NewTxSigner(server client.ABCIClient, signer keys.Signer,
 	reader lc.SignableReader) TxSigner {
 
 	return TxSigner{
@@ -52,10 +54,10 @@ func (t TxSigner) Register(r *mux.Router) {
 	r.HandleFunc("/", t.PostTransaction).Methods("POST")
 }
 
-func renderBroadcast(r lc.TmBroadcastResult) types.GenericResponse {
+func renderBroadcast(r *ctypes.ResultBroadcastTxCommit) types.GenericResponse {
 	return types.GenericResponse{
-		Code: r.Code,
-		Data: r.Data,
-		Log:  r.Log,
+		Code: int32(r.DeliverTx.Code),
+		Data: r.DeliverTx.Data,
+		Log:  r.DeliverTx.Log,
 	}
 }
