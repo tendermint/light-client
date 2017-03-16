@@ -74,6 +74,7 @@ func TestDynamicUpdate(t *testing.T) {
 
 	// some new sets to try later
 	keys2 := keys.Extend(2)
+	keys3 := keys2.Extend(4)
 
 	// we try to update with some blocks
 	cases := []struct {
@@ -98,6 +99,9 @@ func TestDynamicUpdate(t *testing.T) {
 
 		// let's try to adjust to a whole new validator set (we have 5/7 of the votes)
 		{keys2, keys2.ToValidators(10, 0), h + 33, 0, len(keys2), true, false},
+
+		// properly signed but too much change, not allowed (only 7/11 validators known)
+		{keys3, keys3.ToValidators(10, 0), h + 50, 0, len(keys3), false, true},
 	}
 
 	for _, tc := range cases {
@@ -115,7 +119,8 @@ func TestDynamicUpdate(t *testing.T) {
 			// we don't update the height
 			assert.NotEqual(cert.LastHeight, tc.height)
 			if tc.changed {
-				assert.True(certifiers.ToMuchChange(err), "%+v", err)
+				assert.True(certifiers.TooMuchChange(err),
+					"%d: %+v", tc.height, err)
 			}
 		}
 	}
