@@ -2,11 +2,20 @@ package certifiers
 
 import (
 	"bytes"
+	rawerr "errors"
 
 	"github.com/pkg/errors"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
+
+var errValidatorsChanged = rawerr.New("Validators differ between header and certifier")
+
+// ValidatorsChanged asserts whether and error is due
+// to a differing validator set
+func ValidatorsChanged(err error) bool {
+	return errors.Cause(err) == errValidatorsChanged
+}
 
 // StaticCertifier assumes a static set of validators, set on
 // initilization and checks against them.
@@ -14,39 +23,43 @@ import (
 // Good for testing or really simple chains.  You will want a
 // better implementation when the validator set can actually change.
 type StaticCertifier struct {
-	chainID string
-	vset    *types.ValidatorSet
+	ChainID string
+	VSet    *types.ValidatorSet
 	vhash   []byte
 }
 
-func NewStatic(chainID string, vals []*types.Validator) StaticCertifier {
-	vset := types.NewValidatorSet(vals)
-	return StaticCertifier{
-		chainID: chainID,
-		vset:    vset,
-		vhash:   vset.Hash(),
+func NewStatic(chainID string, vals []*types.Validator) *StaticCertifier {
+	return &StaticCertifier{
+		ChainID: chainID,
+		VSet:    types.NewValidatorSet(vals),
 	}
 }
 
-func (c StaticCertifier) assertCertifier() lc.Certifier {
+func (c *StaticCertifier) Hash() []byte {
+	if len(c.vhash) == 0 {
+		c.vhash = c.VSet.Hash()
+	}
+	return c.vhash
+}
+
+func (c *StaticCertifier) assertCertifier() lc.Certifier {
 	return c
 }
 
-func (c StaticCertifier) Certify(check lc.Checkpoint) error {
+func (c *StaticCertifier) Certify(check lc.Checkpoint) error {
 	// do basic sanity checks
-	err := check.ValidateBasic(c.chainID)
+	err := check.ValidateBasic(c.ChainID)
 	if err != nil {
 		return err
 	}
 
 	// make sure it has the same validator set we have (static means static)
-	if !bytes.Equal(c.vhash, check.Header.ValidatorsHash) {
-		return errors.Errorf("Validator hash has changes %X -> %x", c.vhash,
-			check.Header.ValidatorsHash)
+	if !bytes.Equal(c.Hash(), check.Header.ValidatorsHash) {
+		return errors.WithStack(errValidatorsChanged)
 	}
 
 	// then make sure we have the proper signatures for this
-	err = c.vset.VerifyCommit(c.chainID, check.Commit.BlockID,
+	err = c.VSet.VerifyCommit(c.ChainID, check.Commit.BlockID,
 		check.Header.Height, check.Commit)
 	return errors.WithStack(err)
 }

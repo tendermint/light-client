@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/tendermint/types"
 )
@@ -27,30 +26,30 @@ func TestStaticCert(t *testing.T) {
 		height      int
 		first, last int  // who actually signs
 		proper      bool // true -> expect no error
+		changed     bool // true -> expect validator change error
 	}{
 		// perfect, signed by everyone
-		{keys, vals, 1, 0, len(keys), true},
+		{keys, vals, 1, 0, len(keys), true, false},
 		// skip little guy is okay
-		{keys, vals, 2, 1, len(keys), true},
+		{keys, vals, 2, 1, len(keys), true, false},
 		// but not the big guy
-		{keys, vals, 3, 0, len(keys) - 1, false},
+		{keys, vals, 3, 0, len(keys) - 1, false, false},
 		// even changing the power a little bit breaks the static validator
 		// the sigs are enough, but the validator hash is unknown
-		{keys, keys.ToValidators(20, 11), 4, 0, len(keys), false},
+		{keys, keys.ToValidators(20, 11), 4, 0, len(keys), false, true},
 	}
 
 	for _, tc := range cases {
-		// let's make a header and sign it with everyone, must work
-		header := certifiers.GenHeader(chainID, tc.height, nil, tc.vals, []byte("foo"))
-		check := lc.Checkpoint{
-			Header: header,
-			Commit: tc.keys.SignHeader(header, tc.first, tc.last),
-		}
+		check := tc.keys.GenCheckpoint(chainID, tc.height, nil, tc.vals,
+			[]byte("foo"), tc.first, tc.last)
 		err := cert.Certify(check)
 		if tc.proper {
 			assert.Nil(err, "%+v", err)
 		} else {
 			assert.NotNil(err)
+			if tc.changed {
+				assert.True(certifiers.ValidatorsChanged(err), "%+v", err)
+			}
 		}
 	}
 

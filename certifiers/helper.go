@@ -4,6 +4,7 @@ import (
 	"time"
 
 	crypto "github.com/tendermint/go-crypto"
+	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -97,4 +98,16 @@ func GenHeader(chainID string, height int, txs types.Txs,
 		DataHash:       txs.Hash(),
 		AppHash:        appHash,
 	}
+}
+
+// GenCheckpoint calls GenHeader and SignHeader and combines them into a Checkpoint
+func (v ValKeys) GenCheckpoint(chainID string, height int, txs types.Txs,
+	vals []*types.Validator, appHash []byte, first, last int) lc.Checkpoint {
+
+	header := GenHeader(chainID, height, txs, vals, appHash)
+	check := lc.Checkpoint{
+		Header: header,
+		Commit: v.SignHeader(header, first, last),
+	}
+	return check
 }
