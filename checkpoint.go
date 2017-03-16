@@ -8,6 +8,12 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
+// Certifier checks the votes to make sure the block really is signed properly.
+// Certifier must know the current set of validitors by some other means.
+type Certifier interface {
+	Certify(check Checkpoint) error
+}
+
 // Checkpoint is basically the rpc /commit response, but extended
 //
 // This is the basepoint for proving anything on the blockchain. It contains

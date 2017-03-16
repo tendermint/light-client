@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	crypto "github.com/tendermint/go-crypto"
 	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/certifiers"
 	merktest "github.com/tendermint/merkleeyes/testutil"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/types"
@@ -61,7 +60,7 @@ func TestNodeAuditing(t *testing.T) {
 	assert.Equal(k, pr.Key)
 	assert.Equal(v, pr.Value)
 	assert.NotNil(pr.Proof)
-	proof, err := certifiers.MerkleReader.ReadProof(pr.Proof)
+	proof, err := lc.MerkleReader.ReadProof(pr.Proof)
 	require.Nil(err, "%+v", err)
 
 	// and get a new checkpoint to match

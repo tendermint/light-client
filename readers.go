@@ -1,6 +1,9 @@
 package lightclient
 
-import keys "github.com/tendermint/go-keys"
+import (
+	keys "github.com/tendermint/go-keys"
+	merkle "github.com/tendermint/go-merkle"
+)
 
 // Proof is a generalization of merkle.IAVLProof and represents any
 // merkle proof that can validate a key-value pair back to a root hash.
@@ -20,13 +23,15 @@ type ProofReader interface {
 	ReadProof(data []byte) (Proof, error)
 }
 
-// Certifier checks the votes to make sure the block really is signed properly.
-// Certifier must know the current set of validitors by some other means.
-type Certifier interface {
-	Certify(check Checkpoint) error
-}
+// MerkleReader is currently the only implementation of ProofReader,
+// using the IAVLProof from go-merkle
+var MerkleReader ProofReader = merkleReader{}
 
-/*** TODO: reorg ***/
+type merkleReader struct{}
+
+func (p merkleReader) ReadProof(data []byte) (Proof, error) {
+	return merkle.ReadProof(data)
+}
 
 // Value represents a database value and is generally a structure
 // that can be json serialized.  Bytes() is needed to get the original
