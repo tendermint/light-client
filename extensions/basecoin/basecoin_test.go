@@ -15,10 +15,14 @@ import (
 	"github.com/tendermint/go-keys/storage/memstorage"
 	"github.com/tendermint/light-client/extensions/basecoin"
 	"github.com/tendermint/light-client/extensions/basecoin/counter"
-	"github.com/tendermint/light-client/rpc/tests"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 const DefaultAlgo = "ed25519"
+
+func getLocalClient() client.Local {
+	return client.NewLocal(node)
+}
 
 func makeUser(t *testing.T, keys cryptostore.Manager, name, pass string) keys.Info {
 	k, err := keys.Create(name, pass, DefaultAlgo)
@@ -38,8 +42,7 @@ func setAcct(t *testing.T, bcapp *app.Basecoin, acct *bc.Account) {
 func TestBasecoinSetOption(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 	// node must parse basecoin values
-	n := tests.GetNode()
-	n.ValueReader = basecoin.NewBasecoinValues()
+	cl := getLocalClient()
 
 	// store the keys somewhere
 	keys := cryptostore.New(
@@ -53,8 +56,9 @@ func TestBasecoinSetOption(t *testing.T) {
 	addr := k.PubKey.Address()
 
 	// try querying node for this info - empty
-	q, err := n.Query("/account", addr)
+	qres, err := cl.ABCIQuery("/account", addr, false)
 	require.Nil(err)
+	q := qres.Response
 	assert.Nil(q.Value)
 
 	// set some data with SetOption
@@ -68,15 +72,21 @@ func TestBasecoinSetOption(t *testing.T) {
 	setAcct(t, bcapp, &acct)
 
 	// wait for one more block, so this data is commited and in block
-	n.WaitForHeight(q.Height + 1)
+	client.WaitForHeight(cl, int(q.Height+1), nil)
 
 	// try querying node for this info - some data
-	q2, err := n.Query("/account", addr)
+	qres2, err := cl.ABCIQuery("/account", addr, false)
 	require.Nil(err)
+	q2 := qres2.Response
 	require.NotNil(q2.Value)
+
+	// handle parsing values (Value Reader)
+	vr := basecoin.NewBasecoinValues()
+	val, err := vr.ReadValue(q2.Key, q2.Value)
+	require.Nil(err, "%+v", err)
 	// we should read an account back
-	qa, ok := q2.Value.(basecoin.Account)
-	require.True(ok, "%#v", q2.Value)
+	qa, ok := val.(basecoin.Account)
+	require.True(ok, "%#v", val)
 	// and make sure it looks write
 	assert.Equal(basecoin.AccountType, qa.Type)
 	qav := qa.Value
@@ -88,8 +98,7 @@ func TestBasecoinSetOption(t *testing.T) {
 func TestBasecoinSendTx(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 	// node must parse basecoin values
-	n := tests.GetNode()
-	n.ValueReader = basecoin.NewBasecoinValues()
+	cl := getLocalClient()
 
 	// store the keys somewhere
 	keys := cryptostore.New(
@@ -113,8 +122,9 @@ func TestBasecoinSendTx(t *testing.T) {
 	setAcct(t, bcapp, &acct)
 
 	// check there is no data in addr2
-	q, err := n.Query("/account", addr2)
+	qres, err := cl.ABCIQuery("/account", addr2, false)
 	require.Nil(err)
+	q := qres.Response
 	assert.Nil(q.Value)
 
 	// now, let's generate a tx
@@ -147,47 +157,55 @@ func TestBasecoinSendTx(t *testing.T) {
 	// send it
 	tx, err := sig.TxBytes()
 	require.Nil(err)
-	bres, err := n.Broadcast(tx)
+	bres, err := cl.BroadcastTxCommit(tx)
 	require.Nil(err, "%+v", err)
-	require.False(bres.IsOk(), "%#v", bres)
+	require.NotEqual(0, int(bres.CheckTx.GetCode()), "%#v", bres)
 
 	// but sign it first
 	keys.Sign(n1, p1, sig)
 	tx, err = sig.TxBytes()
 	require.Nil(err)
-	bres, err = n.Broadcast(tx)
+	bres, err = cl.BroadcastTxCommit(tx)
 	require.Nil(err, "%+v", err)
-	require.True(bres.IsOk(), "%#v", bres)
+	require.Equal(0, int(bres.CheckTx.GetCode()), "%#v", bres)
 
 	// wait for one more block...
-	q, err = n.Query("/account", addr2)
+	qres, err = cl.ABCIQuery("/account", addr2, false)
 	require.Nil(err)
-	n.WaitForHeight(q.Height + 1)
+	h := qres.Response.Height + 1
+	client.WaitForHeight(cl, int(h), nil)
 
 	// make sure the money arrived
-	q, err = n.Query("/account", addr2)
+	qres, err = cl.ABCIQuery("/account", addr2, false)
 	require.Nil(err)
+	q = qres.Response
 	require.NotNil(q.Value)
-	qav := q.Value.(basecoin.Account).Value
+
+	// parse results and check them
+	vr := basecoin.NewBasecoinValues()
+	val, err := vr.ReadValue(q.Key, q.Value)
+	require.Nil(err, "%+v", err)
+	qav := val.(basecoin.Account).Value
 	assert.Equal(bc.Coins{{Denom: "ATOM", Amount: 20}}, qav.Balance)
 
 	// and was deducted
-	q, err = n.Query("/account", addr1)
+	qres2, err := cl.ABCIQuery("/account", addr1, false)
 	require.Nil(err)
-	require.NotNil(q.Value)
-	qav = q.Value.(basecoin.Account).Value
-	assert.Equal(bc.Coins{{Denom: "ATOM", Amount: 213}}, qav.Balance)
+	q2 := qres2.Response
+	require.NotNil(q2.Value)
+	val2, err := vr.ReadValue(q2.Key, q2.Value)
+	require.Nil(err)
+	qav2 := val2.(basecoin.Account).Value
+	assert.Equal(bc.Coins{{Denom: "ATOM", Amount: 213}}, qav2.Balance)
 }
 
 // TestBasecoinAppTx executes an AppTx on the counter app
 func TestBasecoinAppTx(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
-	// node must parse basecoin values
-	n := tests.GetNode()
-	val := basecoin.NewBasecoinValues()
-	val.RegisterPlugin(counter.Value{})
-	// TODO: register plugin parser
-	n.ValueReader = val
+	cl := getLocalClient()
+	// prepare the value reader (parser)
+	vr := basecoin.NewBasecoinValues()
+	vr.RegisterPlugin(counter.Value{})
 
 	// register the plugin for the sender
 	sr := basecoin.NewBasecoinTx(ChainID)
@@ -249,36 +267,45 @@ func TestBasecoinAppTx(t *testing.T) {
 	keys.Sign(name, pass, sig)
 	tx, err := sig.TxBytes()
 	require.Nil(err)
-	bres, err := n.Broadcast(tx)
+	bres, err := cl.BroadcastTxCommit(tx)
 	require.Nil(err, "%+v", err)
-	require.True(bres.IsOk(), "%#v", bres)
+	require.Equal(0, int(bres.DeliverTx.GetCode()), "%#v", bres)
 
 	// wait for one more block...
-	q, err := n.Query("/account", addr)
+	qres, err := cl.ABCIQuery("/account", addr, false)
 	require.Nil(err)
-	n.WaitForHeight(q.Height + 1)
+	q := qres.Response
+	client.WaitForHeight(cl, int(q.Height+1), nil)
+
+	///////////
 
 	// and the both fees were deducted
-	q, err = n.Query("/account", addr)
+	qres, err = cl.ABCIQuery("/account", addr, false)
 	require.Nil(err)
+	q = qres.Response
 	require.NotNil(q.Value)
-	qav := q.Value.(basecoin.Account).Value
+	val, err := vr.ReadValue(q.Key, q.Value)
+	require.Nil(err, "%+v", err)
+	qav := val.(basecoin.Account).Value
 	// TODO: fix counter, currently we lose all input, even if not
 	// used up by fees
 	assert.Equal(bc.Coins{{Denom: "gold", Amount: 5412}}, qav.Balance)
 
 	// query counter state!
 	cntkey := []byte("CounterPlugin.State")
-	cq, err := n.Query("/key", cntkey)
+	cqres, err := cl.ABCIQuery("/key", cntkey, false)
 	require.Nil(err)
+	cq := cqres.Response
 	require.NotNil(cq.Value)
 	// make sure it's parsed
-	cstate, ok := cq.Value.(counter.Counter)
+	cval, err := vr.ReadValue(cq.Key, cq.Value)
+	require.Nil(err, "%+v", err)
+	cstate, ok := cval.(counter.Counter)
 	require.True(ok)
 	require.Equal(1, cstate.Counter)
 	require.Equal(bc.Coins{{Denom: "gold", Amount: 5}}, cstate.TotalFees)
 
 	// and make sure it is nice json
-	_, err = json.Marshal(cq.Value)
+	_, err = json.Marshal(cval)
 	require.Nil(err)
 }

@@ -19,13 +19,16 @@ import (
 
 	"github.com/tendermint/basecoin/app"
 	"github.com/tendermint/basecoin/plugins/counter"
-	"github.com/tendermint/light-client/rpc/tests"
 	eyes "github.com/tendermint/merkleeyes/client"
+	nm "github.com/tendermint/tendermint/node"
+	rpctest "github.com/tendermint/tendermint/rpc/test"
 )
 
 // bcapp can be used in test cases directly,
 // to SetOption as needed for preparing data
 var bcapp *app.Basecoin
+
+var node *nm.Node
 
 const ChainID = "lc-test-chain-id"
 
@@ -39,7 +42,7 @@ func TestMain(m *testing.M) {
 	cntr := counter.New()
 	bcapp.RegisterPlugin(cntr)
 
-	node := tests.StartTendermint(bcapp)
+	node = rpctest.StartTendermint(bcapp)
 	code := m.Run()
 
 	// and shut down proper at the end
