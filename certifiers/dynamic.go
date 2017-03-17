@@ -17,7 +17,7 @@ var (
 // TooMuchChange asserts whether and error is due to too much change
 // between these validators sets
 func TooMuchChange(err error) bool {
-	return errors.Cause(err) == errTooMuchChange
+	return err != nil && (errors.Cause(err) == errTooMuchChange)
 }
 
 // DynamicCertifier uses a StaticCertifier to evaluate the checkpoint

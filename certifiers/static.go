@@ -14,7 +14,7 @@ var errValidatorsChanged = rawerr.New("Validators differ between header and cert
 // ValidatorsChanged asserts whether and error is due
 // to a differing validator set
 func ValidatorsChanged(err error) bool {
-	return errors.Cause(err) == errValidatorsChanged
+	return err != nil && (errors.Cause(err) == errValidatorsChanged)
 }
 
 // StaticCertifier assumes a static set of validators, set on
