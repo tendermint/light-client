@@ -146,3 +146,19 @@ func (m *MemStoreProvider) GetByHash(hash []byte) (Seed, error) {
 	}
 	return s, err
 }
+
+// MissingProvider doens't store anything, always a miss
+// Designed as a mock for testing
+type MissingProvider struct{}
+
+func NewMissingProvider() MissingProvider {
+	return MissingProvider{}
+}
+
+func (_ MissingProvider) StoreSeed(_ Seed) error { return nil }
+func (_ MissingProvider) GetByHeight(_ int) (Seed, error) {
+	return Seed{}, errors.WithStack(errSeedNotFound)
+}
+func (_ MissingProvider) GetByHash(_ []byte) (Seed, error) {
+	return Seed{}, errors.WithStack(errSeedNotFound)
+}
