@@ -33,18 +33,9 @@ func (p merkleReader) ReadProof(data []byte) (Proof, error) {
 	return merkle.ReadProof(data)
 }
 
-// Value represents a database value and is generally a structure
-// that can be json serialized.  Bytes() is needed to get the original
-// data bytes for validation of proofs
-//
-// TODO: add Fields() method to get field info???
 type Value interface {
 	Bytes() []byte
 }
-
-type ByteValue []byte
-
-func (b ByteValue) Bytes() []byte { return b }
 
 // ValueReader is an abstraction to let us parse application-specific values
 type ValueReader interface {

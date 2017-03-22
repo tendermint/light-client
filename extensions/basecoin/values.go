@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	bc "github.com/tendermint/basecoin/types"
 	crypto "github.com/tendermint/go-crypto"
+	data "github.com/tendermint/go-data"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
 )
@@ -32,7 +33,7 @@ func (t *BasecoinValues) ReadValue(key, value []byte) (lc.Value, error) {
 	}
 
 	// if not render raw
-	return lc.ByteValue(value), nil
+	return data.Bytes(value), nil
 }
 
 func (t *BasecoinValues) RegisterPlugin(reader lc.ValueReader) {
