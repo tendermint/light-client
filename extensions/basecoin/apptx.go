@@ -14,9 +14,7 @@ type AppTx struct {
 	Tx      *bc.AppTx
 }
 
-func (a *AppTx) assertSignable() keys.Signable {
-	return a
-}
+var _ keys.Signable = &AppTx{}
 
 func (t BasecoinTx) readAppTx(data []byte) (keys.Signable, error) {
 	tx, err := parseAppTx(data, t.appData)

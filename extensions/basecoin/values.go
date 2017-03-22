@@ -11,9 +11,13 @@ import (
 	lc "github.com/tendermint/light-client"
 )
 
+// BasecoinValues handles parsing any binary database values and
+// returning them as structs for introspection or json encoding
 type BasecoinValues struct {
 	readers []lc.ValueReader
 }
+
+var _ lc.ValueReader = &BasecoinValues{}
 
 func NewBasecoinValues() *BasecoinValues {
 	val := BasecoinValues{}
@@ -42,6 +46,8 @@ func (t *BasecoinValues) RegisterPlugin(reader lc.ValueReader) {
 
 type accountParser struct{}
 
+var _ lc.ValueReader = accountParser{}
+
 func (_ accountParser) ReadValue(key, value []byte) (lc.Value, error) {
 	if len(key) == 0 || bytes.Equal([]byte("base/a/"), key[:7]) {
 		// first try to render as an account
@@ -55,10 +61,6 @@ func (_ accountParser) ReadValue(key, value []byte) (lc.Value, error) {
 		return nil, errors.Wrap(err, "Parsing account")
 	}
 	return nil, errors.New("Ignoring this key")
-}
-
-func (v *BasecoinValues) assertValueReader() lc.ValueReader {
-	return v
 }
 
 const AccountType = "account"

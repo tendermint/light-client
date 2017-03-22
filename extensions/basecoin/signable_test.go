@@ -23,16 +23,16 @@ func TestSendTxJSON(t *testing.T) {
       "gas": 22,
       "fee": {"denom": "ETH", "amount": 1},
       "inputs": [{
-        "address": "4d8908785ec867139ca02e71a717c01fa506b96a",
+        "address": "4D8908785EC867139CA02E71A717C01FA506B96A",
         "coins": [{"denom": "ETH", "amount": 21}],
         "sequence": 1,
         "pub_key": {
           "type": "ed25519",
-          "data": "d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"
+          "data": "D7FB176319AF0C126C4C4C7851CF7C66340E7DF8763F0AA9700EBAE32A955401"
         }
       }],
       "outputs": [{
-        "address": "9f31a3ac6b1468402aac5593ae9e82a041457f5f",
+        "address": "9F31A3AC6B1468402AAC5593AE9E82A041457F5F",
         "coins": [{"denom": "ETH", "amount": 20}]
       }]
     }
@@ -100,12 +100,12 @@ func TestAppTxJSON(t *testing.T) {
       "gas": 78,
       "fee": {"denom": "ATOM", "amount": 5},
       "input": {
-        "address": "4d8908785ec867139ca02e71a717c01fa506b96a",
+        "address": "4D8908785EC867139CA02E71A717C01FA506B96A",
         "coins": [{"denom": "ATOM", "amount": 21}],
         "sequence": 1,
         "pub_key": {
           "type": "ed25519",
-          "data": "d7fb176319af0c126c4c4c7851cf7c66340e7df8763f0aa9700ebae32a955401"
+          "data": "D7FB176319AF0C126C4C4C7851CF7C66340E7DF8763F0AA9700EBAE32A955401"
         }
       },
       "type": "create",
