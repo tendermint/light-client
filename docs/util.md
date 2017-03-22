@@ -17,56 +17,20 @@ by the main package, not to be imported by other subpackages of lightclient
 
 
 ## <a name="pkg-index">Index</a>
-* [type Auditor](#Auditor)
-  * [func NewAuditor(cert lc.Certifier) Auditor](#NewAuditor)
-  * [func (a Auditor) Audit(key, value []byte, proof lc.Proof, block lc.TmSignedHeader) error](#Auditor.Audit)
 * [type Poster](#Poster)
-  * [func NewPoster(server lc.Broadcaster, signer lc.Signer) Poster](#NewPoster)
-  * [func (p Poster) Post(sign lc.Signable, keyname, passphrase string) (res lc.TmBroadcastResult, err error)](#Poster.Post)
+  * [func NewPoster(server client.ABCIClient, signer keys.Signer) Poster](#NewPoster)
+  * [func (p Poster) Post(sign keys.Signable, keyname, passphrase string) (*ctypes.ResultBroadcastTxCommit, error)](#Poster.Post)
 
 
 #### <a name="pkg-files">Package files</a>
-[auditor.go](/src/github.com/tendermint/light-client/util/auditor.go) [docs.go](/src/github.com/tendermint/light-client/util/docs.go) [poster.go](/src/github.com/tendermint/light-client/util/poster.go) 
+[docs.go](/src/github.com/tendermint/light-client/util/docs.go) [poster.go](/src/github.com/tendermint/light-client/util/poster.go) 
 
 
 
 
 
 
-## <a name="Auditor">type</a> [Auditor](/src/target/auditor.go?s=274:316#L4)
-``` go
-type Auditor struct {
-    // contains filtered or unexported fields
-}
-```
-Auditor takes data, proof, block headers, and tracking of the validator
-set and combines it all to give you complete certainty of the truth
-of a given statement.
-
-
-
-
-
-
-
-### <a name="NewAuditor">func</a> [NewAuditor](/src/target/auditor.go?s=318:360#L8)
-``` go
-func NewAuditor(cert lc.Certifier) Auditor
-```
-
-
-
-
-### <a name="Auditor.Audit">func</a> (Auditor) [Audit](/src/target/auditor.go?s=388:478#L12)
-``` go
-func (a Auditor) Audit(key, value []byte,
-    proof lc.Proof,
-    block lc.TmSignedHeader) error
-```
-
-
-
-## <a name="Poster">type</a> [Poster](/src/target/poster.go?s=273:336#L1)
+## <a name="Poster">type</a> [Poster](/src/target/poster.go?s=380:448#L3)
 ``` go
 type Poster struct {
     // contains filtered or unexported fields
@@ -83,17 +47,17 @@ Only handles single signatures
 
 
 
-### <a name="NewPoster">func</a> [NewPoster](/src/target/poster.go?s=338:400#L4)
+### <a name="NewPoster">func</a> [NewPoster](/src/target/poster.go?s=450:517#L8)
 ``` go
-func NewPoster(server lc.Broadcaster, signer lc.Signer) Poster
+func NewPoster(server client.ABCIClient, signer keys.Signer) Poster
 ```
 
 
 
 
-### <a name="Poster.Post">func</a> (Poster) [Post](/src/target/poster.go?s=538:642#L10)
+### <a name="Poster.Post">func</a> (Poster) [Post](/src/target/poster.go?s=655:764#L14)
 ``` go
-func (p Poster) Post(sign lc.Signable, keyname, passphrase string) (res lc.TmBroadcastResult, err error)
+func (p Poster) Post(sign keys.Signable, keyname, passphrase string) (*ctypes.ResultBroadcastTxCommit, error)
 ```
 Post will sign the transaction with the given credentials and push it to
 the tendermint server

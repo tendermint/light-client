@@ -29,7 +29,7 @@ designed for application support, as that is the main usecase?
 
 ## <a name="pkg-index">Index</a>
 * [Constants](#pkg-constants)
-* [func ReadSignableBinary(data []byte) (lc.Signable, error)](#ReadSignableBinary)
+* [func ReadSignableBinary(data []byte) (keys.Signable, error)](#ReadSignableBinary)
 * [type B58Data](#B58Data)
   * [func (d B58Data) MarshalJSON() ([]byte, error)](#B58Data.MarshalJSON)
   * [func (d *B58Data) UnmarshalJSON(b []byte) (err error)](#B58Data.UnmarshalJSON)
@@ -69,9 +69,9 @@ const RawValueType = "raw"
 
 
 
-## <a name="ReadSignableBinary">func</a> [ReadSignableBinary](/src/target/reader.go?s=354:411#L13)
+## <a name="ReadSignableBinary">func</a> [ReadSignableBinary](/src/target/reader.go?s=353:412#L13)
 ``` go
-func ReadSignableBinary(data []byte) (lc.Signable, error)
+func ReadSignableBinary(data []byte) (keys.Signable, error)
 ```
 
 
@@ -165,7 +165,7 @@ TODO: use B58Data instead of HexData?
 
 
 
-## <a name="MultiSig">type</a> [MultiSig](/src/target/multi.go?s=369:421#L4)
+## <a name="MultiSig">type</a> [MultiSig](/src/target/multi.go?s=357:409#L4)
 ``` go
 type MultiSig struct {
     // contains filtered or unexported fields
@@ -182,12 +182,12 @@ more sense (particularly the verify method)
 
 
 
-### <a name="LoadMulti">func</a> [LoadMulti](/src/target/multi.go?s=566:618#L18)
+### <a name="LoadMulti">func</a> [LoadMulti](/src/target/multi.go?s=554:606#L18)
 ``` go
 func LoadMulti(serialized []byte) (*MultiSig, error)
 ```
 
-### <a name="NewMulti">func</a> [NewMulti](/src/target/multi.go?s=494:530#L14)
+### <a name="NewMulti">func</a> [NewMulti](/src/target/multi.go?s=482:518#L14)
 ``` go
 func NewMulti(data []byte) *MultiSig
 ```
@@ -195,7 +195,7 @@ func NewMulti(data []byte) *MultiSig
 
 
 
-### <a name="MultiSig.Sign">func</a> (\*MultiSig) [Sign](/src/target/multi.go?s=1168:1241#L38)
+### <a name="MultiSig.Sign">func</a> (\*MultiSig) [Sign](/src/target/multi.go?s=1149:1222#L38)
 ``` go
 func (s *MultiSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error
 ```
@@ -207,7 +207,7 @@ Returns error if called with invalid data or too many times
 
 
 
-### <a name="MultiSig.SignBytes">func</a> (\*MultiSig) [SignBytes](/src/target/multi.go?s=916:953#L30)
+### <a name="MultiSig.SignBytes">func</a> (\*MultiSig) [SignBytes](/src/target/multi.go?s=897:934#L30)
 ``` go
 func (s *MultiSig) SignBytes() []byte
 ```
@@ -216,7 +216,7 @@ SignBytes returns the original data passed into `NewSig`
 
 
 
-### <a name="MultiSig.Signers">func</a> (\*MultiSig) [Signers](/src/target/multi.go?s=1612:1665#L52)
+### <a name="MultiSig.Signers">func</a> (\*MultiSig) [Signers](/src/target/multi.go?s=1593:1646#L52)
 ``` go
 func (s *MultiSig) Signers() ([]crypto.PubKey, error)
 ```
@@ -227,7 +227,7 @@ including if there are no signatures
 
 
 
-### <a name="MultiSig.TxBytes">func</a> (\*MultiSig) [TxBytes](/src/target/multi.go?s=2125:2169#L71)
+### <a name="MultiSig.TxBytes">func</a> (\*MultiSig) [TxBytes](/src/target/multi.go?s=2106:2150#L71)
 ``` go
 func (s *MultiSig) TxBytes() ([]byte, error)
 ```
@@ -237,7 +237,7 @@ It returns an error if the Sig was never Signed.
 
 
 
-## <a name="OneSig">type</a> [OneSig](/src/target/one.go?s=367:451#L4)
+## <a name="OneSig">type</a> [OneSig](/src/target/one.go?s=355:439#L4)
 ``` go
 type OneSig struct {
     // contains filtered or unexported fields
@@ -254,12 +254,12 @@ more sense (particularly the verify method)
 
 
 
-### <a name="Load">func</a> [Load](/src/target/one.go?s=516:561#L14)
+### <a name="Load">func</a> [Load](/src/target/one.go?s=504:549#L14)
 ``` go
 func Load(serialized []byte) (*OneSig, error)
 ```
 
-### <a name="New">func</a> [New](/src/target/one.go?s=453:482#L10)
+### <a name="New">func</a> [New](/src/target/one.go?s=441:470#L10)
 ``` go
 func New(data []byte) *OneSig
 ```
@@ -267,7 +267,7 @@ func New(data []byte) *OneSig
 
 
 
-### <a name="OneSig.Sign">func</a> (\*OneSig) [Sign](/src/target/one.go?s=1105:1176#L34)
+### <a name="OneSig.Sign">func</a> (\*OneSig) [Sign](/src/target/one.go?s=1086:1157#L34)
 ``` go
 func (s *OneSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error
 ```
@@ -279,7 +279,7 @@ Returns error if called with invalid data or too many times
 
 
 
-### <a name="OneSig.SignBytes">func</a> (\*OneSig) [SignBytes](/src/target/one.go?s=855:890#L26)
+### <a name="OneSig.SignBytes">func</a> (\*OneSig) [SignBytes](/src/target/one.go?s=836:871#L26)
 ``` go
 func (s *OneSig) SignBytes() []byte
 ```
@@ -288,7 +288,7 @@ SignBytes returns the original data passed into `NewSig`
 
 
 
-### <a name="OneSig.Signers">func</a> (\*OneSig) [Signers](/src/target/one.go?s=1607:1658#L52)
+### <a name="OneSig.Signers">func</a> (\*OneSig) [Signers](/src/target/one.go?s=1588:1639#L52)
 ``` go
 func (s *OneSig) Signers() ([]crypto.PubKey, error)
 ```
@@ -299,7 +299,7 @@ including if there are no signatures
 
 
 
-### <a name="OneSig.TxBytes">func</a> (\*OneSig) [TxBytes](/src/target/one.go?s=1999:2041#L66)
+### <a name="OneSig.TxBytes">func</a> (\*OneSig) [TxBytes](/src/target/one.go?s=1980:2022#L66)
 ``` go
 func (s *OneSig) TxBytes() ([]byte, error)
 ```
