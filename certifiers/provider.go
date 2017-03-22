@@ -120,6 +120,13 @@ func (m *MemStoreProvider) encodeHash(hash []byte) string {
 }
 
 func (m *MemStoreProvider) StoreSeed(seed Seed) error {
+	// make sure the seed is self-consistent before saving
+	err := seed.ValidateBasic(seed.Checkpoint.Header.ChainID)
+	if err != nil {
+		return err
+	}
+
+	// store the valid seed
 	key := m.encodeHash(seed.Hash())
 	m.byHash[key] = seed
 	m.byHeight = append(m.byHeight, seed)

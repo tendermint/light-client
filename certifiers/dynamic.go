@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	errTooMuchChange = rawerr.New("Validators differ between header and certifier")
+	errTooMuchChange = rawerr.New("Validators change too much to safely update")
 	errPastTime      = rawerr.New("Update older than certifier height")
 )
 

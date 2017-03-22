@@ -34,6 +34,21 @@ func (v ValKeys) Extend(n int) ValKeys {
 	return append(v, extra...)
 }
 
+// GenSecValKeys produces an array of secp256k1 private keys to generate commits
+func GenSecValKeys(n int) ValKeys {
+	res := make(ValKeys, n)
+	for i := range res {
+		res[i] = crypto.GenPrivKeySecp256k1()
+	}
+	return res
+}
+
+// Extend adds n more secp256k1 keys (to remove, just take a slice)
+func (v ValKeys) ExtendSec(n int) ValKeys {
+	extra := GenSecValKeys(n)
+	return append(v, extra...)
+}
+
 // ToValidators produces a list of validators from the set of keys
 // The first key has weight `init` and it increases by `inc` every step
 // so we can have all the same weight, or a simple linear distribution
