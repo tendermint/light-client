@@ -70,11 +70,11 @@ KeyStore is implemented by cryptostore.Manager
 
 
 
-## <a name="TxSigner">type</a> [TxSigner](/src/target/tx.go?s=343:399#L5)
+## <a name="TxSigner">type</a> [TxSigner](/src/target/tx.go?s=300:354#L4)
 ``` go
 type TxSigner struct {
     lc.SignableReader
-    util.Poster
+    lc.Poster
 }
 ```
 
@@ -83,7 +83,7 @@ type TxSigner struct {
 
 
 
-### <a name="NewTxSigner">func</a> [NewTxSigner](/src/target/tx.go?s=401:499#L10)
+### <a name="NewTxSigner">func</a> [NewTxSigner](/src/target/tx.go?s=356:454#L9)
 ``` go
 func NewTxSigner(server client.ABCIClient, signer keys.Signer,
     reader lc.SignableReader) TxSigner
@@ -92,21 +92,21 @@ func NewTxSigner(server client.ABCIClient, signer keys.Signer,
 
 
 
-### <a name="TxSigner.PostTransaction">func</a> (TxSigner) [PostTransaction](/src/target/tx.go?s=603:676#L19)
+### <a name="TxSigner.PostTransaction">func</a> (TxSigner) [PostTransaction](/src/target/tx.go?s=556:629#L18)
 ``` go
 func (t TxSigner) PostTransaction(w http.ResponseWriter, r *http.Request)
 ```
 
 
 
-### <a name="TxSigner.Register">func</a> (TxSigner) [Register](/src/target/tx.go?s=1035:1076#L43)
+### <a name="TxSigner.Register">func</a> (TxSigner) [Register](/src/target/tx.go?s=988:1029#L42)
 ``` go
 func (t TxSigner) Register(r *mux.Router)
 ```
 
 
 
-## <a name="Viewer">type</a> [Viewer](/src/target/viewer.go?s=337:407#L7)
+## <a name="Viewer">type</a> [Viewer](/src/target/viewer.go?s=288:358#L6)
 ``` go
 type Viewer struct {
     client.Client
@@ -120,7 +120,7 @@ type Viewer struct {
 
 
 
-### <a name="NewViewer">func</a> [NewViewer](/src/target/viewer.go?s=409:467#L13)
+### <a name="NewViewer">func</a> [NewViewer](/src/target/viewer.go?s=360:418#L12)
 ``` go
 func NewViewer(cl client.Client, cert lc.Certifier) Viewer
 ```
@@ -128,21 +128,21 @@ func NewViewer(cl client.Client, cert lc.Certifier) Viewer
 
 
 
-### <a name="Viewer.ProveData">func</a> (Viewer) [ProveData](/src/target/viewer.go?s=1113:1178#L51)
+### <a name="Viewer.ProveData">func</a> (Viewer) [ProveData](/src/target/viewer.go?s=1064:1129#L50)
 ``` go
 func (v Viewer) ProveData(w http.ResponseWriter, r *http.Request)
 ```
 
 
 
-### <a name="Viewer.QueryData">func</a> (Viewer) [QueryData](/src/target/viewer.go?s=528:593#L20)
+### <a name="Viewer.QueryData">func</a> (Viewer) [QueryData](/src/target/viewer.go?s=479:544#L19)
 ``` go
 func (v Viewer) QueryData(w http.ResponseWriter, r *http.Request)
 ```
 
 
 
-### <a name="Viewer.Register">func</a> (Viewer) [Register](/src/target/viewer.go?s=2434:2473#L119)
+### <a name="Viewer.Register">func</a> (Viewer) [Register](/src/target/viewer.go?s=2377:2416#L118)
 ``` go
 func (v Viewer) Register(r *mux.Router)
 ```

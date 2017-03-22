@@ -31,6 +31,8 @@ on the public keys stored in the KeyManager, along with logic to sort themselves
 
 
 ## <a name="pkg-index">Index</a>
+* [type ByteValue](#ByteValue)
+  * [func (b ByteValue) Bytes() []byte](#ByteValue.Bytes)
 * [type Certifier](#Certifier)
 * [type Checkpoint](#Checkpoint)
   * [func NewCheckpoint(commit *rtypes.ResultCommit) Checkpoint](#NewCheckpoint)
@@ -39,6 +41,9 @@ on the public keys stored in the KeyManager, along with logic to sort themselves
   * [func (c Checkpoint) CheckValidators(vals []*types.Validator) error](#Checkpoint.CheckValidators)
   * [func (c Checkpoint) Height() int](#Checkpoint.Height)
   * [func (c Checkpoint) ValidateBasic(chainID string) error](#Checkpoint.ValidateBasic)
+* [type Poster](#Poster)
+  * [func NewPoster(server client.ABCIClient, signer keys.Signer) Poster](#NewPoster)
+  * [func (p Poster) Post(sign keys.Signable, keyname, passphrase string) (*ctypes.ResultBroadcastTxCommit, error)](#Poster.Post)
 * [type Proof](#Proof)
 * [type ProofReader](#ProofReader)
 * [type SignableReader](#SignableReader)
@@ -47,10 +52,30 @@ on the public keys stored in the KeyManager, along with logic to sort themselves
 
 
 #### <a name="pkg-files">Package files</a>
-[checkpoint.go](/src/github.com/tendermint/light-client/checkpoint.go) [docs.go](/src/github.com/tendermint/light-client/docs.go) [readers.go](/src/github.com/tendermint/light-client/readers.go) 
+[checkpoint.go](/src/github.com/tendermint/light-client/checkpoint.go) [docs.go](/src/github.com/tendermint/light-client/docs.go) [poster.go](/src/github.com/tendermint/light-client/poster.go) [readers.go](/src/github.com/tendermint/light-client/readers.go) 
 
 
 
+
+
+
+## <a name="ByteValue">type</a> [ByteValue](/src/target/readers.go?s=1303:1324#L35)
+``` go
+type ByteValue []byte
+```
+
+
+
+
+
+
+
+
+
+### <a name="ByteValue.Bytes">func</a> (ByteValue) [Bytes](/src/target/readers.go?s=1326:1359#L37)
+``` go
+func (b ByteValue) Bytes() []byte
+```
 
 
 
@@ -152,6 +177,41 @@ a significantly strong proof for this header's validity.
 
 
 
+## <a name="Poster">type</a> [Poster](/src/target/poster.go?s=387:455#L3)
+``` go
+type Poster struct {
+    // contains filtered or unexported fields
+}
+```
+Poster combines KeyStore and Node to process a Signable and deliver it to tendermint
+returning the results from the tendermint node, once the transaction is processed.
+
+Only handles single signatures
+
+
+
+
+
+
+
+### <a name="NewPoster">func</a> [NewPoster](/src/target/poster.go?s=457:524#L8)
+``` go
+func NewPoster(server client.ABCIClient, signer keys.Signer) Poster
+```
+
+
+
+
+### <a name="Poster.Post">func</a> (Poster) [Post](/src/target/poster.go?s=662:771#L14)
+``` go
+func (p Poster) Post(sign keys.Signable, keyname, passphrase string) (*ctypes.ResultBroadcastTxCommit, error)
+```
+Post will sign the transaction with the given credentials and push it to
+the tendermint server
+
+
+
+
 ## <a name="Proof">type</a> [Proof](/src/target/readers.go?s=320:625#L1)
 ``` go
 type Proof interface {
@@ -201,7 +261,7 @@ using the IAVLProof from go-merkle
 
 
 
-## <a name="SignableReader">type</a> [SignableReader](/src/target/readers.go?s=1715:1798#L45)
+## <a name="SignableReader">type</a> [SignableReader](/src/target/readers.go?s=1786:1869#L49)
 ``` go
 type SignableReader interface {
     ReadSignable(data []byte) (keys.Signable, error)
@@ -237,7 +297,7 @@ TODO: add Fields() method to get field info???
 
 
 
-## <a name="ValueReader">type</a> [ValueReader](/src/target/readers.go?s=1380:1713#L36)
+## <a name="ValueReader">type</a> [ValueReader](/src/target/readers.go?s=1451:1784#L40)
 ``` go
 type ValueReader interface {
     // ReadValue accepts a key, value pair to decode.  The value bytes must be
