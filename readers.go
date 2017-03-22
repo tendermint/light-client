@@ -42,6 +42,10 @@ type Value interface {
 	Bytes() []byte
 }
 
+type ByteValue []byte
+
+func (b ByteValue) Bytes() []byte { return b }
+
 // ValueReader is an abstraction to let us parse application-specific values
 type ValueReader interface {
 	// ReadValue accepts a key, value pair to decode.  The value bytes must be

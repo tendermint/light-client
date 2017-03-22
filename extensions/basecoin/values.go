@@ -5,9 +5,9 @@ import (
 
 	"github.com/pkg/errors"
 	bc "github.com/tendermint/basecoin/types"
+	crypto "github.com/tendermint/go-crypto"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/tx"
 )
 
 type BasecoinValues struct {
@@ -32,7 +32,7 @@ func (t *BasecoinValues) ReadValue(key, value []byte) (lc.Value, error) {
 	}
 
 	// if not render raw
-	return tx.NewValue(value), nil
+	return lc.ByteValue(value), nil
 }
 
 func (t *BasecoinValues) RegisterPlugin(reader lc.ValueReader) {
@@ -69,9 +69,9 @@ type Account struct {
 }
 
 type AccountData struct {
-	PubKey   tx.JSONPubKey `json:"pub_key,omitempty"` // May be empty, if not known.
-	Sequence int           `json:"sequence"`
-	Balance  bc.Coins      `json:"coins"`
+	PubKey   crypto.PubKeyS `json:"pub_key,omitempty"` // May be empty, if not known.
+	Sequence int            `json:"sequence"`
+	Balance  bc.Coins       `json:"coins"`
 }
 
 func (a Account) Bytes() []byte {
@@ -84,7 +84,7 @@ func renderAccount(acct *bc.Account, data []byte) Account {
 		Value: AccountData{
 			Sequence: acct.Sequence,
 			Balance:  acct.Balance,
-			PubKey:   tx.JSONPubKey{acct.PubKey},
+			PubKey:   crypto.PubKeyS{acct.PubKey},
 		},
 		data: data,
 	}
