@@ -3,8 +3,6 @@ package tx
 import (
 	"github.com/pkg/errors"
 	crypto "github.com/tendermint/go-crypto"
-	keys "github.com/tendermint/go-keys"
-	wire "github.com/tendermint/go-wire"
 )
 
 // OneSig lets us wrap arbitrary data with a go-crypto signature
@@ -12,24 +10,14 @@ import (
 // TODO: rethink how we want to integrate this with KeyStore so it makes
 // more sense (particularly the verify method)
 type OneSig struct {
-	data   []byte
-	sig    crypto.Signature
-	pubkey crypto.PubKey
+	data []byte
+	signed
 }
 
-func New(data []byte) *OneSig {
-	return &OneSig{data: data}
-}
+var _ SigInner = &OneSig{}
 
-func Load(serialized []byte) (*OneSig, error) {
-	var s OneSig
-	err := wire.ReadBinaryBytes(serialized, &s)
-	return &s, err
-}
-
-// assertSignable is just to make sure we stay in sync with the Signable interface
-func (s *OneSig) assertSignable() keys.Signable {
-	return s
+func New(data []byte) Sig {
+	return Sig{&OneSig{data: data}}
 }
 
 // SignBytes returns the original data passed into `NewSig`
@@ -52,7 +40,6 @@ func (s *OneSig) Sign(pubkey crypto.PubKey, sig crypto.Signature) error {
 	// set the value once we are happy
 	s.pubkey = pubkey
 	s.sig = sig
-
 	return nil
 }
 
@@ -63,19 +50,8 @@ func (s *OneSig) Signers() ([]crypto.PubKey, error) {
 	if s.pubkey == nil || s.sig == nil {
 		return nil, errors.New("Never signed")
 	}
-
 	if !s.pubkey.VerifyBytes(s.data, s.sig) {
 		return nil, errors.New("Signature doesn't match")
 	}
-
 	return []crypto.PubKey{s.pubkey}, nil
-}
-
-// TxBytes serializes the Sig to send it to a tendermint app.
-// It returns an error if the Sig was never Signed.
-func (s *OneSig) TxBytes() ([]byte, error) {
-	if s.sig == nil {
-		return nil, errors.New("Transaction was never signed")
-	}
-	return wire.BinaryBytes(wrapper{s}), nil
 }

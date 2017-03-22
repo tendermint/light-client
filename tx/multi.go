@@ -3,8 +3,6 @@ package tx
 import (
 	"github.com/pkg/errors"
 	crypto "github.com/tendermint/go-crypto"
-	keys "github.com/tendermint/go-keys"
-	wire "github.com/tendermint/go-wire"
 )
 
 // MultiSig lets us wrap arbitrary data with a go-crypto signature
@@ -21,19 +19,10 @@ type signed struct {
 	pubkey crypto.PubKey
 }
 
-func NewMulti(data []byte) *MultiSig {
-	return &MultiSig{data: data}
-}
+var _ SigInner = &MultiSig{}
 
-func LoadMulti(serialized []byte) (*MultiSig, error) {
-	var s MultiSig
-	err := wire.ReadBinaryBytes(serialized, &s)
-	return &s, err
-}
-
-// assertSignable is just to make sure we stay in sync with the Signable interface
-func (s *MultiSig) assertSignable() keys.Signable {
-	return s
+func NewMulti(data []byte) Sig {
+	return Sig{&MultiSig{data: data}}
 }
 
 // SignBytes returns the original data passed into `NewSig`
@@ -74,13 +63,4 @@ func (s *MultiSig) Signers() ([]crypto.PubKey, error) {
 	}
 
 	return keys, nil
-}
-
-// TxBytes serializes the Sig to send it to a tendermint app.
-// It returns an error if the Sig was never Signed.
-func (s *MultiSig) TxBytes() ([]byte, error) {
-	if len(s.sigs) == 0 {
-		return nil, errors.New("Never signed")
-	}
-	return wire.BinaryBytes(wrapper{s}), nil
 }
