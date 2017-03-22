@@ -1,4 +1,4 @@
-DOC_PKGS:=./certifiers ./mock ./proxy ./tx ./util
+DOC_PKGS:=./certifiers ./mock ./proxy ./tx
 REPO:=github.com/tendermint/light-client
 
 .PHONY: install build test list_pkg docs clean_docs get_vendor_deps tools $(DOC_PKGS)

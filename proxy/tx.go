@@ -7,14 +7,13 @@ import (
 	keys "github.com/tendermint/go-keys"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proxy/types"
-	"github.com/tendermint/light-client/util"
 	"github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 type TxSigner struct {
 	lc.SignableReader
-	util.Poster
+	lc.Poster
 }
 
 func NewTxSigner(server client.ABCIClient, signer keys.Signer,
@@ -22,7 +21,7 @@ func NewTxSigner(server client.ABCIClient, signer keys.Signer,
 
 	return TxSigner{
 		SignableReader: reader,
-		Poster:         util.NewPoster(server, signer),
+		Poster:         lc.NewPoster(server, signer),
 	}
 }
 

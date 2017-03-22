@@ -1,4 +1,4 @@
-package util
+package lightclient
 
 import (
 	keys "github.com/tendermint/go-keys"

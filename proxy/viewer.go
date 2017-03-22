@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	abci "github.com/tendermint/abci/types"
 	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/proxy/types"
 	"github.com/tendermint/tendermint/rpc/client"
 )
@@ -105,7 +104,7 @@ func (v Viewer) ProveData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// now use the checkpoint to validate proof
-	proof, err := certifiers.MerkleReader.ReadProof(p.Proof)
+	proof, err := lc.MerkleReader.ReadProof(p.Proof)
 	if err != nil {
 		writeError(w, err)
 		return
