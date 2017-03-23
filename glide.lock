@@ -95,8 +95,9 @@ imports:
   subpackages:
   - flowrate
 - name: github.com/tendermint/go-keys
-  version: 0c92c8516f530f7f58150073a03e7fc7639b1cfb
+  version: 398ac046da7e1b23551e6a0d4405d3a7653eafad
   subpackages:
+  - cmd
   - cryptostore
   - server
   - server/types

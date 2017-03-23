@@ -13,6 +13,7 @@ import:
 - package: github.com/tendermint/go-keys
   version: master
   subpackages:
+  - cmd
   - cryptostore
   - server
   - storage/filestorage
