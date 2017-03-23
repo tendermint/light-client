@@ -15,7 +15,7 @@ FIRST: test that current basecoin-proxy command works against v0.9/v0.4 release
  so we can merge to master (also need to rewrite README.md)
 
 * init - takes the chain ID, and and verifies a known seed
-  * returns an error if already initialized in that dir, use --data for a new
+  * returns an error if already initialized in that dir, use --root for a new
     dir or --force-reset to wipe existing data clean
 * keys - subcommand to run the go-keys cli
 * seeds - subcommand to view header/commit/validator seeds
@@ -57,6 +57,7 @@ import (
 
 	"github.com/spf13/cobra"
 	keycmd "github.com/tendermint/go-keys/cmd"
+	"github.com/tendermint/light-client/commands"
 )
 
 // BaseCli represents the base command when called without any subcommands
@@ -71,12 +72,19 @@ over a JSON API.`,
 }
 
 func init() {
+	commands.AddBasicFlags(BaseCli)
+
 	// set up the various commands to use
 	BaseCli.AddCommand(keycmd.RootCmd)
+	BaseCli.AddCommand(commands.InitCmd)
 }
 
 func main() {
 	BaseCli.PersistentPreRunE = keycmd.SetupKeys
 	keycmd.PrepareMainCmd(BaseCli, "TM", os.ExpandEnv("$HOME/.basecli"))
 	BaseCli.Execute()
+	// err := BaseCli.Execute()
+	// if err != nil {
+	// 	fmt.Printf("%+v\n", err)
+	// }
 }
