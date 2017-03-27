@@ -2,22 +2,11 @@ package certifiers
 
 import (
 	"encoding/hex"
-	rawerr "errors"
 	"sort"
 
-	"github.com/pkg/errors"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
-
-var (
-	errSeedNotFound = rawerr.New("Seed not found by provider")
-)
-
-// SeedNotFound asserts whether an error is due to missing data
-func SeedNotFound(err error) bool {
-	return err != nil && (errors.Cause(err) == errSeedNotFound)
-}
 
 // Seed is a checkpoint and the actual validator set, the base info you
 // need to update to a given point, assuming knowledge of some previous
@@ -142,14 +131,14 @@ func (m *MemStoreProvider) GetByHeight(h int) (Seed, error) {
 			return s, nil
 		}
 	}
-	return Seed{}, errors.WithStack(errSeedNotFound)
+	return Seed{}, ErrSeedNotFound()
 }
 
 func (m *MemStoreProvider) GetByHash(hash []byte) (Seed, error) {
 	var err error
 	s, ok := m.byHash[m.encodeHash(hash)]
 	if !ok {
-		err = errors.WithStack(errSeedNotFound)
+		err = ErrSeedNotFound()
 	}
 	return s, err
 }
@@ -164,8 +153,8 @@ func NewMissingProvider() MissingProvider {
 
 func (_ MissingProvider) StoreSeed(_ Seed) error { return nil }
 func (_ MissingProvider) GetByHeight(_ int) (Seed, error) {
-	return Seed{}, errors.WithStack(errSeedNotFound)
+	return Seed{}, ErrSeedNotFound()
 }
 func (_ MissingProvider) GetByHash(_ []byte) (Seed, error) {
-	return Seed{}, errors.WithStack(errSeedNotFound)
+	return Seed{}, ErrSeedNotFound()
 }

@@ -1,24 +1,11 @@
 package certifiers
 
 import (
-	rawerr "errors"
 	"fmt"
 
-	"github.com/pkg/errors"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
-
-var (
-	errTooMuchChange = rawerr.New("Validators change too much to safely update")
-	errPastTime      = rawerr.New("Update older than certifier height")
-)
-
-// TooMuchChange asserts whether and error is due to too much change
-// between these validators sets
-func TooMuchChange(err error) bool {
-	return err != nil && (errors.Cause(err) == errTooMuchChange)
-}
 
 // DynamicCertifier uses a StaticCertifier to evaluate the checkpoint
 // but allows for a change, if we present enough proof
@@ -58,7 +45,7 @@ func (c *DynamicCertifier) Certify(check lc.Checkpoint) error {
 func (c *DynamicCertifier) Update(check lc.Checkpoint, vals []*types.Validator) error {
 	// ignore all checkpoints in the past -> only to the future
 	if check.Height() <= c.LastHeight {
-		return errors.WithStack(errPastTime)
+		return ErrPastTime()
 	}
 
 	// first, verify if the input is self-consistent....
@@ -74,8 +61,7 @@ func (c *DynamicCertifier) Update(check lc.Checkpoint, vals []*types.Validator) 
 	err = VerifyCommitAny(c.Cert.VSet, vset, c.Cert.ChainID,
 		check.Commit.BlockID, check.Header.Height, check.Commit)
 	if err != nil {
-		// return errors.WithStack(err)
-		return errors.WithStack(errTooMuchChange)
+		return ErrTooMuchChange()
 	}
 
 	// looks good, we can update

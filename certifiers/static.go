@@ -2,20 +2,11 @@ package certifiers
 
 import (
 	"bytes"
-	rawerr "errors"
 
 	"github.com/pkg/errors"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
-
-var errValidatorsChanged = rawerr.New("Validators differ between header and certifier")
-
-// ValidatorsChanged asserts whether and error is due
-// to a differing validator set
-func ValidatorsChanged(err error) bool {
-	return err != nil && (errors.Cause(err) == errValidatorsChanged)
-}
 
 // StaticCertifier assumes a static set of validators, set on
 // initilization and checks against them.
@@ -55,7 +46,7 @@ func (c *StaticCertifier) Certify(check lc.Checkpoint) error {
 
 	// make sure it has the same validator set we have (static means static)
 	if !bytes.Equal(c.Hash(), check.Header.ValidatorsHash) {
-		return errors.WithStack(errValidatorsChanged)
+		return ErrValidatorsChanged()
 	}
 
 	// then make sure we have the proper signatures for this

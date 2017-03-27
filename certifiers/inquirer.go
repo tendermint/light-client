@@ -1,22 +1,9 @@
 package certifiers
 
 import (
-	rawerr "errors"
-
-	"github.com/pkg/errors"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
-
-var (
-	errNoPathFound = rawerr.New("Cannot find a path of validators")
-)
-
-// NoPathFound asserts whether an error is due to no path of
-// validators in provider from where we are to where we want to be
-func NoPathFound(err error) bool {
-	return err != nil && (errors.Cause(err) == errNoPathFound)
-}
 
 type InquiringCertifier struct {
 	Cert *DynamicCertifier
@@ -74,9 +61,8 @@ func (c *InquiringCertifier) updateToHeight(h int) error {
 		return err
 	}
 	start, end := c.Cert.LastHeight, seed.Height()
-	// fmt.Println("updateToHeight", start, end)
 	if end <= start {
-		return errors.WithStack(errNoPathFound)
+		return ErrNoPathFound()
 	}
 	err = c.Update(seed.Checkpoint, seed.Validators)
 
