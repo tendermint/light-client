@@ -67,7 +67,7 @@ func (m Provider) StoreSeed(seed certifiers.Seed) error {
 	}
 
 	paths := []string{
-		filepath.Join(m.valDir, m.encodeHeight(seed.Height())),
+		filepath.Join(m.checkDir, m.encodeHeight(seed.Height())),
 		filepath.Join(m.valDir, m.encodeHash(seed.Header.ValidatorsHash)),
 	}
 	for _, p := range paths {

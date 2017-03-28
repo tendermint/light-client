@@ -80,7 +80,6 @@ func init() {
 }
 
 func main() {
-	BaseCli.PersistentPreRunE = keycmd.SetupKeys
 	keycmd.PrepareMainCmd(BaseCli, "TM", os.ExpandEnv("$HOME/.basecli"))
 	BaseCli.Execute()
 	// err := BaseCli.Execute()

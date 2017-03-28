@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	toml "github.com/pelletier/go-toml" // same as viper, different from tendermint, ugh...
 	"github.com/pkg/errors"
@@ -14,16 +15,23 @@ import (
 	"github.com/spf13/viper"
 
 	keycmd "github.com/tendermint/go-keys/cmd" // these usages can move to some common dir
+	wire "github.com/tendermint/go-wire"
+	"github.com/tendermint/light-client/certifiers"
+	"github.com/tendermint/light-client/certifiers/client"
+	"github.com/tendermint/light-client/certifiers/files"
 )
 
-var dirPerm = os.FileMode(0700)
+var (
+	dirPerm  = os.FileMode(0700)
+	provider certifiers.Provider
+)
 
 const (
 	ChainFlag = "chainid"
+	NodeFlag  = "node"
+	SeedFlag  = "seed"
 
 	ConfigFile = "config.toml"
-	SeedDir    = "seeds"
-	ProofDir   = "proofs"
 )
 
 // InitCmd will initialize the basecli store
@@ -35,10 +43,38 @@ var InitCmd = &cobra.Command{
 
 func init() {
 	InitCmd.Flags().Bool("force-reset", false, "DANGEROUS: Wipe clean an existing client store")
+	InitCmd.Flags().String(SeedFlag, "", "Seed file to import (optional)")
 }
 
 func AddBasicFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().String(ChainFlag, "", "Chain ID of tendermint node")
+	cmd.PersistentFlags().String(NodeFlag, "", "<host>:<port> to tendermint rpc interface for this chain")
+}
+
+func GetProvider() certifiers.Provider {
+	if provider == nil {
+		// store the keys directory
+		rootDir := viper.GetString("root")
+		provider = certifiers.NewCacheProvider(
+			certifiers.NewMemStoreProvider(),
+			files.NewProvider(rootDir),
+			client.NewHTTP(viper.GetString(NodeFlag)),
+		)
+	}
+	return provider
+}
+
+func GetCertifier() (*certifiers.InquiringCertifier, error) {
+	// load up the latest store....
+	p := GetProvider()
+	// this should get the most recent verified seed
+	seed, err := certifiers.LatestSeed(p)
+	if err != nil {
+		return nil, err
+	}
+	cert := certifiers.NewInquiring(
+		viper.GetString(ChainFlag), seed.Validators, p)
+	return cert, nil
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
@@ -47,7 +83,6 @@ func runInit(cmd *cobra.Command, args []string) error {
 	if viper.GetBool("force-reset") {
 		fmt.Println("Bye, bye data... wiping it all clean!")
 		os.RemoveAll(root)
-		os.MkdirAll(root, dirPerm)
 	}
 
 	err := checkEmpty(root)
@@ -61,14 +96,16 @@ func runInit(cmd *cobra.Command, args []string) error {
 	}
 
 	// TODO: accept and validate seed
-	return nil
+	err = initSeed()
+
+	return err
 }
 
 func initConfigFile(cmd *cobra.Command) error {
 	flags := cmd.Flags()
 	tree := toml.TreeFromMap(map[string]interface{}{})
 
-	required := []string{ChainFlag}
+	required := []string{ChainFlag, NodeFlag}
 	for _, f := range required {
 		if !flags.Changed(f) {
 			return errors.Errorf(`"--%s" required`, f)
@@ -98,8 +135,53 @@ func initConfigFile(cmd *cobra.Command) error {
 	return nil
 }
 
+func initSeed() (err error) {
+	// create a provider....
+	p := GetProvider()
+
+	// load a seed file, or get data from the provider
+	var seed certifiers.Seed
+	seedFile := viper.GetString(SeedFlag)
+	if seedFile == "" {
+		fmt.Println("Loading validator set from tendermint rpc...")
+		seed, err = certifiers.LatestSeed(p)
+	} else {
+		fmt.Printf("Loading validators from file %s\n", seedFile)
+		inf, err := os.Open(seedFile)
+		if err == nil {
+			var n int
+			wire.ReadBinaryPtr(&seed, inf, 0, &n, &err)
+			inf.Close()
+		}
+	}
+	// can't load the seed? abort!
+	if err != nil {
+		return err
+	}
+
+	// make sure it is a proper seed
+	err = seed.ValidateBasic(viper.GetString(ChainFlag))
+	if err != nil {
+		return err
+	}
+
+	// ask the user to verify the validator hash
+	fmt.Println("\nImportant: if this is incorrect, all interaction with the chain will be insecure!")
+	fmt.Printf("  Given validator hash valid: %X\n", seed.Hash())
+	fmt.Println("Is this valid (y/n)?")
+	valid := askForConfirmation()
+	if !valid {
+		return errors.New("Invalid validator hash, try init with proper seed later")
+	}
+
+	// if accepted, store seed as current state
+	p.StoreSeed(seed)
+	return nil
+}
+
 func checkEmpty(root string) error {
 	// we create the keys dir on startup, anything else is a sign of error
+	os.MkdirAll(root, dirPerm)
 	dir, err := os.Open(root)
 	if err != nil {
 		return errors.WithStack(err)
@@ -111,12 +193,25 @@ func checkEmpty(root string) error {
 		return errors.WithStack(err)
 	}
 
-	for _, ours := range []string{ConfigFile, SeedDir, ProofDir} {
-		for _, f := range files {
-			if f == ours {
-				return errors.Errorf(`"%s" already exists, cannot init`, f)
-			}
-		}
+	if len(files) > 0 {
+		return errors.Errorf(`"%s" contains data, cannot init`, root)
 	}
 	return nil
+}
+
+func askForConfirmation() bool {
+	var resp string
+	_, err := fmt.Scanln(&resp)
+	if err != nil {
+		panic(err)
+	}
+	resp = strings.ToLower(resp)
+	if resp == "y" || resp == "yes" {
+		return true
+	} else if resp == "n" || resp == "no" {
+		return false
+	} else {
+		fmt.Println("Please type yes or no and then press enter:")
+		return askForConfirmation()
+	}
 }

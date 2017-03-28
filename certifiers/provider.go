@@ -1,9 +1,13 @@
 package certifiers
 
 import (
+	"math"
+
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
+
+var FutureHeight = (math.MaxInt32 - 5)
 
 // Seed is a checkpoint and the actual validator set, the base info you
 // need to update to a given point, assuming knowledge of some previous
@@ -18,7 +22,11 @@ func (s Seed) Height() int {
 }
 
 func (s Seed) Hash() []byte {
-	return s.Checkpoint.Header.ValidatorsHash
+	h := s.Checkpoint.Header
+	if h == nil {
+		return nil
+	}
+	return h.ValidatorsHash
 }
 
 type Seeds []Seed
@@ -38,6 +46,10 @@ type Provider interface {
 	GetByHeight(h int) (Seed, error)
 	// GetByHash returns a seed exactly matching this validator hash
 	GetByHash(hash []byte) (Seed, error)
+}
+
+func LatestSeed(p Provider) (Seed, error) {
+	return p.GetByHeight(FutureHeight)
 }
 
 // CacheProvider allows you to place one or more caches in front of a source
