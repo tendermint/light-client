@@ -74,7 +74,7 @@ func TestFileProvider(t *testing.T) {
 
 	// make sure we get the last hash if we overstep
 	seed, err = p.GetByHeight(5000)
-	if assert.Nil(err) {
+	if assert.Nil(err, "%+v", err) {
 		assert.Equal(seeds[count-1].Height(), seed.Height())
 		err = checkEqual(seeds[count-1], seed, chainID)
 		assert.Nil(err)
@@ -82,7 +82,7 @@ func TestFileProvider(t *testing.T) {
 
 	// and middle ones as well
 	seed, err = p.GetByHeight(47)
-	if assert.Nil(err) {
+	if assert.Nil(err, "%+v", err) {
 		// we only step by 10, so 40 must be the one below this
 		assert.Equal(40, seed.Height())
 	}
