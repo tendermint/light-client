@@ -19,7 +19,6 @@ FIRST: test that current basecoin-proxy command works against v0.9/v0.4 release
     dir or --force-reset to wipe existing data clean
 * keys - subcommand to run the go-keys cli
 * seeds - subcommand to view header/commit/validator seeds
-  * list - lists points we have here (verified and unverified)
   * show - shows details on one stored seed
   * update - tries to update from known seed to current validator set if possible
     at a minimum it will download current state
@@ -46,8 +45,6 @@ LATER:
 --> actually this main program should be in basecoin along with extensions/basecoin
  as an example of easily tools to build a CLI
 
-TODO: certifiers needs FileProvider and NodeProvider
-
 */
 
 package main
@@ -58,6 +55,7 @@ import (
 	"github.com/spf13/cobra"
 	keycmd "github.com/tendermint/go-keys/cmd"
 	"github.com/tendermint/light-client/commands"
+	"github.com/tendermint/light-client/commands/seeds"
 )
 
 // BaseCli represents the base command when called without any subcommands
@@ -77,6 +75,7 @@ func init() {
 	// set up the various commands to use
 	BaseCli.AddCommand(keycmd.RootCmd)
 	BaseCli.AddCommand(commands.InitCmd)
+	BaseCli.AddCommand(seeds.RootCmd)
 }
 
 func main() {
