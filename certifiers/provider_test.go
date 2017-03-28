@@ -76,3 +76,52 @@ func checkProvider(t *testing.T, p certifiers.Provider, chainID, app string) {
 	}
 
 }
+
+// this will make a get height, and if it is good, set the data as well
+func checkGetHeight(t *testing.T, p certifiers.Provider, ask, expect int) {
+	seed, err := p.GetByHeight(ask)
+	require.Nil(t, err, "%+v", err)
+	if assert.Equal(t, expect, seed.Height()) {
+		err = p.StoreSeed(seed)
+		require.Nil(t, err, "%+v", err)
+	}
+}
+
+func TestCacheGetsBestHeight(t *testing.T) {
+	// assert, require := assert.New(t), require.New(t)
+	require := require.New(t)
+
+	// we will write data to the second level of the cache (p2),
+	// and see what gets cached, stored in
+	p := certifiers.NewMemStoreProvider()
+	p2 := certifiers.NewMemStoreProvider()
+	cp := certifiers.NewCacheProvider(p, p2)
+
+	chainID := "cache-best-height"
+	appHash := []byte("01234567")
+	keys := certifiers.GenValKeys(5)
+	count := 10
+
+	// set a bunch of seeds
+	for i := 0; i < count; i++ {
+		vals := keys.ToValidators(10, int64(count/2))
+		h := 10 * (i + 1)
+		check := keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, 5)
+		seed := certifiers.Seed{check, vals}
+		err := p2.StoreSeed(seed)
+		require.Nil(err)
+	}
+
+	// let's get a few heights from the cache and set them proper
+	checkGetHeight(t, cp, 57, 50)
+	checkGetHeight(t, cp, 33, 30)
+
+	// make sure they are set in p as well (but nothing else)
+	checkGetHeight(t, p, 44, 30)
+	checkGetHeight(t, p, 50, 50)
+	checkGetHeight(t, p, 99, 50)
+
+	// now, query the cache for a higher value
+	checkGetHeight(t, p2, 99, 90)
+	checkGetHeight(t, cp, 99, 90)
+}

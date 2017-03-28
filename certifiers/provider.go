@@ -69,9 +69,15 @@ func (c CacheProvider) StoreSeed(seed Seed) (err error) {
 
 func (c CacheProvider) GetByHeight(h int) (s Seed, err error) {
 	for _, p := range c.Providers {
-		s, err = p.GetByHeight(h)
+		var ts Seed
+		ts, err = p.GetByHeight(h)
 		if err == nil {
-			break
+			if ts.Height() > s.Height() {
+				s = ts
+			}
+			if ts.Height() == h {
+				break
+			}
 		}
 	}
 	return s, err

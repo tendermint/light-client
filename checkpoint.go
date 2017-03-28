@@ -33,6 +33,9 @@ func NewCheckpoint(commit *rtypes.ResultCommit) Checkpoint {
 }
 
 func (c Checkpoint) Height() int {
+	if c.Header == nil {
+		return 0
+	}
 	return c.Header.Height
 }
 
