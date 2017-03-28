@@ -17,6 +17,10 @@ func NewInquiring(chainID string, vals []*types.Validator, provider Provider) *I
 	}
 }
 
+func (c *InquiringCertifier) ChainID() string {
+	return c.Cert.Cert.ChainID
+}
+
 func (c *InquiringCertifier) Certify(check lc.Checkpoint) error {
 	err := c.Cert.Certify(check)
 	if !ValidatorsChanged(err) {

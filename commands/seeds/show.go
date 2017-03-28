@@ -17,7 +17,6 @@ const (
 	fileFlag   = "file"
 )
 
-// getCmd represents the get command
 var showCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Show the details of one selected seed",
@@ -34,14 +33,7 @@ func init() {
 	RootCmd.AddCommand(showCmd)
 }
 
-func showSeed(cmd *cobra.Command, args []string) (err error) {
-	p := commands.GetProvider()
-
-	var seed certifiers.Seed
-	h := viper.GetInt(heightFlag)
-	hash := viper.GetString(hashFlag)
-	file := viper.GetString(fileFlag)
-
+func loadSeed(p certifiers.Provider, h int, hash, file string) (seed certifiers.Seed, err error) {
 	// load the seed from the proper place
 	if h != 0 {
 		seed, err = p.GetByHeight(h)
@@ -57,7 +49,16 @@ func showSeed(cmd *cobra.Command, args []string) (err error) {
 		// default is latest seed
 		seed, err = certifiers.LatestSeed(p)
 	}
+	return
+}
 
+func showSeed(cmd *cobra.Command, args []string) error {
+	p := commands.GetProvider()
+
+	h := viper.GetInt(heightFlag)
+	hash := viper.GetString(hashFlag)
+	file := viper.GetString(fileFlag)
+	seed, err := loadSeed(p, h, hash, file)
 	if err != nil {
 		return err
 	}
