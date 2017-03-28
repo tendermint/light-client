@@ -17,6 +17,7 @@ func TestCacheProvider(t *testing.T) {
 	p := certifiers.NewCacheProvider(
 		certifiers.NewMissingProvider(),
 		certifiers.NewMemStoreProvider(),
+		certifiers.NewMissingProvider(),
 	)
 	checkProvider(t, p, "test-cache", "kjfhekfhkewhgit")
 }

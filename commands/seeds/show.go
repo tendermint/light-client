@@ -3,7 +3,6 @@ package seeds
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -53,7 +52,7 @@ func showSeed(cmd *cobra.Command, args []string) (err error) {
 			seed, err = p.GetByHash(vhash)
 		}
 	} else if file != "" {
-		err = errors.New("Not implemented")
+		seed, err = certifiers.LoadSeed(file)
 	} else {
 		// default is latest seed
 		seed, err = certifiers.LatestSeed(p)

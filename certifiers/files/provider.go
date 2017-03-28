@@ -8,7 +8,6 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
-	wire "github.com/tendermint/go-wire"
 	"github.com/tendermint/light-client/certifiers"
 )
 
@@ -71,19 +70,10 @@ func (m Provider) StoreSeed(seed certifiers.Seed) error {
 		filepath.Join(m.valDir, m.encodeHash(seed.Header.ValidatorsHash)),
 	}
 	for _, p := range paths {
-		outf, err := os.Create(p)
-		if os.IsExist(err) {
-			continue
-		}
-		if err == nil {
-			var n int
-			wire.WriteBinary(seed, outf, &n, &err)
-			// we can't use defer as we are in a loop... make sure we close
-			outf.Close()
-		}
+		err := seed.Write(p)
 		// unknown error in creating or writing immediately breaks
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	return nil
@@ -91,65 +81,43 @@ func (m Provider) StoreSeed(seed certifiers.Seed) error {
 
 func (m Provider) GetByHeight(h int) (certifiers.Seed, error) {
 	// first we look for exact match, then search...
-	s := certifiers.Seed{}
 	path := filepath.Join(m.checkDir, m.encodeHeight(h))
-	inf, err := os.Open(path)
-	// if no match, make a best attempt to find one lower
-	if os.IsNotExist(err) {
-		inf, err = m.searchForHeight(h)
+	seed, err := certifiers.LoadSeed(path)
+	if certifiers.SeedNotFound(err) {
+		path, err = m.searchForHeight(h)
+		if err == nil {
+			seed, err = certifiers.LoadSeed(path)
+		}
 	}
-
-	if err == nil {
-		defer inf.Close()
-		var n int
-		wire.ReadBinaryPtr(&s, inf, 0, &n, &err)
-	}
-
-	// error here on read file or parse file
-	return s, errors.WithStack(err)
+	return seed, err
 }
 
 // search for height, looks for a file with highest height < h
 // return certifiers.ErrSeedNotFound() if not there...
-func (m Provider) searchForHeight(h int) (*os.File, error) {
+func (m Provider) searchForHeight(h int) (string, error) {
 	d, err := os.Open(m.checkDir)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return "", errors.WithStack(err)
 	}
 	files, err := d.Readdirnames(0)
 
 	d.Close()
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return "", errors.WithStack(err)
 	}
 
 	desired := m.encodeHeight(h)
 	sort.Strings(files)
 	i := sort.SearchStrings(files, desired)
 	if i == 0 {
-		return nil, certifiers.ErrSeedNotFound()
+		return "", certifiers.ErrSeedNotFound()
 	}
 	found := files[i-1]
-
 	path := filepath.Join(m.checkDir, found)
-	inf, err := os.Open(path)
-	return inf, errors.WithStack(err)
+	return path, errors.WithStack(err)
 }
 
 func (m Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
-	s := certifiers.Seed{}
 	path := filepath.Join(m.valDir, m.encodeHash(hash))
-	inf, err := os.Open(path)
-	if os.IsNotExist(err) {
-		return s, certifiers.ErrSeedNotFound()
-	}
-
-	if err == nil {
-		defer inf.Close()
-		var n int
-		wire.ReadBinaryPtr(&s, inf, 0, &n, &err)
-	}
-
-	// error here on read file or parse file
-	return s, errors.WithStack(err)
+	return certifiers.LoadSeed(path)
 }

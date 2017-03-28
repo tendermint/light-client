@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/viper"
 
 	keycmd "github.com/tendermint/go-keys/cmd" // these usages can move to some common dir
-	wire "github.com/tendermint/go-wire"
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/certifiers/client"
 	"github.com/tendermint/light-client/certifiers/files"
@@ -147,12 +146,7 @@ func initSeed() (err error) {
 		seed, err = certifiers.LatestSeed(p)
 	} else {
 		fmt.Printf("Loading validators from file %s\n", seedFile)
-		inf, err := os.Open(seedFile)
-		if err == nil {
-			var n int
-			wire.ReadBinaryPtr(&seed, inf, 0, &n, &err)
-			inf.Close()
-		}
+		seed, err = certifiers.LoadSeed(seedFile)
 	}
 	// can't load the seed? abort!
 	if err != nil {

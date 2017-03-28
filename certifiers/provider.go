@@ -2,7 +2,10 @@ package certifiers
 
 import (
 	"math"
+	"os"
 
+	"github.com/pkg/errors"
+	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
@@ -27,6 +30,39 @@ func (s Seed) Hash() []byte {
 		return nil
 	}
 	return h.ValidatorsHash
+}
+
+func (s Seed) Write(path string) (err error) {
+	var f *os.File
+	f, err = os.Create(path)
+	if err == nil {
+		var n int
+		wire.WriteBinary(s, f, &n, &err)
+		f.Close()
+	}
+	// we don't write, but this is not an error
+	if os.IsExist(err) {
+		return nil
+	}
+	return errors.WithStack(err)
+}
+
+func LoadSeed(path string) (seed Seed, err error) {
+	var f *os.File
+	f, err = os.Open(path)
+	if err == nil {
+		var n int
+		wire.ReadBinaryPtr(&seed, f, 0, &n, &err)
+		f.Close()
+	}
+
+	// report error nicely
+	if os.IsNotExist(err) {
+		err = ErrSeedNotFound()
+	} else if err != nil {
+		err = errors.WithStack(err)
+	}
+	return
 }
 
 type Seeds []Seed
@@ -91,6 +127,10 @@ func (c CacheProvider) GetByHeight(h int) (s Seed, err error) {
 				break
 			}
 		}
+	}
+	// even if the last one had an error, if any was a match, this is good
+	if s.Height() > 0 {
+		err = nil
 	}
 	return s, err
 }
