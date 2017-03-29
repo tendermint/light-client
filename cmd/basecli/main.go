@@ -25,13 +25,24 @@ FIRST: test that current basecoin-proxy command works against v0.9/v0.4 release
   * export - exports some seeds for passing to a peer
   * import - imports seeds from a peer, filling in gaps if the node changed too
       much while you were offline - does lots of validation
-  * validate - verifies and shows details of file (just import --dry-run?)
-* proofs - like seeds, store them (later)
+    * --dry-run just checks validity but doesn't store (TODO: deeper)
+  * TODO: list????
+* proofs
+  *
+* TODO: proofs - like seeds, store them (later)
   * list
   * show
   * export
   * import
   * ??get a new proof?? this makes a query via command line
+
+basecli proof state list --key <k> --height <h>
+basecli proof state get <key> --height <h>
+basecli proof state export <key> --height <h>
+
+basecli proof tx list -> hashes
+basecli proof tx get <hash>
+basecli proof tx export <hash>
 
 NEXT:
 * tx - at least support sending via cli, if not all plugins...
@@ -55,6 +66,7 @@ import (
 	"github.com/spf13/cobra"
 	keycmd "github.com/tendermint/go-keys/cmd"
 	"github.com/tendermint/light-client/commands"
+	"github.com/tendermint/light-client/commands/proofs"
 	"github.com/tendermint/light-client/commands/seeds"
 )
 
@@ -76,6 +88,7 @@ func init() {
 	BaseCli.AddCommand(keycmd.RootCmd)
 	BaseCli.AddCommand(commands.InitCmd)
 	BaseCli.AddCommand(seeds.RootCmd)
+	BaseCli.AddCommand(proofs.RootCmd)
 }
 
 func main() {
