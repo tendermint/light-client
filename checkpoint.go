@@ -94,32 +94,3 @@ func (c Checkpoint) CheckValidators(vals []*types.Validator) error {
 	}
 	return nil
 }
-
-// CheckTxs checks if the entire set of transactions for the block matches
-// the Checkpoint header.
-func (c Checkpoint) CheckTxs(txs types.Txs) error {
-	hash := txs.Hash()
-	if !bytes.Equal(hash, c.Header.DataHash) {
-		return errors.Errorf("TxHash %X != Header hash %X",
-			hash, c.Header.DataHash)
-	}
-	return nil
-}
-
-// TODO: one tx plus proof.... need changes in the
-// func (c Checkpoint) CheckTx(tx types.Tx) error {
-//   return nil
-// }
-
-// CheckAppState validates whether the key-value pair and merkle proof
-// can be verified with this Checkpoint.
-func (c Checkpoint) CheckAppState(k, v []byte, proof Proof) error {
-	if !bytes.Equal(proof.Root(), c.Header.AppHash) {
-		return errors.Errorf("Proof is for AppHash %X but header has %X",
-			proof.Root(), c.Header.AppHash)
-	}
-	if !proof.Verify(k, v, c.Header.AppHash) {
-		return errors.New("Proof doesn't match given key-value pair")
-	}
-	return nil
-}

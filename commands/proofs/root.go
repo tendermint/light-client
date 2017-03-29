@@ -1,9 +1,6 @@
 package proofs
 
-import (
-	"github.com/spf13/cobra"
-	lc "github.com/tendermint/light-client"
-)
+import "github.com/spf13/cobra"
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -42,15 +39,4 @@ data to other peers as needed.
 func init() {
 	RootCmd.AddCommand(stateCmd)
 	RootCmd.AddCommand(txCmd)
-}
-
-type Prover interface {
-	Get(key []byte, h int) (Proof, error)
-	Unmarshal([]byte) (Proof, error)
-}
-
-type Proof interface {
-	BlockHeight() int
-	Validate(lc.Checkpoint) error // Make sure the checkpoint is validated and proper height
-	Marshal() ([]byte, error)
 }

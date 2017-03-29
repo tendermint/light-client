@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	abci "github.com/tendermint/abci/types"
 	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/proofs"
 	"github.com/tendermint/light-client/proxy/types"
 	"github.com/tendermint/tendermint/rpc/client"
 )
@@ -49,7 +50,7 @@ func (v Viewer) QueryData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := renderQuery(q, false)
+	resp, err := renderQuery(q)
 	if err == nil {
 		writeSuccess(w, resp)
 	} else {
@@ -68,19 +69,15 @@ func (v Viewer) ProveData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the proof
-	pr, err := v.ABCIQuery("/key", key, true)
+	prover := proofs.NewAppProver(v)
+	pr, err := prover.Get(key, 0)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	p := pr.Response
-	if p.Code != 0 {
-		writeCode(w, renderQueryFail(p), 400)
-	}
 
 	// waiting until the signatures are ready (if needed)
-	h := int(p.Height)
+	h := int(pr.BlockHeight())
 	err = client.WaitForHeight(v, h, nil)
 	if err != nil {
 		writeError(w, err)
@@ -88,7 +85,6 @@ func (v Viewer) ProveData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the next block height
-	// TODO: when there is no height?
 	com, err := v.Commit(h)
 	if err != nil {
 		writeError(w, err)
@@ -96,20 +92,15 @@ func (v Viewer) ProveData(w http.ResponseWriter, r *http.Request) {
 	}
 	check := lc.NewCheckpoint(com)
 
-	// let's see if this is valid
+	// let's see if the checkpoint is properly signed
 	err = v.Certify(check)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	// now use the checkpoint to validate proof
-	proof, err := lc.MerkleReader.ReadProof(p.Proof)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	err = check.CheckAppState(p.Key, p.Value, proof)
+	// now make sure the proof matches our new header
+	err = pr.Validate(check)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -117,7 +108,7 @@ func (v Viewer) ProveData(w http.ResponseWriter, r *http.Request) {
 
 	// D00d, we are good!
 	// that was one hard won boolean flag
-	resp, err := renderQuery(p, true)
+	resp, err := renderProof(pr.(proofs.AppProof))
 	if err == nil {
 		writeSuccess(w, resp)
 	} else {
@@ -130,7 +121,7 @@ func (v Viewer) Register(r *mux.Router) {
 	r.HandleFunc("/proof/{key}", v.ProveData).Methods("GET")
 }
 
-func renderQuery(r abci.ResponseQuery, proven bool) (*types.QueryResponse, error) {
+func renderQuery(r abci.ResponseQuery) (*types.QueryResponse, error) {
 	value, err := json.Marshal(r.Value)
 	if err != nil {
 		return nil, err
@@ -139,7 +130,20 @@ func renderQuery(r abci.ResponseQuery, proven bool) (*types.QueryResponse, error
 		Height: r.Height,
 		Key:    r.Key,
 		Value:  value,
-		Proven: proven,
+		Proven: false,
+	}, nil
+}
+
+func renderProof(p proofs.AppProof) (*types.QueryResponse, error) {
+	value, err := json.Marshal(p.Value)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryResponse{
+		Height: p.Height,
+		Key:    p.Key,
+		Value:  value,
+		Proven: true,
 	}, nil
 }
 
