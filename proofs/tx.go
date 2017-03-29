@@ -44,12 +44,20 @@ func (t TxProver) Get(key []byte, h uint64) (lc.Proof, error) {
 	return proof, err
 }
 
-func (t TxProver) Unmarshal(data []byte) (lc.Proof, error) {
+func (t TxProver) Unmarshal(data []byte) (pr lc.Proof, err error) {
+	// to handle go-wire panics... ugh
+	defer func() {
+		if rec := recover(); rec != nil {
+			if e, ok := rec.(error); ok {
+				err = errors.WithStack(e)
+			} else {
+				err = errors.Errorf("Panic: %v", rec)
+			}
+		}
+	}()
 	var proof TxProof
-	var n int
-	var err error
-	wire.ReadBinary(&proof, bytes.NewBuffer(data), txLimit, &n, &err)
-	return proof, errors.WithStack(err)
+	err = errors.WithStack(wire.ReadBinaryBytes(data, &proof))
+	return proof, err
 }
 
 // TxProof checks ALL txs for one block... we need a better way!

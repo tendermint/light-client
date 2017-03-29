@@ -13,10 +13,6 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 )
 
-func getLocalClient() client.Local {
-	return client.NewLocal(node)
-}
-
 func getCurrentCheck(t *testing.T, cl client.Client) lc.Checkpoint {
 	stat, err := cl.Status()
 	require.Nil(t, err, "%+v", err)
@@ -29,8 +25,6 @@ func getCheckForHeight(t *testing.T, cl client.Client, h int) lc.Checkpoint {
 	require.Nil(t, err, "%+v", err)
 	return lc.NewCheckpoint(commit)
 }
-
-// TODO: read/write and erroroneous proofs
 
 func TestAppProofs(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
