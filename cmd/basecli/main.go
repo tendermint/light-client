@@ -28,13 +28,11 @@ FIRST: test that current basecoin-proxy command works against v0.9/v0.4 release
     * --dry-run just checks validity but doesn't store (TODO: deeper)
   * TODO: list????
 * proofs
-  *
-* TODO: proofs - like seeds, store them (later)
-  * list
-  * show
+  * get - display just as binary or accept plug in to display as json?
+  * list????
+  * show?
   * export
-  * import
-  * ??get a new proof?? this makes a query via command line
+  * import (--dry-run)
 
 basecli proof state list --key <k> --height <h>
 basecli proof state get <key> --height <h>

@@ -1,6 +1,12 @@
 package proofs
 
-import "github.com/spf13/cobra"
+import (
+	"encoding/hex"
+	"errors"
+
+	"github.com/spf13/cobra"
+	lc "github.com/tendermint/light-client"
+)
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -14,29 +20,22 @@ data to other peers as needed.
 `,
 }
 
-var stateCmd = &cobra.Command{
-	Use:   "state",
-	Short: "Handle proofs for state of abci app",
-	Long: `Proofs allows you to validate abci state with merkle proofs.
-
-These proofs tie the data to a checkpoint, which is managed by "seeds".
-Here we can validate these proofs and import/export them to prove specific
-data to other peers as needed.
-`,
+type ProofCommander struct {
+	Prover func() lc.Prover
 }
 
-var txCmd = &cobra.Command{
-	Use:   "tx",
-	Short: "Handle proofs of commited txs",
-	Long: `Proofs allows you to validate abci state with merkle proofs.
-
-These proofs tie the data to a checkpoint, which is managed by "seeds".
-Here we can validate these proofs and import/export them to prove specific
-data to other peers as needed.
-`,
+func (p ProofCommander) Register(parent *cobra.Command) {
+	parent.AddCommand(p.GetCmd())
 }
 
-func init() {
-	RootCmd.AddCommand(stateCmd)
-	RootCmd.AddCommand(txCmd)
+const (
+	heightFlag = "height"
+)
+
+func getHexArg(args []string) ([]byte, error) {
+	if len(args) != 1 || len(args[0]) == 0 {
+		return nil, errors.New("You must provide exactly one arg in hex")
+	}
+	bytes, err := hex.DecodeString(args[0])
+	return bytes, err
 }
