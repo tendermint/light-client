@@ -79,18 +79,3 @@ func (c Checkpoint) ValidateBasic(chainID string) error {
 	// empowered validators
 	return nil
 }
-
-// CheckValidators should only be used after you fully trust this checkpoint
-//
-// It checks if these really are the validators authorized to sign the
-// checkpoint.
-func (c Checkpoint) CheckValidators(vals []*types.Validator) error {
-	if len(vals) == 0 {
-		return errors.New("No validators provided")
-	}
-	hash := types.NewValidatorSet(vals).Hash()
-	if !bytes.Equal(hash, c.Header.ValidatorsHash) {
-		return errors.New("Validator hashes differ")
-	}
-	return nil
-}
