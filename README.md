@@ -8,11 +8,27 @@ If you're still with me, then you should take a deeper look at this repo.  The p
 
 ## Important Note
 
-The current code will work with tendermint 0.9 and basecoin 0.2.
+The current code will work with tendermint 0.9 and basecoin 0.3.1.
 
-However, I realized this was much more difficult than it needed to be, and ended up integrating an even more powerful rpc client in tendermint itself, as well as a more flexible json un/marshaler through a new repository `go-data`, along with changes to `go-crypto` and `basecoin` to support it.
+This is an incomplete but usable state. The main purpose here is validating headers along with signatures (here refered to as seeds). And some basic checks for abci and tx proofs.  To make this better, the cli needs to be more aware of the actual data structures used in the particular abci app, and expose them.  This is an area of development.
 
-So, feel free to use and read this code, but be aware that I will do a major rewrite to make use of those other libraries, so don't code to much on the current API.
+The develop branch is tracking tendermint 0.9.1 release and a number of refactors for internal libraries, and there should be another release soon.  There will also be some better api for this version.
+
+However, a number of desired features require some breaking changes to the tendermint rpc itself, which are planned for 0.10, and that version of the light-client should be more secure in the face of malicious nodes.
+
+### Let's go already
+
+1. Compile the code with `make install`
+2. Run a basecoin 0.3.1 instance on some machine (or better yet, a cluster)
+3. Initialize the local client:
+  * Run `basecli init --chain_id <ID> --node <host>:<port>
+  * This will ask you to confirm the validator set of the running cluster and verify the chain id is correct, check this step.
+  * You must use `--force-reset` to overwrite this dir
+  * You can also use `-r` or `--root` to store the chain config in a custom dir (and support two chains at once)
+4. After some time (and possible validator set changes), update the the current chain state securely
+  * Run `basecli seeds update`
+  * Run `basecli seeds show --height X` to show the closest seed to that height if available
+5. Try `basecli --help` to see what is available and try it out.
 
 ### More reasons
 
@@ -53,39 +69,27 @@ Finally, we could export a nice `.so` file with a simple C ABI using [-buildmode
 
 We need to manage private keys locally, store them securely (passphrase protected), sign transactions, and display their addresses (for receiving transactions).
 
-This code is in the [cryptostore directory](./cryptostore). It uses a composable architecture to allow you to customize the type of key (currently Ed25519 or Secp256k1), what symetric encryption algorithm we use to passphrase-encode the key for storage, and where we store the key (currently in-memory or on disk, could be extend to eg. vault, etcd, db...)
-
-Please take a look at the godoc for this package, as care was taken to make it approachable. Note that you can find the [storage options](./storage) in their own package.  They can be used to store eg. validator lists as well.
+This code is now a separate repo called [go-keys](https://github.com/tendermint/go-keys) and is embedded as a subcommand in `basecli keys`. Try that with `list` and `new` to see info.  Also, note the `-o json` command to see a machine readable format with more info.
 
 The general concept (create, list, sign, import, export...) was inspired by [Ethereum Key Management](https://github.com/ethereum/go-ethereum/wiki/Managing-Your-Accounts).  The code and architecture was developed completely independently (I didn't even look at their code, so as not to possibly violate the GPLv3 license).
 
-### Creating Transactions
+### Tracking Validators
 
-If the server is writen in go, especially if it is based on basecoin, generating the transaction (with `go-wire`) and signing with `go-crypto` is very hard to reliably do from any language other than go.  This library will produce an interface, where the caller can simply provide the data to the transaction, as well as a keyname and passphrase, and the library will generate a byte array (or hex/base64 string) with the properly encoded and signed transaction. If running the proxy server, we will also post it directly to the blockchain for you.
+Unless you want to blindly trust the node you talk with, you need to trace every response back to a hash in a block header and validate the commit signatures of that block header match the proper validator set.  If there is a contant validator set, you store it locally upon initialization of the client, and check against that every time.
 
-This should be written in a way that it is easy to add custom transaction encodings to a custom build of this library without forking the codebase (just importing it and passing some initialization info).
+Once there is a dynamic validator set, the issue of verifying a block becomes a bit more tricky. There is background information in a [github issue](https://github.com/tendermint/tendermint/issues/377), and the [concept of validators](https://tendermint.com/docs/internals/validators).
 
-We extracted these ideas and present the results in three interfaces:
+I refer to a complete proof at one height as a seed (block header, block commit signatures, validator set).  All code to validate these seeds and to use these seeds to validate other headers can be found in the [certifiers package](https://github.com/tendermint/light-client/tree/master/certifiers).
 
-* [Signable](./transactions.go#L28-L48), which can be implemented by any transaction
-* [Signer](./transactions.go#L50-L54), which is responsible for attaching signatures to the `Signable` and is implemented by [cryptostore.Manager](./cryptostore/holder.go#L9-L14)
-* [Poster](./transactions.go#L56-L62), which pulls together a `Signer` and `Broadcaster`, so we can `Post` the `Signable` directly to tendermint in one shot.
+In short, if there is a block at height H with a known (trusted) validator set V, and another block at height H' (H' > H) with validator set V' != V, then we want a way to safely update it. First, get the new (unconfirmed) validator set V' and verify H' is internally consistent and properly signed by this V'. Assuming it is a valid block, we check that at least 2/3 of the validators in V signed it, meaning it would also be valid under our old assumptions.  That should be enough, but we can also check that the V counts for at least 2/3 of the total votes in H' for extra safety (we can have a discussion if this is strictly required). If we can verify all this, then we can accept H' and V' as valid and use that to validate all blocks X > H'.
 
-The infrastructure is in place, it is just up to an app to create transactions that implement the `Signable` interface, to take advantage of the lightclient. We provide various implementations that can simply be used by applications that don't have special requirements:
+If we cannot update directly from H -> H' because there was too much changes to the validator set, then we can look for some Hm (H < Hm < H') with a validator set Vm.  Then we try to update H -> Hm and Hm -> H' in two separate steps.  If one of these steps doesn't work, then we continue bisecting, until we eventually have to externally validate the valdiator set changes at every block.
 
-* `tx.OneSig` - supports one signature using go-crypto (`tx.New(data)`)
-* `tx.MultiSig` - supports multi-sig using go-crypto (`tx.NewMulti(data)`)
-* `mock.OneSig` - records a single signature for use in testing
-* `mock.MultiSig` - records multi-sig for use in testing
+There is only one problem now... it is impossible to get old validator sets from the tendermint RPC API.  You can currently copy these seeds from one light client to another, with full verification.  Thus, if client A cannot update from height 800 to 1200, but client B has the full seed for height 1000, he can export it and client A can import that seed, doing the full verification procedure above to advance from 800 to 1000, and then move up to the current block height.
 
-**TODO** update basecoin transactions to support the `Signable` interface
+Since we never trust any server in this protocol, only the signatures themselves, it doesn't matter if the seed comes from a (possibly malicious) node or a (possibly malicious) user.  We can accept it or reject it only based on our trusted validator set and cryptographic proofs. This makes it extremely important to verify that you have the proper validator set when initializing the client, as that is the root of all trust.
 
-
-### RPC Wrapper
-
-First, we created a [simple interface](./rpc) to call the tendermint RPC, to avoid a lot of boilerplate casting and marshaling of data types when we call the RPC. This is a literal client of the existing tendermint RPC, and will track the most recent version of tendermint rpc (and multiple versions once 1.0 is released). The main advantage over using `github.com/tendermint/go-rpc/client` directly is that we handle casting the types and following the rpc interfaces, allowing you to just call simple, type-safe methods.
-
-Secondly, we create two abstract interfaces `Broadcaster` and `Checker` representing the needs of a light client, either sending info to tendermint, or getting and validating a key-value pair.  These interfaces (and a but more) are implemented by [rpc.Node](https://github.com/tendermint/light-client/blob/develop/rpc/node.go), which takes the results from `rpc.HTTPClient` and does some validation and other processing on them.  This is responsible for all parsing of tendermint structures, as well as app-specific data structures.  To that end, it must be configurable to allow custom deserializing of `Proof` and `Value`.
+Or course, this assumes that the known block is within the unbonding period to avoid the "nothing at stake" problem. If you haven't seen the state in a few months, you will need to manually verify the new validator set hash using off-chain means (the same as getting the initial hash).
 
 ### Viewing Data
 
@@ -93,52 +97,19 @@ When querying data, we often get binary data back from the server.  We need a wa
 
 The data must be returned from the app as bytes that match the merkle proof, thus it is the responsibility of this library to parse it.  Since this is application-specific domain knowledge, we cannot program this, but rather allow the application designer to provide us this information in a special `ValueReader` interface, which knows how to read the application-specific values stored in the merkle tree, and convert them into a struct that can be json-encoded, or otherwise transformed for other binding.
 
-There is a simple implementation `mock.ByteValueReader` for testing, which just wraps the `[]byte` into a `Value` without doing any parsing.  For integration with your application, please provide your application-specific logic.
+If you just want to pass unparsed bytes as hex-data around, use `Bytes` from `go-data` to store the data, which serializes in hex by default and fulfills the `lightclient.Value` interface.
 
 ### Verifying Proofs
 
 Beyond simply querying data from a blockchain, we often want **undeniable, cryptographic proof** of its validity.  This is the reason for exposing merkle proofs as first class objects in the new query [request](https://github.com/tendermint/abci/blob/develop/types/types.pb.go#L718-L723) and [response](https://github.com/tendermint/abci/blob/develop/types/types.pb.go#L1413-L1421).  However, this Proof byte slice, still generally requires go code to [parse and validate](https://github.com/tendermint/go-merkle/blob/develop/iavl_proof.go#L14-L42).
 
-It is important to provide access to this essential functionality in a light client library, so we can provide this security to any UI we wish to build. We provide a few methods to allow this to work:
+It is important to provide access to this essential functionality in a light client library, so we can provide this security to any UI we wish to build. Once we have a header we have properly certified by the above mechanisms, then we can accept merkle proofs for any data that leads to any of the root hashes in the block header (currently, this is meaningfully the apphash (for state), datahash (for txs in that block), and the validatorhash (used by the certifier)).
 
-* There are two important methods to get information, implemented by `rpc.Node`:
-  * `Checker.Prove` method will parse the data into a format that can be used to prove a key-value slice leads to a root hash
-  * `Checker.SignedHeader` retrieves a block header, containing the AppHash, as well as the Precommit signatures that prove which validators signed off on this commit
-* `Certifier.Certify` uses some out-of-band knowledge of the validator set to check that these signatures are sufficient proof (> 2/3 votes)
-  * `rpc.StaticCertifier` is a simple implementation, using a static validator set, for test code or very simple apps
-  * **TODO**: special `TrackingCertifier`, which is seeded with some validator set and does occasional queries on the blockchain to update it safely.
-
-Note: here is some info on the [block structure](https://tendermint.com/docs/internals/block-structure) we parse to get this data
-
-### Tracking Validators
-
-Once there is a dynamic validator set, the issue of verifying a block becomes a bit more tricky.  This is still a work in progress, but so far I have yet to see an app that dynamically updates the validator set. In any case "coming soon".s
-
-There is background information in a [github issue](https://github.com/tendermint/tendermint/issues/377), and the [concept of validators](https://tendermint.com/docs/internals/validators)
-
-**TODO**: Link to Bucky's document about this algorithm
-
-**TODO**: Implement
+This is still a work in progress (will be enhanced soon), but you can view the initial code in the [proofs package](https://github.com/tendermint/light-client/tree/master/proofs).
 
 ## Extensibility
 
-Of course, every application has its own transaction types, its own way of signing them, and its own data structures for which it wishes to present proofs. While we can work with interfaces that know how to serialize themselves (like `Signable`), this does not tell us how to *deserialize* the objects.  In fact, it is impossible to attach this information to an interface (as we allow many potentially unknown concrete types). We use two ways for this in the code:
-
-###Hard code dependencies
-
-Some things are hard coded for simplicity, or as there are no other options available.  I tried to abstract `crypto.PubKey` and `crypto.Signature` and quickly came to the issue that interface methods applying to interfaces cannot be implemented by other interfaces with the same footprint. I'll explain later, but for technical reasons it was quite difficult not to just use go-crypto, and anyway, this is supposed to be a general purpose implementation of any cryptographic algorithm, so I left it as a direct dependency.  If you wish to add new algorithms, you have to add them to go-crypto (by forking).
-
-###External configuration
-
-Other concepts need maximum flexibility, as there are many options, most specific to the application itself. For this we need to provide our own "Read" functions somehow.  My approach is to define interfaces for the Readers and pass them into the constructors of any struct that will need to deserialize bytes. Maybe you have another approach, like dynamically registering with `init` in your package, as is done to extend the basecoin commands. This is open to discussion as to which approach is the simplest to use and most maintainable.
-
-* `Proof` is loaded by `rpc.Node` when running queries.  `rpc.Node` uses a `rpc.ProofReader` to define this behavior, which is set to `MerkleReader` in the constructor.  If needed, this can be made more configurable.
-* `Signable` will need to be passed into the program somehow, and as most of the bindings (json, jni, etc) don't handle go structs so well, we provide a `SignableReader` that accepts json as `[]byte` and returns a concrete implementation of a `Signable`. This is app-specific, and since the byte layout doesn't matter until we sign the struct, we can expose a simple interface to pass in unsigned transaction. This would be mainly used by the bindings on input.
-* `Value` - when we get data back from the server, it is just a bunch of bytes, exactly as stored in the app, which is important to be able to validate the proofs.  However, once we validate it, most clients would rather just have a struct or json object and some stamp that it was, in fact, cryptographically proven. Thus, we add a `ValueReader`, like the `SignableReader`, but this is executed by `rpc.Node` upon receiving the response to a query. Since an app can (and usually does) support multiple data formats, we also provide the key to help the Reader decipher the bytes.
-
-###Interfaces referring to interfaces
-
-TODO: why `lightclient.PubKey` implementing `crypto.PubKey` without importing `crypto` is impossible. digging deep with go interfaces.
+Of course, every application has its own transaction types, its own way of signing them, and its own data structures for which it wishes to present proofs. While we can work with interfaces that know how to serialize themselves (like `Signable`), this does not tell us how to *deserialize* the objects.  In fact, it is impossible to attach this information to an interface (as we allow many potentially unknown concrete types). We will allow each client to configure this app-specific parsing and display logic as plugins, which are registered in `package main`, thus allowing one to easily create light-client customized for their app, the way we can easily create specialized installs of basecoin with a few custom plugins configured.
 
 ## References
 
