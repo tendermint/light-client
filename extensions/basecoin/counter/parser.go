@@ -21,6 +21,8 @@ func ReadCounterTx(data []byte) ([]byte, error) {
 
 type Value struct{}
 
+var _ lc.ValueReader = Value{}
+
 func (_ Value) ReadValue(key, value []byte) (lc.Value, error) {
 	target := []byte("CounterPlugin.State")
 	if len(key) == 0 || bytes.Equal(target, key) {

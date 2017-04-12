@@ -5,14 +5,19 @@ import (
 
 	"github.com/pkg/errors"
 	bc "github.com/tendermint/basecoin/types"
+	crypto "github.com/tendermint/go-crypto"
+	data "github.com/tendermint/go-data"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/tx"
 )
 
+// BasecoinValues handles parsing any binary database values and
+// returning them as structs for introspection or json encoding
 type BasecoinValues struct {
 	readers []lc.ValueReader
 }
+
+var _ lc.ValueReader = &BasecoinValues{}
 
 func NewBasecoinValues() *BasecoinValues {
 	val := BasecoinValues{}
@@ -32,7 +37,7 @@ func (t *BasecoinValues) ReadValue(key, value []byte) (lc.Value, error) {
 	}
 
 	// if not render raw
-	return tx.NewValue(value), nil
+	return data.Bytes(value), nil
 }
 
 func (t *BasecoinValues) RegisterPlugin(reader lc.ValueReader) {
@@ -40,6 +45,8 @@ func (t *BasecoinValues) RegisterPlugin(reader lc.ValueReader) {
 }
 
 type accountParser struct{}
+
+var _ lc.ValueReader = accountParser{}
 
 func (_ accountParser) ReadValue(key, value []byte) (lc.Value, error) {
 	if len(key) == 0 || bytes.Equal([]byte("base/a/"), key[:7]) {
@@ -56,10 +63,6 @@ func (_ accountParser) ReadValue(key, value []byte) (lc.Value, error) {
 	return nil, errors.New("Ignoring this key")
 }
 
-func (v *BasecoinValues) assertValueReader() lc.ValueReader {
-	return v
-}
-
 const AccountType = "account"
 
 type Account struct {
@@ -69,9 +72,9 @@ type Account struct {
 }
 
 type AccountData struct {
-	PubKey   tx.JSONPubKey `json:"pub_key,omitempty"` // May be empty, if not known.
-	Sequence int           `json:"sequence"`
-	Balance  bc.Coins      `json:"coins"`
+	PubKey   crypto.PubKeyS `json:"pub_key,omitempty"` // May be empty, if not known.
+	Sequence int            `json:"sequence"`
+	Balance  bc.Coins       `json:"coins"`
 }
 
 func (a Account) Bytes() []byte {
@@ -84,7 +87,7 @@ func renderAccount(acct *bc.Account, data []byte) Account {
 		Value: AccountData{
 			Sequence: acct.Sequence,
 			Balance:  acct.Balance,
-			PubKey:   tx.JSONPubKey{acct.PubKey},
+			PubKey:   crypto.PubKeyS{acct.PubKey},
 		},
 		data: data,
 	}

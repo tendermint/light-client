@@ -1,26 +1,23 @@
 package lightclient
 
-// Proof is a generalization of merkle.IAVLProof and represents any
-// merkle proof that can validate a key-value pair back to a root hash.
-// TODO: someway to save/export a given proof for another client??
+// Prover is anything that can provide proofs.
+// Such as a AppProver (for merkle proofs of app state)
+// or TxProver (for merkle proofs that a tx is in a block)
+type Prover interface {
+	// Get returns the key for the given block height
+	// The prover should accept h=0 for latest height
+	Get(key []byte, h uint64) (Proof, error)
+	Unmarshal([]byte) (Proof, error)
+}
+
+// Proof is a generic interface for data along with the cryptographic proof
+// of it's validity, tied to a checkpoint.
+//
+// Every implementation should offer some method to recover the data itself
+// that was proven (like k-v pair, tx bytes, etc....)
 type Proof interface {
-	// Root returns the RootHash of the merkle tree used in the proof,
-	// This is important for correlating it with a block header.
-	Root() []byte
-
-	// Verify returns true iff this proof validates this key and value belong
-	// to the given root
-	Verify(key, value, root []byte) bool
-}
-
-// ProofReader is an abstraction to let us parse proofs
-type ProofReader interface {
-	ReadProof(data []byte) (Proof, error)
-}
-
-// Certifier checks the votes to make sure the block really is signed properly.
-// Certifier must know the current set of validitors by some other means.
-// TODO: some implementation to track the validator set (various algorithms)
-type Certifier interface {
-	Certify(block TmSignedHeader) error
+	BlockHeight() uint64
+	Validate(Checkpoint) error // Make sure the checkpoint is validated and proper height
+	// Marshal prepares for storage
+	Marshal() ([]byte, error)
 }

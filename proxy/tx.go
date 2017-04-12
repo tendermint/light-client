@@ -4,22 +4,24 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	keys "github.com/tendermint/go-keys"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proxy/types"
-	"github.com/tendermint/light-client/util"
+	"github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 type TxSigner struct {
 	lc.SignableReader
-	util.Poster
+	lc.Poster
 }
 
-func NewTxSigner(server lc.Broadcaster, signer lc.Signer,
+func NewTxSigner(server client.ABCIClient, signer keys.Signer,
 	reader lc.SignableReader) TxSigner {
 
 	return TxSigner{
 		SignableReader: reader,
-		Poster:         util.NewPoster(server, signer),
+		Poster:         lc.NewPoster(server, signer),
 	}
 }
 
@@ -51,10 +53,10 @@ func (t TxSigner) Register(r *mux.Router) {
 	r.HandleFunc("/", t.PostTransaction).Methods("POST")
 }
 
-func renderBroadcast(r lc.TmBroadcastResult) types.GenericResponse {
+func renderBroadcast(r *ctypes.ResultBroadcastTxCommit) types.GenericResponse {
 	return types.GenericResponse{
-		Code: r.Code,
-		Data: r.Data,
-		Log:  r.Log,
+		Code: int32(r.DeliverTx.Code),
+		Data: r.DeliverTx.Data,
+		Log:  r.DeliverTx.Log,
 	}
 }

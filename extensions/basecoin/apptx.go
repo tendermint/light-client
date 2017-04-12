@@ -4,8 +4,8 @@ import (
 	"github.com/pkg/errors"
 	bc "github.com/tendermint/basecoin/types"
 	crypto "github.com/tendermint/go-crypto"
+	keys "github.com/tendermint/go-keys"
 	wire "github.com/tendermint/go-wire"
-	lc "github.com/tendermint/light-client"
 )
 
 type AppTx struct {
@@ -14,11 +14,9 @@ type AppTx struct {
 	Tx      *bc.AppTx
 }
 
-func (a *AppTx) assertSignable() lc.Signable {
-	return a
-}
+var _ keys.Signable = &AppTx{}
 
-func (t BasecoinTx) readAppTx(data []byte) (lc.Signable, error) {
+func (t BasecoinTx) readAppTx(data []byte) (keys.Signable, error) {
 	tx, err := parseAppTx(data, t.appData)
 	app := AppTx{
 		chainID: t.chainID,

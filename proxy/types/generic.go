@@ -1,7 +1,5 @@
 package types
 
-import lc "github.com/tendermint/light-client"
-
 // ErrorResponse is returned for 4xx and 5xx errors
 // type ErrorResponse struct {
 // 	Success bool   `json:"success"`
@@ -12,7 +10,7 @@ import lc "github.com/tendermint/light-client"
 // GenericResponse is returned for 4xx and 5xx errors
 // And the following 2xx results: BroadcastResult
 type GenericResponse struct {
-	Code lc.TmCode `json:"code"` // TODO: rethink this (0 = success)
-	Data []byte    `json:"data"` // TODO: make sure this is hex encoded
-	Log  string    `json:"log"`
+	Code int32  `json:"code"` // TODO: rethink this (0 = success)
+	Data []byte `json:"data"` // TODO: make sure this is hex encoded
+	Log  string `json:"log"`
 }

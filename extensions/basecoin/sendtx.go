@@ -1,11 +1,13 @@
 package basecoin
 
 import (
+	"encoding/json"
+
 	"github.com/pkg/errors"
 	bc "github.com/tendermint/basecoin/types"
 	crypto "github.com/tendermint/go-crypto"
+	keys "github.com/tendermint/go-keys"
 	wire "github.com/tendermint/go-wire"
-	lc "github.com/tendermint/light-client"
 )
 
 type SendTx struct {
@@ -14,17 +16,16 @@ type SendTx struct {
 	Tx      *bc.SendTx
 }
 
-func (s *SendTx) assertSignable() lc.Signable {
-	return s
-}
+var _ keys.Signable = &SendTx{}
 
-func (t BasecoinTx) readSendTx(data []byte) (lc.Signable, error) {
-	tx, err := parseSendTx(data)
+func (t BasecoinTx) readSendTx(data []byte) (keys.Signable, error) {
+	var tx bc.SendTx
+	err := json.Unmarshal(data, &tx)
 	send := SendTx{
 		chainID: t.chainID,
-		Tx:      tx,
+		Tx:      &tx,
 	}
-	return &send, err
+	return &send, errors.Wrap(err, "parse sendtx")
 }
 
 // SignBytes returned the unsigned bytes, needing a signature

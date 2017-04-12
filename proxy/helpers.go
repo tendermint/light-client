@@ -13,9 +13,12 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	keys "github.com/tendermint/go-keys"
+	keyserver "github.com/tendermint/go-keys/server"
 	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/proxy/types"
-	"github.com/tendermint/light-client/rpc"
+	"github.com/tendermint/tendermint/rpc/client"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -23,8 +26,8 @@ import (
 
 // KeyStore is implemented by cryptostore.Manager
 type KeyStore interface {
-	lc.KeyManager
-	lc.Signer
+	keys.Manager
+	keys.Signer
 }
 
 // RegisterDefault constructs all components and wires them up under
@@ -32,14 +35,14 @@ type KeyStore interface {
 //
 // TODO: something more intelligent for getting validators,
 // this is pretty insecure right now
-func RegisterDefault(r *mux.Router, keys KeyStore, node rpc.Node,
-	txReader lc.SignableReader, valReader lc.ValueReader) {
+func RegisterDefault(r *mux.Router, ks KeyStore, node client.Client,
+	txReader lc.SignableReader, valReader lc.ValueReader, chainID string) {
 
-	key := NewKeyServer(keys)
+	key := keyserver.New(ks, "ed25519")
 	sk := r.PathPrefix("/keys").Subrouter()
 	key.Register(sk)
 
-	tx := NewTxSigner(node, keys, txReader)
+	tx := NewTxSigner(node, ks, txReader)
 	st := r.PathPrefix("/txs").Subrouter()
 	tx.Register(st)
 
@@ -48,9 +51,12 @@ func RegisterDefault(r *mux.Router, keys KeyStore, node rpc.Node,
 	if err != nil {
 		panic(err)
 	}
-	cert := rpc.StaticCertifier{Vals: vals.Validators}
+	cert := certifiers.NewStatic(
+		chainID,
+		vals.Validators,
+	)
 
-	view := NewViewer(node, node, cert)
+	view := NewViewer(node, cert)
 	view.Register(r)
 }
 

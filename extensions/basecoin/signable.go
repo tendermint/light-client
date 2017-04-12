@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
-	lc "github.com/tendermint/light-client"
+	keys "github.com/tendermint/go-keys"
 )
 
 type TxType struct {
-	Type string
-	Data json.RawMessage
+	Type string           `json:"type"`
+	Data *json.RawMessage `json:"data"`
 }
 
 type BasecoinTx struct {
@@ -31,12 +31,8 @@ type AppDataReader func(name, txType string, json []byte) ([]byte, error)
 // TxReader handles parsing and serializing one particular type
 type TxReader func(json []byte) ([]byte, error)
 
-func (t BasecoinTx) assertSignableReader() lc.SignableReader {
-	return t
-}
-
 // Turn json into a signable object
-func (t BasecoinTx) ReadSignable(data []byte) (lc.Signable, error) {
+func (t BasecoinTx) ReadSignable(data []byte) (keys.Signable, error) {
 	var tx TxType
 	err := json.Unmarshal(data, &tx)
 	if err != nil {
@@ -44,9 +40,9 @@ func (t BasecoinTx) ReadSignable(data []byte) (lc.Signable, error) {
 	}
 	// switch to tx type
 	if tx.Type == "sendtx" {
-		return t.readSendTx(tx.Data)
+		return t.readSendTx(*tx.Data)
 	} else if tx.Type == "apptx" {
-		return t.readAppTx(tx.Data)
+		return t.readAppTx(*tx.Data)
 	}
 	return nil, errors.Errorf("Unknown type: %s", tx.Type)
 }
