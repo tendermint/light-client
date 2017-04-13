@@ -54,22 +54,15 @@ func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
 	return proof, nil
 }
 
-func (a AppProver) Unmarshal(data []byte) (pr lc.Proof, err error) {
-	// to handle go-wire panics... ugh
-	defer func() {
-		if rec := recover(); rec != nil {
-			if e, ok := rec.(error); ok {
-				err = errors.WithStack(e)
-			} else {
-				err = errors.Errorf("Panic: %v", rec)
-			}
-		}
-	}()
+func (a AppProver) Unmarshal(data []byte) (lc.Proof, error) {
 	var proof AppProof
-	err = errors.WithStack(wire.ReadBinaryBytes(data, &proof))
+	err := errors.WithStack(wire.ReadBinaryBytes(data, &proof))
 	return proof, err
 }
 
+// AppProof containts a key-value pair at a given height.
+// It also contains the merkle proof from that key-value pair to the root hash,
+// which can be verified against a signed header.
 type AppProof struct {
 	Height uint64
 	Key    data.Bytes
