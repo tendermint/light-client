@@ -1,8 +1,6 @@
 package proofs
 
 import (
-	"bytes"
-
 	"github.com/pkg/errors"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
@@ -35,12 +33,17 @@ func (t TxProver) Get(key []byte, h uint64) (lc.Proof, error) {
 		return nil, err
 	}
 
+	// find the desired tx in the block
+	txs := block.Block.Txs
+	idx := txs.Index(key)
+	if idx == -1 {
+		return nil, errors.Errorf("Specified Tx not found in block (numtxs = %d)", len(txs))
+	}
+	// and build a proof for lighter storage
 	proof := TxProof{
 		Height: uint64(block.Block.Height),
-		Txs:    block.Block.Txs,
+		Proof:  txs.Proof(idx),
 	}
-	// sets the index if key is there, otherwise sets error
-	err = proof.SetTx(key)
 	return proof, err
 }
 
@@ -53,24 +56,11 @@ func (t TxProver) Unmarshal(data []byte) (pr lc.Proof, err error) {
 // TxProof checks ALL txs for one block... we need a better way!
 type TxProof struct {
 	Height uint64
-	Index  int
-	Txs    types.Txs
+	Proof  types.TxProof
 }
 
-// Tx returns the selected transaction from the block
-func (p TxProof) Tx() []byte {
-	return p.Txs[p.Index]
-}
-
-// SetTx sets the index for the specified tx, returns an error if not present
-func (p *TxProof) SetTx(tx []byte) error {
-	for i, t := range p.Txs {
-		if bytes.Equal(tx, t) {
-			p.Index = i
-			return nil
-		}
-	}
-	return errors.Errorf("Specified Tx not found in block (numtxs = %d)", len(p.Txs))
+func (p *TxProof) Tx() types.Tx {
+	return p.Proof.Data
 }
 
 func (p TxProof) BlockHeight() uint64 {
@@ -82,22 +72,10 @@ func (p TxProof) Validate(check lc.Checkpoint) error {
 		return errors.Errorf("Trying to validate proof for block %d with header for block %d",
 			p.Height, check.Height())
 	}
-
-	hash := p.Txs.Hash()
-	if !bytes.Equal(check.Header.DataHash, hash) {
-		return errors.Errorf("Hash mismatch: checkpoint = %X, proof = %X",
-			check.Header.DataHash, hash)
-	}
-
-	return nil
+	return p.Proof.Validate(check.Header.DataHash)
 }
 
 func (p TxProof) Marshal() ([]byte, error) {
 	data := wire.BinaryBytes(p)
 	return data, nil
 }
-
-// TODO: one tx plus proof.... need changes in the
-// func (c Checkpoint) CheckTx(tx types.Tx) error {
-//   return nil
-// }

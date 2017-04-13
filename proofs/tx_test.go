@@ -1,7 +1,6 @@
 package proofs_test
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -9,26 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/light-client/proofs"
 	merktest "github.com/tendermint/merkleeyes/testutil"
-	"github.com/tendermint/tendermint/rpc/client"
 )
-
-// findTx returns the firts block height with at least one tx
-func findTx(cl client.Client, start, end int) (uint64, error) {
-	// fmt.Printf("Searching %d to %d\n", end, start)
-	headers, err := cl.BlockchainInfo(start, end)
-	if err != nil {
-		return 0, err
-	}
-	for _, head := range headers.BlockMetas {
-		h := head.Header.Height
-		dh := head.Header.DataHash
-		// fmt.Printf("%d: %X\n", h, dh)
-		if len(dh) > 0 {
-			return uint64(h), nil
-		}
-	}
-	return 0, errors.New("No tx found")
-}
 
 func TestTxProofs(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
@@ -45,17 +25,20 @@ func TestTxProofs(t *testing.T) {
 	require.Nil(err, "%+v", err)
 	require.EqualValues(0, br.CheckTx.GetCode())
 	require.EqualValues(0, br.DeliverTx.GetCode())
+	h := br.Height
 
-	h, err := findTx(cl, precheck.Height()-1, precheck.Height()+20)
+	// let's get a proof for our tx
+	pr, err := prover.Get(tx, uint64(h))
 	require.Nil(err, "%+v", err)
 
-	// unfortunately we cannot tell the server to give us any height
-	// other than the most recent, so 0 is the only choice :(
-	pr, err := prover.Get(tx, h)
-	require.Nil(err, "%+v", err)
-	check := getCheckForHeight(t, cl, int(h))
+	// make sure bad queries return errors
+	_, err = prover.Get([]byte("no-such-tx"), uint64(h))
+	require.NotNil(err)
+	_, err = prover.Get(tx, uint64(h+1))
+	require.NotNil(err)
 
 	// matches and validates with post-tx header
+	check := getCheckForHeight(t, cl, h)
 	err = pr.Validate(check)
 	assert.Nil(err, "%+v", err)
 
@@ -73,12 +56,3 @@ func TestTxProofs(t *testing.T) {
 	// object are invalid proof (2000 random attempts)
 	testSerialization(t, prover, pr, check, 2000)
 }
-
-// // validate all tx in the block
-// block, err := cl.Block(check.Height())
-// require.Nil(err, "%+v", err)
-// err = check.CheckTxs(block.Block.Data.Txs)
-// assert.Nil(err, "%+v", err)
-
-// oh, i would like the know the hieght of the broadcast_commit.....
-// so i could verify that tx :(
