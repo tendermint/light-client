@@ -1,13 +1,13 @@
 package: github.com/tendermint/light-client
 import:
 - package: github.com/tendermint/go-crypto
-  version: master
+  version: develop
 - package: github.com/tendermint/go-data
-  version: master
+  version: develop
 - package: github.com/tendermint/go-config
   version: master
 - package: github.com/tendermint/go-rpc
-  version: master
+  version: develop
   subpackages:
   - client
 - package: github.com/tendermint/go-keys
@@ -19,21 +19,21 @@ import:
   - storage/filestorage
   - storage/memstorage
 - package: github.com/tendermint/merkleeyes
-  version: master
+  version: develop
   subpackages:
   - app
 - package: github.com/tendermint/abci
-  version: master
+  version: develop
   subpackages:
   - client
   - example/dummy
   - types
 - package: github.com/tendermint/basecoin
-  version: master
+  version: develop
   subpackages:
   - types
 - package: github.com/tendermint/tendermint
-  version: ^0.9.0
+  version: develop
   subpackages:
   - config/tendermint_test
   - node
