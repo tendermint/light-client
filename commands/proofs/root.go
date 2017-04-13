@@ -5,7 +5,10 @@ import (
 	"errors"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/commands"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -21,10 +24,22 @@ data to other peers as needed.
 }
 
 type ProofCommander struct {
-	Prover func() lc.Prover
+	node client.Client
+	lc.Prover
+	ProverFunc func(client.Client) lc.Prover
+}
+
+// Init uses configuration info to create a network connection
+// as well as initializing the prover
+func (p ProofCommander) Init() {
+	endpoint := viper.GetString(commands.NodeFlag)
+	p.node = client.NewHTTP(endpoint, "/websockets")
+	p.Prover = p.ProverFunc(p.node)
 }
 
 func (p ProofCommander) Register(parent *cobra.Command) {
+	// we add each subcommand here, so we can register the
+	// ProofCommander in one swoop
 	parent.AddCommand(p.GetCmd())
 }
 

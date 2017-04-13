@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	data "github.com/tendermint/go-data"
+	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/commands"
 )
 
 func (p ProofCommander) GetCmd() *cobra.Command {
@@ -24,22 +26,43 @@ func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// load the seed as specified
-	prover := p.Prover()
+	// instantiate the prover instance and get a proof from the server
+	p.Init()
 	h := viper.GetInt(heightFlag)
-
-	proof, err := prover.Get(key, uint64(h))
+	proof, err := p.Get(key, uint64(h))
 	if err != nil {
 		return err
 	}
 
-	// TODO: plenty!
-	//
-	// get the header and seed to validate it (from provider)
-	// validate it
-	// print out some data
-	// store it
-	fmt.Println("Got it")
+	// here is the certifier, root of all knowledge
+	cert, err := commands.GetCertifier()
+	if err != nil {
+		return err
+	}
+
+	// get and validate a signed header for this proof
+
+	// FIXME: cannot use cert.GetByHeight for now, as it also requires
+	// Validators and will fail on querying tendermint for non-current height.
+	// When this is supported, we should use it instead...
+	commit, err := p.node.Commit(h)
+	if err != nil {
+		return err
+	}
+	check := lc.Checkpoint{commit.Header, commit.Commit}
+	err = cert.Certify(check)
+	if err != nil {
+		return err
+	}
+
+	// validate the proof against the certified header to ensure data integrity
+	err = proof.Validate(check)
+	if err != nil {
+		return err
+	}
+
+	// TODO: store the proof or do something more interesting than just printing
+	fmt.Println("Your data is 100% certified:")
 	data, err := data.ToJSON(proof)
 	if err != nil {
 		return err
