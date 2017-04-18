@@ -187,7 +187,7 @@ imports:
   - client
   - testutil
 - name: github.com/tendermint/tendermint
-  version: 6899c91ebed16b3cee91af6b5c1e73b5caa24cc1
+  version: 16bffdf7ab4b6f0699966bf0f24bacb7a5d32d60
   subpackages:
   - blockchain
   - config/tendermint_test

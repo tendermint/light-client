@@ -27,22 +27,18 @@ func NewTxProver(node client.Client) TxProver {
 
 // Get tries to download a merkle hash for app state on this key from
 // the tendermint node.
+//
+// Important: key must be Tx.Hash()
 func (t TxProver) Get(key []byte, h uint64) (lc.Proof, error) {
-	block, err := t.node.Block(int(h))
+	res, err := t.node.Tx(key, int(h), 0, true)
 	if err != nil {
 		return nil, err
 	}
 
-	// find the desired tx in the block
-	txs := block.Block.Txs
-	idx := txs.Index(key)
-	if idx == -1 {
-		return nil, errors.Errorf("Specified Tx not found in block (numtxs = %d)", len(txs))
-	}
 	// and build a proof for lighter storage
 	proof := TxProof{
-		Height: uint64(block.Block.Height),
-		Proof:  txs.Proof(idx),
+		Height: uint64(res.Height),
+		Proof:  res.Proof,
 	}
 	return proof, err
 }

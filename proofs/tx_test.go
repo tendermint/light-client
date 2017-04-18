@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/light-client/proofs"
 	merktest "github.com/tendermint/merkleeyes/testutil"
+	"github.com/tendermint/tendermint/types"
 )
 
 func TestTxProofs(t *testing.T) {
@@ -20,7 +21,8 @@ func TestTxProofs(t *testing.T) {
 	precheck := getCurrentCheck(t, cl)
 
 	// great, let's store some data here, and make more checks....
-	_, _, tx := merktest.MakeTxKV()
+	_, _, btx := merktest.MakeTxKV()
+	tx := types.Tx(btx)
 	br, err := cl.BroadcastTxCommit(tx)
 	require.Nil(err, "%+v", err)
 	require.EqualValues(0, br.CheckTx.GetCode())
@@ -28,7 +30,7 @@ func TestTxProofs(t *testing.T) {
 	h := br.Height
 
 	// let's get a proof for our tx
-	pr, err := prover.Get(tx, uint64(h))
+	pr, err := prover.Get(tx.Hash(), uint64(h))
 	require.Nil(err, "%+v", err)
 
 	// make sure bad queries return errors
