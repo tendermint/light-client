@@ -19,10 +19,10 @@ type StaticCertifier struct {
 	vhash   []byte
 }
 
-func NewStatic(chainID string, vals []*types.Validator) *StaticCertifier {
+func NewStatic(chainID string, vals *types.ValidatorSet) *StaticCertifier {
 	return &StaticCertifier{
 		ChainID: chainID,
-		VSet:    types.NewValidatorSet(vals),
+		VSet:    vals,
 	}
 }
 

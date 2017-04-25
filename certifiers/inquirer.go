@@ -10,7 +10,7 @@ type InquiringCertifier struct {
 	Provider
 }
 
-func NewInquiring(chainID string, vals []*types.Validator, provider Provider) *InquiringCertifier {
+func NewInquiring(chainID string, vals *types.ValidatorSet, provider Provider) *InquiringCertifier {
 	return &InquiringCertifier{
 		Cert:     NewDynamic(chainID, vals),
 		Provider: provider,
@@ -33,7 +33,7 @@ func (c *InquiringCertifier) Certify(check lc.Checkpoint) error {
 	return c.Cert.Certify(check)
 }
 
-func (c *InquiringCertifier) Update(check lc.Checkpoint, vals []*types.Validator) error {
+func (c *InquiringCertifier) Update(check lc.Checkpoint, vals *types.ValidatorSet) error {
 	err := c.Cert.Update(check, vals)
 	if err == nil {
 		c.StoreSeed(Seed{Checkpoint: check, Validators: vals})

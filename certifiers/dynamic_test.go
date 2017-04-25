@@ -24,7 +24,7 @@ func TestDynamicCert(t *testing.T) {
 
 	cases := []struct {
 		keys        certifiers.ValKeys
-		vals        []*types.Validator
+		vals        *types.ValidatorSet
 		height      int
 		first, last int  // who actually signs
 		proper      bool // true -> expect no error
@@ -79,7 +79,7 @@ func TestDynamicUpdate(t *testing.T) {
 	// we try to update with some blocks
 	cases := []struct {
 		keys        certifiers.ValKeys
-		vals        []*types.Validator
+		vals        *types.ValidatorSet
 		height      int
 		first, last int  // who actually signs
 		proper      bool // true -> expect no error

@@ -22,7 +22,7 @@ func TestStaticCert(t *testing.T) {
 
 	cases := []struct {
 		keys        certifiers.ValKeys
-		vals        []*types.Validator
+		vals        *types.ValidatorSet
 		height      int
 		first, last int  // who actually signs
 		proper      bool // true -> expect no error

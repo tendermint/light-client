@@ -53,12 +53,12 @@ func (v ValKeys) ExtendSec(n int) ValKeys {
 // The first key has weight `init` and it increases by `inc` every step
 // so we can have all the same weight, or a simple linear distribution
 // (should be enough for testing)
-func (v ValKeys) ToValidators(init, inc int64) []*types.Validator {
+func (v ValKeys) ToValidators(init, inc int64) *types.ValidatorSet {
 	res := make([]*types.Validator, len(v))
 	for i, k := range v {
 		res[i] = types.NewValidator(k.PubKey(), init+int64(i)*inc)
 	}
-	return res
+	return types.NewValidatorSet(res)
 }
 
 // SignHeader properly signs the header with all keys from first to last exclusive
@@ -66,8 +66,7 @@ func (v ValKeys) SignHeader(header *types.Header, first, last int) *types.Commit
 	votes := make([]*types.Vote, len(v))
 
 	// we need this list to keep the ordering...
-	vals := v.ToValidators(1, 0)
-	vset := types.NewValidatorSet(vals)
+	vset := v.ToValidators(1, 0)
 
 	// fill in the votes we want
 	for i := first; i < last; i++ {
@@ -100,7 +99,7 @@ func makeVote(header *types.Header, vals *types.ValidatorSet, key crypto.PrivKey
 }
 
 func GenHeader(chainID string, height int, txs types.Txs,
-	vals []*types.Validator, appHash []byte) *types.Header {
+	vals *types.ValidatorSet, appHash []byte) *types.Header {
 
 	return &types.Header{
 		ChainID: chainID,
@@ -109,7 +108,7 @@ func GenHeader(chainID string, height int, txs types.Txs,
 		NumTxs:  len(txs),
 		// LastBlockID
 		// LastCommitHash
-		ValidatorsHash: types.NewValidatorSet(vals).Hash(),
+		ValidatorsHash: vals.Hash(),
 		DataHash:       txs.Hash(),
 		AppHash:        appHash,
 	}
@@ -117,7 +116,7 @@ func GenHeader(chainID string, height int, txs types.Txs,
 
 // GenCheckpoint calls GenHeader and SignHeader and combines them into a Checkpoint
 func (v ValKeys) GenCheckpoint(chainID string, height int, txs types.Txs,
-	vals []*types.Validator, appHash []byte, first, last int) lc.Checkpoint {
+	vals *types.ValidatorSet, appHash []byte, first, last int) lc.Checkpoint {
 
 	header := GenHeader(chainID, height, txs, vals, appHash)
 	check := lc.Checkpoint{
