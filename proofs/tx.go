@@ -65,8 +65,7 @@ func (p TxProof) BlockHeight() uint64 {
 
 func (p TxProof) Validate(check lc.Checkpoint) error {
 	if uint64(check.Height()) != p.Height {
-		return errors.Errorf("Trying to validate proof for block %d with header for block %d",
-			p.Height, check.Height())
+		return lc.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 	return p.Proof.Validate(check.Header.DataHash)
 }

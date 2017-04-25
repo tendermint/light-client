@@ -60,8 +60,7 @@ func (c Checkpoint) ValidateBasic(chainID string) error {
 
 	// make sure the header and commit match (height and hash)
 	if c.Commit.Height() != c.Header.Height {
-		return errors.Errorf("Commit height %d != header height %d",
-			c.Commit.Height(), c.Header.Height)
+		return ErrHeightMismatch(c.Commit.Height(), c.Header.Height)
 	}
 	hhash := c.Header.Hash()
 	chash := c.Commit.BlockID.Hash

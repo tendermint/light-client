@@ -43,7 +43,7 @@ func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
 		return nil, errors.New("Missing information in query response")
 	}
 	if h != 0 && h != resp.Height {
-		return nil, errors.Errorf("Requested height %d, received %d", h, resp.Height)
+		return nil, lc.ErrHeightMismatch(int(h), int(resp.Height))
 	}
 	proof := AppProof{
 		Height: resp.Height,
@@ -76,8 +76,7 @@ func (p AppProof) BlockHeight() uint64 {
 
 func (p AppProof) Validate(check lc.Checkpoint) error {
 	if uint64(check.Height()) != p.Height {
-		return errors.Errorf("Trying to validate proof for block %d with header for block %d",
-			p.Height, check.Height())
+		return lc.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 
 	proof, err := merkle.ReadProof(p.Proof)

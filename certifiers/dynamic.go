@@ -107,7 +107,7 @@ func VerifyCommitAny(old, cur *types.ValidatorSet, chainID string,
 			continue
 		}
 		if precommit.Height != height {
-			return fmt.Errorf("Invalid commit -- wrong height: %v vs %v", height, precommit.Height)
+			return lc.ErrHeightMismatch(height, precommit.Height)
 		}
 		if precommit.Round != round {
 			return fmt.Errorf("Invalid commit -- wrong round: %v vs %v", round, precommit.Round)
