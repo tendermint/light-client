@@ -33,6 +33,11 @@ func TestTxProofs(t *testing.T) {
 	pr, err := prover.Get(tx.Hash(), uint64(h))
 	require.Nil(err, "%+v", err)
 
+	// it should also work for 0 height (using indexer)
+	pr2, err := prover.Get(tx.Hash(), 0)
+	require.Nil(err, "%+v", err)
+	require.Equal(pr, pr2)
+
 	// make sure bad queries return errors
 	_, err = prover.Get([]byte("no-such-tx"), uint64(h))
 	require.NotNil(err)
