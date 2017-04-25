@@ -51,7 +51,7 @@ func TestDynamicCert(t *testing.T) {
 		} else {
 			assert.NotNil(err)
 			if tc.changed {
-				assert.True(certifiers.ValidatorsChanged(err), "%+v", err)
+				assert.True(certifiers.IsValidatorsChangedErr(err), "%+v", err)
 			}
 		}
 	}
@@ -119,7 +119,7 @@ func TestDynamicUpdate(t *testing.T) {
 			// we don't update the height
 			assert.NotEqual(cert.LastHeight, tc.height)
 			if tc.changed {
-				assert.True(certifiers.TooMuchChange(err),
+				assert.True(certifiers.IsTooMuchChangeErr(err),
 					"%d: %+v", tc.height, err)
 			}
 		}

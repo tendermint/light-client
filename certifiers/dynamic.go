@@ -41,11 +41,11 @@ func (c *DynamicCertifier) Certify(check lc.Checkpoint) error {
 // Update will verify if this is a valid change and update
 // the certifying validator set if safe to do so.
 //
-// Returns an error if update is impossible (invalid proof or TooMuchChange)
+// Returns an error if update is impossible (invalid proof or IsTooMuchChangeErr)
 func (c *DynamicCertifier) Update(check lc.Checkpoint, vals []*types.Validator) error {
 	// ignore all checkpoints in the past -> only to the future
 	if check.Height() <= c.LastHeight {
-		return ErrPastTime()
+		return ErrIsPastTimeErr()
 	}
 
 	// first, verify if the input is self-consistent....
@@ -61,7 +61,7 @@ func (c *DynamicCertifier) Update(check lc.Checkpoint, vals []*types.Validator) 
 	err = VerifyCommitAny(c.Cert.VSet, vset, c.Cert.ChainID,
 		check.Commit.BlockID, check.Header.Height, check.Commit)
 	if err != nil {
-		return ErrTooMuchChange()
+		return ErrIsTooMuchChangeErr()
 	}
 
 	// looks good, we can update

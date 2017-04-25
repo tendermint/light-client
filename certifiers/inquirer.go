@@ -23,7 +23,7 @@ func (c *InquiringCertifier) ChainID() string {
 
 func (c *InquiringCertifier) Certify(check lc.Checkpoint) error {
 	err := c.Cert.Certify(check)
-	if !ValidatorsChanged(err) {
+	if !IsValidatorsChangedErr(err) {
 		return err
 	}
 	err = c.updateToHash(check.Header.ValidatorsHash)
@@ -42,7 +42,7 @@ func (c *InquiringCertifier) Update(check lc.Checkpoint, vals []*types.Validator
 }
 
 // updateToHash gets the validator hash we want to update to
-// if TooMuchChange, we try to find a path by binary search over height
+// if IsTooMuchChangeErr, we try to find a path by binary search over height
 func (c *InquiringCertifier) updateToHash(vhash []byte) error {
 	// try to get the match, and update
 	seed, err := c.GetByHash(vhash)
@@ -50,8 +50,8 @@ func (c *InquiringCertifier) updateToHash(vhash []byte) error {
 		return err
 	}
 	err = c.Cert.Update(seed.Checkpoint, seed.Validators)
-	// handle TooMuchChange by using divide and conquer
-	if TooMuchChange(err) {
+	// handle IsTooMuchChangeErr by using divide and conquer
+	if IsTooMuchChangeErr(err) {
 		err = c.updateToHeight(seed.Height())
 	}
 	return err
@@ -66,12 +66,12 @@ func (c *InquiringCertifier) updateToHeight(h int) error {
 	}
 	start, end := c.Cert.LastHeight, seed.Height()
 	if end <= start {
-		return ErrNoPathFound()
+		return ErrIsNoPathFoundErr()
 	}
 	err = c.Update(seed.Checkpoint, seed.Validators)
 
-	// we can handle TooMuchChange specially
-	if !TooMuchChange(err) {
+	// we can handle IsTooMuchChangeErr specially
+	if !IsTooMuchChangeErr(err) {
 		return err
 	}
 

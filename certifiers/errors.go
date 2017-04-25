@@ -7,56 +7,56 @@ import (
 )
 
 var (
-	errValidatorsChanged = rawerr.New("Validators differ between header and certifier")
-	errSeedNotFound      = rawerr.New("Seed not found by provider")
-	errTooMuchChange     = rawerr.New("Validators change too much to safely update")
-	errPastTime          = rawerr.New("Update older than certifier height")
-	errNoPathFound       = rawerr.New("Cannot find a path of validators")
+	errIsValidatorsChangedErr = rawerr.New("Validators differ between header and certifier")
+	errIsSeedNotFoundErr      = rawerr.New("Seed not found by provider")
+	errIsTooMuchChangeErr     = rawerr.New("Validators change too much to safely update")
+	errIsPastTimeErr          = rawerr.New("Update older than certifier height")
+	errIsNoPathFoundErr       = rawerr.New("Cannot find a path of validators")
 )
 
-// SeedNotFound asserts whether an error is due to missing data
-func SeedNotFound(err error) bool {
-	return err != nil && (errors.Cause(err) == errSeedNotFound)
+// IsSeedNotFoundErr asserts whether an error is due to missing data
+func IsSeedNotFoundErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errIsSeedNotFoundErr)
 }
 
-func ErrSeedNotFound() error {
-	return errors.WithStack(errSeedNotFound)
+func ErrIsSeedNotFoundErr() error {
+	return errors.WithStack(errIsSeedNotFoundErr)
 }
 
-// ValidatorsChanged asserts whether and error is due
+// IsValidatorsChangedErr asserts whether and error is due
 // to a differing validator set
-func ValidatorsChanged(err error) bool {
-	return err != nil && (errors.Cause(err) == errValidatorsChanged)
+func IsValidatorsChangedErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errIsValidatorsChangedErr)
 }
 
-func ErrValidatorsChanged() error {
-	return errors.WithStack(errValidatorsChanged)
+func ErrIsValidatorsChangedErr() error {
+	return errors.WithStack(errIsValidatorsChangedErr)
 }
 
-// TooMuchChange asserts whether and error is due to too much change
+// IsTooMuchChangeErr asserts whether and error is due to too much change
 // between these validators sets
-func TooMuchChange(err error) bool {
-	return err != nil && (errors.Cause(err) == errTooMuchChange)
+func IsTooMuchChangeErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errIsTooMuchChangeErr)
 }
 
-func ErrTooMuchChange() error {
-	return errors.WithStack(errTooMuchChange)
+func ErrIsTooMuchChangeErr() error {
+	return errors.WithStack(errIsTooMuchChangeErr)
 }
 
-func PastTime(err error) bool {
-	return err != nil && (errors.Cause(err) == errPastTime)
+func IsPastTimeErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errIsPastTimeErr)
 }
 
-func ErrPastTime() error {
-	return errors.WithStack(errPastTime)
+func ErrIsPastTimeErr() error {
+	return errors.WithStack(errIsPastTimeErr)
 }
 
-// NoPathFound asserts whether an error is due to no path of
+// IsNoPathFoundErr asserts whether an error is due to no path of
 // validators in provider from where we are to where we want to be
-func NoPathFound(err error) bool {
-	return err != nil && (errors.Cause(err) == errNoPathFound)
+func IsNoPathFoundErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errIsNoPathFoundErr)
 }
 
-func ErrNoPathFound() error {
-	return errors.WithStack(errNoPathFound)
+func ErrIsNoPathFoundErr() error {
+	return errors.WithStack(errIsNoPathFoundErr)
 }

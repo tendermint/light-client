@@ -48,7 +48,7 @@ func TestStaticCert(t *testing.T) {
 		} else {
 			assert.NotNil(err)
 			if tc.changed {
-				assert.True(certifiers.ValidatorsChanged(err), "%+v", err)
+				assert.True(certifiers.IsValidatorsChangedErr(err), "%+v", err)
 			}
 		}
 	}

@@ -58,7 +58,7 @@ func LoadSeed(path string) (seed Seed, err error) {
 
 	// report error nicely
 	if os.IsNotExist(err) {
-		err = ErrSeedNotFound()
+		err = ErrIsSeedNotFoundErr()
 	} else if err != nil {
 		err = errors.WithStack(err)
 	}
@@ -155,8 +155,8 @@ func NewMissingProvider() MissingProvider {
 
 func (_ MissingProvider) StoreSeed(_ Seed) error { return nil }
 func (_ MissingProvider) GetByHeight(_ int) (Seed, error) {
-	return Seed{}, ErrSeedNotFound()
+	return Seed{}, ErrIsSeedNotFoundErr()
 }
 func (_ MissingProvider) GetByHash(_ []byte) (Seed, error) {
-	return Seed{}, ErrSeedNotFound()
+	return Seed{}, ErrIsSeedNotFoundErr()
 }

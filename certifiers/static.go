@@ -46,7 +46,7 @@ func (c *StaticCertifier) Certify(check lc.Checkpoint) error {
 
 	// make sure it has the same validator set we have (static means static)
 	if !bytes.Equal(c.Hash(), check.Header.ValidatorsHash) {
-		return ErrValidatorsChanged()
+		return ErrIsValidatorsChangedErr()
 	}
 
 	// then make sure we have the proper signatures for this
