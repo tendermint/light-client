@@ -23,7 +23,7 @@ func getCheckForHeight(t *testing.T, cl client.Client, h int) lc.Checkpoint {
 	client.WaitForHeight(cl, h, nil)
 	commit, err := cl.Commit(h)
 	require.Nil(t, err, "%+v", err)
-	return lc.NewCheckpoint(commit)
+	return lc.CheckpointFromResult(commit)
 }
 
 func TestAppProofs(t *testing.T) {
