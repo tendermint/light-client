@@ -55,7 +55,7 @@ type TxProof struct {
 	Proof  types.TxProof
 }
 
-func (p *TxProof) Tx() types.Tx {
+func (p TxProof) Data() []byte {
 	return p.Proof.Data
 }
 

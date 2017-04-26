@@ -59,10 +59,13 @@ LATER:
 package main
 
 import (
+	"encoding/hex"
 	"os"
 
 	"github.com/spf13/cobra"
+	btypes "github.com/tendermint/basecoin/types"
 	keycmd "github.com/tendermint/go-keys/cmd"
+	wire "github.com/tendermint/go-wire"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/commands/proofs"
 	"github.com/tendermint/light-client/commands/seeds"
@@ -85,6 +88,23 @@ app-specific data structures.
 `,
 }
 
+// TODO: remove this. basecoin account viewer for demo
+type AccountPresenter struct{}
+
+func (_ AccountPresenter) MakeKey(str string) ([]byte, error) {
+	res, err := hex.DecodeString(str)
+	if err == nil {
+		res = append([]byte("base/a/"), res...)
+	}
+	return res, err
+}
+
+func (_ AccountPresenter) ParseData(raw []byte) (interface{}, error) {
+	var acc *btypes.Account
+	err := wire.ReadBinaryBytes(raw, &acc)
+	return acc, err
+}
+
 func init() {
 	commands.AddBasicFlags(BaseCli)
 
@@ -92,6 +112,10 @@ func init() {
 	BaseCli.AddCommand(keycmd.RootCmd)
 	BaseCli.AddCommand(commands.InitCmd)
 	BaseCli.AddCommand(seeds.RootCmd)
+	// TODO: when subclassing register some parsers with
+	// proofs.StatePresenters["app"] = pres
+	// proofs.TxPresenters["app"] = pres
+	proofs.StatePresenters["account"] = AccountPresenter{}
 	BaseCli.AddCommand(proofs.RootCmd)
 }
 

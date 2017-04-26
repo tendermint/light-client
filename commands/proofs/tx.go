@@ -7,6 +7,8 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 )
 
+var TxPresenters = proofs.NewPresenters()
+
 var txCmd = &cobra.Command{
 	Use:   "tx",
 	Short: "Handle proofs of commited txs",
@@ -19,7 +21,10 @@ data to other peers as needed.
 }
 
 func init() {
-	txProver := ProofCommander{ProverFunc: txProver}
+	txProver := ProofCommander{
+		ProverFunc: txProver,
+		Presenters: TxPresenters,
+	}
 	txProver.Register(txCmd)
 	RootCmd.AddCommand(txCmd)
 }

@@ -56,7 +56,7 @@ func TestTxProofs(t *testing.T) {
 	// make sure it has the values we want
 	txpr, ok := pr.(proofs.TxProof)
 	if assert.True(ok) {
-		assert.EqualValues(tx, txpr.Tx())
+		assert.EqualValues(tx, txpr.Data())
 	}
 
 	// make sure we read/write properly, and any changes to the serialized

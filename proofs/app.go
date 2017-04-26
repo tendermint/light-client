@@ -40,7 +40,7 @@ func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
 		return nil, errors.Errorf("Query error %d: %s", resp.Code, resp.Code.String())
 	}
 	if len(resp.Key) == 0 || len(resp.Value) == 0 || len(resp.Proof) == 0 {
-		return nil, errors.New("Missing information in query response")
+		return nil, errors.New("No data returned for query")
 	}
 	if h != 0 && h != resp.Height {
 		return nil, lc.ErrHeightMismatch(int(h), int(resp.Height))
@@ -68,6 +68,10 @@ type AppProof struct {
 	Key    data.Bytes
 	Value  data.Bytes
 	Proof  data.Bytes
+}
+
+func (p AppProof) Data() []byte {
+	return p.Value
 }
 
 func (p AppProof) BlockHeight() uint64 {

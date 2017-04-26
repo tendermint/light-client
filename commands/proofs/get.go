@@ -1,6 +1,7 @@
 package proofs
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -8,20 +9,35 @@ import (
 	data "github.com/tendermint/go-data"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 func (p ProofCommander) GetCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get <key>",
+		Use:   "get",
 		Short: "Get a proof from the tendermint node",
 		RunE:  p.doGet,
 	}
 	cmd.Flags().Int(heightFlag, 0, "Height to query (skip to use latest block)")
+	cmd.Flags().String(appFlag, "raw", "App to use to interpret data")
+	cmd.Flags().String(keyFlag, "", "Key to query on")
 	return cmd
 }
 
 func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
-	key, err := getHexArg(args)
+	app := viper.GetString(appFlag)
+	pres, err := p.Lookup(app)
+	if err != nil {
+		return err
+	}
+
+	rawkey := viper.GetString(keyFlag)
+	if rawkey == "" {
+		return errors.New("missing required flag: --" + keyFlag)
+	}
+
+	// prepare the query in an app-dependent manner
+	key, err := pres.MakeKey(rawkey)
 	if err != nil {
 		return err
 	}
@@ -33,6 +49,7 @@ func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	ph := int(proof.BlockHeight())
 
 	// here is the certifier, root of all knowledge
 	cert, err := commands.GetCertifier()
@@ -45,7 +62,8 @@ func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
 	// FIXME: cannot use cert.GetByHeight for now, as it also requires
 	// Validators and will fail on querying tendermint for non-current height.
 	// When this is supported, we should use it instead...
-	commit, err := p.node.Commit(h)
+	client.WaitForHeight(p.node, ph, nil)
+	commit, err := p.node.Commit(ph)
 	if err != nil {
 		return err
 	}
@@ -63,7 +81,12 @@ func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
 
 	// TODO: store the proof or do something more interesting than just printing
 	fmt.Println("Your data is 100% certified:")
-	data, err := data.ToJSON(proof)
+	fmt.Printf("Height: %d\n", proof.BlockHeight())
+	info, err := pres.ParseData(proof.Data())
+	if err != nil {
+		return err
+	}
+	data, err := data.ToJSON(info)
 	if err != nil {
 		return err
 	}

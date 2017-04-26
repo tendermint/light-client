@@ -20,4 +20,6 @@ type Proof interface {
 	Validate(Checkpoint) error // Make sure the checkpoint is validated and proper height
 	// Marshal prepares for storage
 	Marshal() ([]byte, error)
+	// Data extracts the query result we want to see
+	Data() []byte
 }

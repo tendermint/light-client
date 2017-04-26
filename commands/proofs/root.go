@@ -1,13 +1,11 @@
 package proofs
 
 import (
-	"encoding/hex"
-	"errors"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
+	"github.com/tendermint/light-client/proofs"
 	"github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -27,6 +25,7 @@ type ProofCommander struct {
 	node client.Client
 	lc.Prover
 	ProverFunc func(client.Client) lc.Prover
+	proofs.Presenters
 }
 
 // Init uses configuration info to create a network connection
@@ -45,12 +44,6 @@ func (p ProofCommander) Register(parent *cobra.Command) {
 
 const (
 	heightFlag = "height"
+	appFlag    = "app"
+	keyFlag    = "key"
 )
-
-func getHexArg(args []string) ([]byte, error) {
-	if len(args) != 1 || len(args[0]) == 0 {
-		return nil, errors.New("You must provide exactly one arg in hex")
-	}
-	bytes, err := hex.DecodeString(args[0])
-	return bytes, err
-}
