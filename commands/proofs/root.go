@@ -31,7 +31,7 @@ type ProofCommander struct {
 
 // Init uses configuration info to create a network connection
 // as well as initializing the prover
-func (p ProofCommander) Init() {
+func (p *ProofCommander) Init() {
 	endpoint := viper.GetString(commands.NodeFlag)
 	p.node = client.NewHTTP(endpoint, "/websockets")
 	p.Prover = p.ProverFunc(p.node)
