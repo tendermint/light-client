@@ -1,5 +1,5 @@
-hash: 04e1a549bde3270586be149bb38cc64e859e004377d3af367bf622b861433dda
-updated: 2017-04-27T13:13:08.48686577-04:00
+hash: 055829edafb1b6dc7f91773897783f13a3444476d2b5b9d27e5c778b179164e7
+updated: 2017-04-27T23:09:43.257689438+02:00
 imports:
 - name: github.com/bgentry/speakeasy
   version: 4aabc24848ce5fd31929f7d1e4ea74d3709c14cd
@@ -112,10 +112,6 @@ imports:
   - example/dummy
   - server
   - types
-- name: github.com/tendermint/basecoin
-  version: 7457802806cd9119eaace5c82925c0eb054d37ef
-  subpackages:
-  - types
 - name: github.com/tendermint/ed25519
   version: 1f52c6f8b8a5c7908aff4497c186af344b428925
   subpackages:
@@ -150,7 +146,7 @@ imports:
   subpackages:
   - term
 - name: github.com/tendermint/merkleeyes
-  version: 6fd69aa0871a4e685a5570aa7ab3d12e4068a722
+  version: 0fab643ccac1a3f93b90e0e2682a5d1b9d17f8c4
   subpackages:
   - app
   - client

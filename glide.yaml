@@ -18,10 +18,6 @@ import:
   version: develop
   subpackages:
   - app
-- package: github.com/tendermint/basecoin
-  version: develop
-  subpackages:
-  - types
 - package: github.com/tendermint/tendermint
   version: develop
   subpackages:
