@@ -23,7 +23,8 @@ var showCmd = &cobra.Command{
 	Long: `Shows the most recent downloaded key by default.
 If desired, you can select by height, validator hash, or a file.
 `,
-	RunE: showSeed,
+	RunE:         showSeed,
+	SilenceUsage: true,
 }
 
 func init() {

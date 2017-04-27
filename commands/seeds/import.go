@@ -15,10 +15,11 @@ const (
 )
 
 var importCmd = &cobra.Command{
-	Use:   "import <file>",
-	Short: "Imports a new seed from the given file",
-	Long:  `Validate this file and update to the given seed if secure.`,
-	RunE:  importSeed,
+	Use:          "import <file>",
+	Short:        "Imports a new seed from the given file",
+	Long:         `Validate this file and update to the given seed if secure.`,
+	RunE:         importSeed,
+	SilenceUsage: true,
 }
 
 func init() {

@@ -14,9 +14,10 @@ import (
 
 func (p ProofCommander) GetCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get",
-		Short: "Get a proof from the tendermint node",
-		RunE:  p.doGet,
+		Use:          "get",
+		Short:        "Get a proof from the tendermint node",
+		RunE:         p.doGet,
+		SilenceUsage: true,
 	}
 	cmd.Flags().Int(heightFlag, 0, "Height to query (skip to use latest block)")
 	cmd.Flags().String(appFlag, "raw", "App to use to interpret data")

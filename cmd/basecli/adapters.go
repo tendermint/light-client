@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	btypes "github.com/tendermint/basecoin/types"
 	wire "github.com/tendermint/go-wire"
@@ -57,7 +58,33 @@ func (t SendTxReader) ReadTxJSON(data []byte) (interface{}, error) {
 
 type SendTxMaker struct{}
 
-func (m SendTxMaker) MakeReader(cmd *cobra.Command, args []string) (lightclient.TxReader, error) {
+func (m SendTxMaker) MakeReader() (lightclient.TxReader, error) {
 	chainID := viper.GetString(commands.ChainFlag)
 	return SendTxReader{ChainID: chainID}, nil
+}
+
+type SendFlags struct {
+	To       string
+	From     string
+	Amount   string
+	Fee      string
+	Gas      int
+	Sequence int
+}
+
+func (m SendTxMaker) Flags() (*flag.FlagSet, interface{}) {
+	fs := flag.NewFlagSet("foobar", flag.ContinueOnError)
+	fs.String("to", "", "Destination address for the bits")
+	fs.String("from", "", "Sender address for the tx")
+	fs.String("amount", "", "Coins to send in the format <amt><coin>,<amt><coin>...")
+	fs.String("fee", "", "Coins for the transaction fee of the format <amt><coin>")
+	fs.Int("gas", 0, "Amount of gas for this transaction")
+	fs.Int("sequence", -1, "Sequence number for this transaction")
+	return fs, &SendFlags{}
+}
+
+func (t SendTxReader) ReadTxFlags(flags interface{}) (interface{}, error) {
+	data := flags.(*SendFlags)
+	fmt.Printf("Data: %#v\n", data)
+	return nil, errors.New("gotcha")
 }

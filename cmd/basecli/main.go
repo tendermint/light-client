@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -40,9 +39,9 @@ func init() {
 
 func main() {
 	keycmd.PrepareMainCmd(BaseCli, "BC", os.ExpandEnv("$HOME/.basecli"))
-	// BaseCli.Execute()
-	err := BaseCli.Execute()
-	if err != nil {
-		fmt.Printf("%+v\n", err)
-	}
+	BaseCli.Execute()
+	// err := BaseCli.Execute()
+	// if err != nil {
+	// 	fmt.Printf("%+v\n", err)
+	// }
 }

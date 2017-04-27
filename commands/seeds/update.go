@@ -9,9 +9,10 @@ import (
 )
 
 var updateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update seed to current chain state if possible",
-	RunE:  updateSeed,
+	Use:          "update",
+	Short:        "Update seed to current chain state if possible",
+	RunE:         updateSeed,
+	SilenceUsage: true,
 }
 
 func init() {

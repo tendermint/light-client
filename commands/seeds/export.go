@@ -14,7 +14,8 @@ var exportCmd = &cobra.Command{
 	Long: `Exports the most recent seed to a binary file.
 If desired, you can select by an older height or validator hash.
 `,
-	RunE: exportSeed,
+	RunE:         exportSeed,
+	SilenceUsage: true,
 }
 
 func init() {

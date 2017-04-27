@@ -126,7 +126,7 @@ imports:
   subpackages:
   - test
 - name: github.com/tendermint/go-crypto
-  version: 9b95da8fa4187f6799558d89b271dc8ab6485615
+  version: 197a2b270fd94ee03824b158e738fce62862d0b8
   subpackages:
   - cmd
   - keys

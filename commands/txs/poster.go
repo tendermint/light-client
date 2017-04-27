@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	keycmd "github.com/tendermint/go-crypto/cmd"
 	keys "github.com/tendermint/go-crypto/keys"
@@ -20,13 +21,17 @@ import (
 )
 
 type Poster struct {
-	name  string
-	maker ReaderMaker
-	// reader lightclient.TxReader
+	name     string
+	maker    ReaderMaker
+	flagData interface{}
 }
 
 type ReaderMaker interface {
-	MakeReader(cmd *cobra.Command, args []string) (lightclient.TxReader, error)
+	MakeReader() (lightclient.TxReader, error)
+	// Flags returns a set of flags to register, as well as a struct
+	// which they should parse in to (viper.Unmarshal).  This second
+	// argument should be a pointer and will be passed in to TxReader.ReadTxFlags
+	Flags() (*flag.FlagSet, interface{})
 }
 
 func NewPoster(name string, maker ReaderMaker) *Poster {
@@ -37,35 +42,50 @@ func NewPoster(name string, maker ReaderMaker) *Poster {
 }
 
 func (p *Poster) CreateCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:  p.name,
-		RunE: p.RunE,
+	cmd := &cobra.Command{
+		Use:          p.name,
+		RunE:         p.RunE,
+		SilenceUsage: true,
 	}
+	fset, fdata := p.maker.Flags()
+	cmd.Flags().AddFlagSet(fset)
+	p.flagData = fdata
+	return cmd
 }
 
 func (p *Poster) RunE(cmd *cobra.Command, args []string) error {
 	fmt.Println("Got", p.name)
 
 	// get our reader
-	reader, err := p.maker.MakeReader(cmd, args)
+	reader, err := p.maker.MakeReader()
 	if err != nil {
 		return err
 	}
 
-	// get input
+	// get input if provided
 	input := viper.GetString(InputFlag)
-	if input == "" {
-		return errors.New("--input is required")
-	}
-	raw, err := readInput(input)
-	if err != nil {
-		return err
-	}
+	var tx interface{}
+	if input != "" {
+		raw, err := readInput(input)
+		if err != nil {
+			return err
+		}
 
-	// parse the input
-	tx, err := reader.ReadTxJSON(raw)
-	if err != nil {
-		return err
+		// parse the input
+		tx, err = reader.ReadTxJSON(raw)
+		if err != nil {
+			return err
+		}
+	} else {
+		// we try to parse the flags!
+		err := viper.Unmarshal(p.flagData)
+		if err != nil {
+			return err
+		}
+		tx, err = reader.ReadTxFlags(p.flagData)
+		if err != nil {
+			return err
+		}
 	}
 
 	// sign if it is Signable
@@ -126,8 +146,7 @@ func signTx(tx keys.Signable, name string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO: clean up manager so we don't force this
-	err = manager.(keys.Signer).Sign(name, pass, tx)
+	err = manager.Sign(name, pass, tx)
 	if err != nil {
 		return nil, err
 	}

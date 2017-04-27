@@ -31,6 +31,8 @@ type SignableReader interface {
 // If this returns anything that doesn't implement either keys.Signable, nor
 // Value, then it is considered an error
 type TxReader interface {
+	// this reads a given json input
 	ReadTxJSON([]byte) (interface{}, error)
-	// ReadTxCLI(map[string]string) (interface{}, error)
+	// this uses
+	ReadTxFlags(interface{}) (interface{}, error)
 }
