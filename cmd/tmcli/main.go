@@ -34,17 +34,19 @@ FIRST: test that current basecoin-proxy command works against v0.9/v0.4 release
   * export
   * import (--dry-run)
 
-tmcli proof state list --key <k> --height <h>
-tmcli proof state get <key> --height <h>
-tmcli proof state export <key> --height <h>
+tmcli proof state get --app=<app> --key=<key> --height=<h>
 
-tmcli proof tx list -> hashes
-tmcli proof tx get <hash>
-tmcli proof tx export <hash>
+tmcli proof tx get --app=<app> --key=<key>
+
 
 NEXT:
 * tx - at least support sending via cli, if not all plugins...
     at this point we would replace the entire basecoin cli
+  * <app> (dynamically registered)
+    * <type> (dynamically registered)
+      * --input=<filename|->: load json from a file or stdin
+      * --data.XYZ=ABC: dynamically created flags from the tx type
+  TODO: register these app/type parsers
 
 LATER:
 * proxy - runs an http server to post and sign tx, make queries, and
@@ -59,20 +61,17 @@ LATER:
 package main
 
 import (
-	"encoding/hex"
 	"os"
 
 	"github.com/spf13/cobra"
-	btypes "github.com/tendermint/basecoin/types"
 	keycmd "github.com/tendermint/go-crypto/cmd"
-	wire "github.com/tendermint/go-wire"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/commands/proofs"
 	"github.com/tendermint/light-client/commands/seeds"
 )
 
-// BaseCli represents the base command when called without any subcommands
-var BaseCli = &cobra.Command{
+// TmCli represents the base command when called without any subcommands
+var TmCli = &cobra.Command{
 	Use:   "tmcli",
 	Short: "Light client for tendermint",
 	Long: `Tmcli is a full-fledged, but generic light-client app for tendermint.
@@ -88,40 +87,22 @@ app-specific data structures.
 `,
 }
 
-// TODO: remove this. basecoin account viewer for demo
-type AccountPresenter struct{}
-
-func (_ AccountPresenter) MakeKey(str string) ([]byte, error) {
-	res, err := hex.DecodeString(str)
-	if err == nil {
-		res = append([]byte("base/a/"), res...)
-	}
-	return res, err
-}
-
-func (_ AccountPresenter) ParseData(raw []byte) (interface{}, error) {
-	var acc *btypes.Account
-	err := wire.ReadBinaryBytes(raw, &acc)
-	return acc, err
-}
-
 func init() {
-	commands.AddBasicFlags(BaseCli)
+	commands.AddBasicFlags(TmCli)
 
 	// set up the various commands to use
-	BaseCli.AddCommand(keycmd.RootCmd)
-	BaseCli.AddCommand(commands.InitCmd)
-	BaseCli.AddCommand(seeds.RootCmd)
+	TmCli.AddCommand(keycmd.RootCmd)
+	TmCli.AddCommand(commands.InitCmd)
+	TmCli.AddCommand(seeds.RootCmd)
 	// TODO: when subclassing register some parsers with
 	// proofs.StatePresenters["app"] = pres
 	// proofs.TxPresenters["app"] = pres
-	proofs.StatePresenters["account"] = AccountPresenter{}
-	BaseCli.AddCommand(proofs.RootCmd)
+	TmCli.AddCommand(proofs.RootCmd)
 }
 
 func main() {
-	keycmd.PrepareMainCmd(BaseCli, "TM", os.ExpandEnv("$HOME/.tmcli"))
-	BaseCli.Execute()
+	keycmd.PrepareMainCmd(TmCli, "TM", os.ExpandEnv("$HOME/.tmcli"))
+	TmCli.Execute()
 	// err := BaseCli.Execute()
 	// if err != nil {
 	// 	fmt.Printf("%+v\n", err)
