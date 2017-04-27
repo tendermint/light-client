@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -8,6 +9,7 @@ import (
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/commands/proofs"
 	"github.com/tendermint/light-client/commands/seeds"
+	"github.com/tendermint/light-client/commands/txs"
 )
 
 // BaseCli represents the base command when called without any subcommands
@@ -32,9 +34,15 @@ func init() {
 	proofs.StatePresenters.Register("account", AccountPresenter{})
 	proofs.TxPresenters.Register("base", BaseTxPresenter{})
 	BaseCli.AddCommand(proofs.RootCmd)
+	txs.Register("send", SendTxMaker{})
+	BaseCli.AddCommand(txs.RootCmd)
 }
 
 func main() {
 	keycmd.PrepareMainCmd(BaseCli, "BC", os.ExpandEnv("$HOME/.basecli"))
-	BaseCli.Execute()
+	// BaseCli.Execute()
+	err := BaseCli.Execute()
+	if err != nil {
+		fmt.Printf("%+v\n", err)
+	}
 }
