@@ -107,7 +107,7 @@ func NewCacheProvider(providers ...Provider) CacheProvider {
 // Aborts on first error it encounters (closest provider)
 func (c CacheProvider) StoreSeed(seed Seed) (err error) {
 	for _, p := range c.Providers {
-		err := p.StoreSeed(seed)
+		err = p.StoreSeed(seed)
 		if err != nil {
 			break
 		}
