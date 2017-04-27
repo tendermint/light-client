@@ -19,7 +19,7 @@ import:
   subpackages:
   - app
 - package: github.com/tendermint/basecoin
-  version: unstable
+  version: develop
   subpackages:
   - types
 - package: github.com/tendermint/tendermint
@@ -27,9 +27,9 @@ import:
   subpackages:
   - config/tendermint_test
   - node
-  - rpc/tendermint/core/types
-  - rpc/tendermint/client
-  - rpc/types
+  - rpc/core/types
+  - rpc/client
+  - rpc/lib/types
   - types
 - package: github.com/tendermint/tmlibs
   version: develop

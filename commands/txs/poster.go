@@ -16,7 +16,7 @@ import (
 	keys "github.com/tendermint/go-crypto/keys"
 	lightclient "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
-	"github.com/tendermint/tendermint/rpc/tendermint/client"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 type Poster struct {

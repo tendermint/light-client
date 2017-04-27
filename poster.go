@@ -2,8 +2,8 @@ package lightclient
 
 import (
 	keys "github.com/tendermint/go-crypto/keys"
-	"github.com/tendermint/tendermint/rpc/tendermint/client"
-	ctypes "github.com/tendermint/tendermint/rpc/tendermint/core/types"
+	"github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // Poster combines KeyStore and Node to process a Signable and deliver it to tendermint

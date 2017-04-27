@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/certifiers/client"
-	rpctest "github.com/tendermint/tendermint/rpc/tendermint/test"
+	rpctest "github.com/tendermint/tendermint/rpc/test"
 )
 
 func TestProvider(t *testing.T) {

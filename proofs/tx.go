@@ -4,7 +4,7 @@ import (
 	"github.com/pkg/errors"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/tendermint/rpc/tendermint/client"
+	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/types"
 )
 

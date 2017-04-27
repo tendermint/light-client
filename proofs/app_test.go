@@ -10,7 +10,7 @@ import (
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proofs"
 	merktest "github.com/tendermint/merkleeyes/testutil"
-	"github.com/tendermint/tendermint/rpc/tendermint/client"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 func getCurrentCheck(t *testing.T, cl client.Client) lc.Checkpoint {

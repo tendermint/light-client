@@ -6,7 +6,7 @@ import (
 	merkle "github.com/tendermint/go-merkle"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/tendermint/rpc/tendermint/client"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 var _ lc.Prover = AppProver{}

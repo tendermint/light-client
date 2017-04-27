@@ -9,7 +9,7 @@ import (
 	data "github.com/tendermint/go-wire/data"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
-	"github.com/tendermint/tendermint/rpc/tendermint/client"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 func (p ProofCommander) GetCmd() *cobra.Command {

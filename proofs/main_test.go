@@ -6,8 +6,8 @@ import (
 
 	meapp "github.com/tendermint/merkleeyes/app"
 	nm "github.com/tendermint/tendermint/node"
-	"github.com/tendermint/tendermint/rpc/tendermint/client"
-	rpctest "github.com/tendermint/tendermint/rpc/tendermint/test"
+	"github.com/tendermint/tendermint/rpc/client"
+	rpctest "github.com/tendermint/tendermint/rpc/test"
 )
 
 var node *nm.Node

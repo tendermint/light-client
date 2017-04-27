@@ -6,7 +6,7 @@ import (
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/proofs"
-	"github.com/tendermint/tendermint/rpc/tendermint/client"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 // RootCmd represents the base command when called without any subcommands
