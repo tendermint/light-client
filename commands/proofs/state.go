@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proofs"
-	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/rpc/tendermint/client"
 )
 
 var StatePresenters = proofs.NewPresenters()

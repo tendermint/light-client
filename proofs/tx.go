@@ -4,7 +4,7 @@ import (
 	"github.com/pkg/errors"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/rpc/tendermint/client"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -29,8 +29,9 @@ func NewTxProver(node client.Client) TxProver {
 // the tendermint node.
 //
 // Important: key must be Tx.Hash()
+// Height is completely ignored for now :(
 func (t TxProver) Get(key []byte, h uint64) (lc.Proof, error) {
-	res, err := t.node.Tx(key, int(h), 0, true)
+	res, err := t.node.Tx(key, true)
 	if err != nil {
 		return nil, err
 	}

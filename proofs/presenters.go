@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 
 	"github.com/pkg/errors"
-	data "github.com/tendermint/go-data"
+	data "github.com/tendermint/go-wire/data"
 )
 
 // Presenter allows us to encode queries and parse results in an app-specific way

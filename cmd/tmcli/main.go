@@ -64,7 +64,7 @@ import (
 
 	"github.com/spf13/cobra"
 	btypes "github.com/tendermint/basecoin/types"
-	keycmd "github.com/tendermint/go-keys/cmd"
+	keycmd "github.com/tendermint/go-crypto/cmd"
 	wire "github.com/tendermint/go-wire"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/commands/proofs"

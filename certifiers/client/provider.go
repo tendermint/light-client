@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tendermint/light-client/certifiers"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	rpcclient "github.com/tendermint/tendermint/rpc/tendermint/client"
+	ctypes "github.com/tendermint/tendermint/rpc/tendermint/core/types"
 	"github.com/tendermint/tendermint/types"
 )
 

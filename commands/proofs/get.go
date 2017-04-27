@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	data "github.com/tendermint/go-data"
+	data "github.com/tendermint/go-wire/data"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
-	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/rpc/tendermint/client"
 )
 
 func (p ProofCommander) GetCmd() *cobra.Command {

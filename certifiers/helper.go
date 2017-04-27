@@ -15,7 +15,7 @@ type ValKeys []crypto.PrivKey
 func GenValKeys(n int) ValKeys {
 	res := make(ValKeys, n)
 	for i := range res {
-		res[i] = crypto.GenPrivKeyEd25519()
+		res[i] = crypto.GenPrivKeyEd25519().Wrap()
 	}
 	return res
 }
@@ -24,7 +24,7 @@ func GenValKeys(n int) ValKeys {
 func (v ValKeys) Change(i int) ValKeys {
 	res := make(ValKeys, len(v))
 	copy(res, v)
-	res[i] = crypto.GenPrivKeyEd25519()
+	res[i] = crypto.GenPrivKeyEd25519().Wrap()
 	return res
 }
 
@@ -38,7 +38,7 @@ func (v ValKeys) Extend(n int) ValKeys {
 func GenSecValKeys(n int) ValKeys {
 	res := make(ValKeys, n)
 	for i := range res {
-		res[i] = crypto.GenPrivKeySecp256k1()
+		res[i] = crypto.GenPrivKeySecp256k1().Wrap()
 	}
 	return res
 }

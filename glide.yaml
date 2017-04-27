@@ -1,35 +1,25 @@
 package: github.com/tendermint/light-client
 import:
-- package: github.com/tendermint/go-crypto
-  version: develop
-- package: github.com/tendermint/go-data
-  version: develop
-- package: github.com/tendermint/go-config
-  version: master
-- package: github.com/tendermint/go-rpc
-  version: develop
-  subpackages:
-  - client
-- package: github.com/tendermint/go-keys
-  version: master
-  subpackages:
-  - cmd
-  - cryptostore
-  - server
-  - storage/filestorage
-  - storage/memstorage
-- package: github.com/tendermint/merkleeyes
-  version: develop
-  subpackages:
-  - app
 - package: github.com/tendermint/abci
   version: develop
   subpackages:
   - client
   - example/dummy
   - types
-- package: github.com/tendermint/basecoin
+- package: github.com/tendermint/go-crypto
   version: develop
+  subpackages:
+  - keys/cmd
+  - keys/cryptostore
+  - keys/server
+  - keys/storage/filestorage
+  - keys/storage/memstorage
+- package: github.com/tendermint/merkleeyes
+  version: develop
+  subpackages:
+  - app
+- package: github.com/tendermint/basecoin
+  version: unstable
   subpackages:
   - types
 - package: github.com/tendermint/tendermint
@@ -37,16 +27,26 @@ import:
   subpackages:
   - config/tendermint_test
   - node
-  - rpc/core/types
+  - rpc/tendermint/core/types
+  - rpc/tendermint/client
+  - rpc/types
   - types
+- package: github.com/tendermint/tmlibs
+  version: develop
+  subpackages:
+  - common
+  - events
+  - logger
+- package: github.com/pkg/errors
+  version: ^0.8.0
 - package: github.com/gorilla/mux
   version: ^1.2.0
 - package: github.com/gorilla/handlers
   version: ^1.1.0
-- package: github.com/jbenet/go-base58
-  version: ^1.0.0
 - package: github.com/pelletier/go-toml
   version: ^0.5.0
+- package: github.com/spf13/cobra
+- package: github.com/spf13/pflag
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.4

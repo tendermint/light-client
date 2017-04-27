@@ -2,11 +2,11 @@ package proofs
 
 import (
 	"github.com/pkg/errors"
-	data "github.com/tendermint/go-data"
+	data "github.com/tendermint/go-wire/data"
 	merkle "github.com/tendermint/go-merkle"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/rpc/tendermint/client"
 )
 
 var _ lc.Prover = AppProver{}

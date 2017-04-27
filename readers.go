@@ -1,6 +1,6 @@
 package lightclient
 
-import keys "github.com/tendermint/go-keys"
+import keys "github.com/tendermint/go-crypto/keys"
 
 type Value interface {
 	Bytes() []byte

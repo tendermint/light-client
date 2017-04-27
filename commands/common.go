@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	keycmd "github.com/tendermint/go-keys/cmd" // these usages can move to some common dir
+	keycmd "github.com/tendermint/go-crypto/cmd" // these usages can move to some common dir
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/certifiers/client"
 	"github.com/tendermint/light-client/certifiers/files"
