@@ -187,7 +187,12 @@ func checkEmpty(root string) error {
 		return errors.WithStack(err)
 	}
 
-	if len(files) > 0 {
+	empty := len(files) == 0
+	if !empty && len(files) == 1 && files[0] == "keys" {
+		empty = true
+	}
+
+	if !empty {
 		return errors.Errorf(`"%s" contains data, cannot init`, root)
 	}
 	return nil

@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	btypes "github.com/tendermint/basecoin/types"
+	keycmd "github.com/tendermint/go-crypto/cmd"
 	wire "github.com/tendermint/go-wire"
 	lightclient "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
@@ -65,26 +65,92 @@ func (m SendTxMaker) MakeReader() (lightclient.TxReader, error) {
 
 type SendFlags struct {
 	To       string
-	From     string
 	Amount   string
 	Fee      string
-	Gas      int
+	Gas      int64
 	Sequence int
 }
 
 func (m SendTxMaker) Flags() (*flag.FlagSet, interface{}) {
 	fs := flag.NewFlagSet("foobar", flag.ContinueOnError)
 	fs.String("to", "", "Destination address for the bits")
-	fs.String("from", "", "Sender address for the tx")
 	fs.String("amount", "", "Coins to send in the format <amt><coin>,<amt><coin>...")
 	fs.String("fee", "", "Coins for the transaction fee of the format <amt><coin>")
-	fs.Int("gas", 0, "Amount of gas for this transaction")
+	fs.Int64("gas", 0, "Amount of gas for this transaction")
 	fs.Int("sequence", -1, "Sequence number for this transaction")
 	return fs, &SendFlags{}
 }
 
 func (t SendTxReader) ReadTxFlags(flags interface{}) (interface{}, error) {
 	data := flags.(*SendFlags)
-	fmt.Printf("Data: %#v\n", data)
-	return nil, errors.New("gotcha")
+
+	// parse to and from addresses
+	to, err := hex.DecodeString(StripHex(data.To))
+	if err != nil {
+		return nil, errors.Errorf("To address is invalid hex: %v\n", err)
+	}
+
+	// TODO: figure out a cleaner way to do this... until then
+	// just close your eyes and continue...
+	manager := keycmd.GetKeyManager()
+	name := viper.GetString("name")
+	info, err := manager.Get(name)
+
+	//parse the fee and amounts into coin types
+	feeCoin, err := btypes.ParseCoin(data.Fee)
+	if err != nil {
+		return nil, err
+	}
+	amountCoins, err := btypes.ParseCoins(data.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	// craft the tx
+	input := btypes.TxInput{
+		Address:  info.Address,
+		Coins:    amountCoins,
+		Sequence: data.Sequence,
+	}
+	if data.Sequence == 1 {
+		input.PubKey = info.PubKey
+	}
+	output := btypes.TxOutput{
+		Address: to,
+		Coins:   amountCoins,
+	}
+	tx := btypes.SendTx{
+		Gas:     data.Gas,
+		Fee:     feeCoin,
+		Inputs:  []btypes.TxInput{input},
+		Outputs: []btypes.TxOutput{output},
+	}
+
+	// wrap it in the proper signer thing...
+	send := SendTx{
+		chainID: t.ChainID,
+		Tx:      &tx,
+	}
+	return &send, nil
+}
+
+/** copied from basecoin cli - put in common somewhere? **/
+
+// Returns true for non-empty hex-string prefixed with "0x"
+func isHex(s string) bool {
+	if len(s) > 2 && s[:2] == "0x" {
+		_, err := hex.DecodeString(s[2:])
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+func StripHex(s string) string {
+	if isHex(s) {
+		return s[2:]
+	}
+	return s
 }
