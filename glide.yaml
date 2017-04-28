@@ -19,7 +19,7 @@ import:
   subpackages:
   - app
 - package: github.com/tendermint/tendermint
-  version: develop
+  version: bytes
   subpackages:
   - config/tendermint_test
   - node

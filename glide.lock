@@ -1,5 +1,5 @@
-hash: 055829edafb1b6dc7f91773897783f13a3444476d2b5b9d27e5c778b179164e7
-updated: 2017-04-27T23:09:43.257689438+02:00
+hash: c887040d9aa1545d4d2c45db78032ab5e132c4eebed14e757573e7f7103fc162
+updated: 2017-04-27T20:02:48.730032774-04:00
 imports:
 - name: github.com/bgentry/speakeasy
   version: 4aabc24848ce5fd31929f7d1e4ea74d3709c14cd
@@ -106,7 +106,7 @@ imports:
   - leveldb/table
   - leveldb/util
 - name: github.com/tendermint/abci
-  version: c709d3cc857929a8dd36a90da3640122d7e75770
+  version: 8d8e35ae537538c9cf6808be3ca9dd7dab81b7f6
   subpackages:
   - client
   - example/dummy
@@ -137,7 +137,7 @@ imports:
 - name: github.com/tendermint/go-merkle
   version: 714d4d04557fd068a7c2a1748241ce8428015a96
 - name: github.com/tendermint/go-wire
-  version: 334005c236d19c632fb5f073f9de3b0fab6a522b
+  version: b53add0b622662731985485f3a19be7f684660b8
   subpackages:
   - data
   - data/base58
@@ -153,7 +153,7 @@ imports:
   - iavl
   - testutil
 - name: github.com/tendermint/tendermint
-  version: 1310c7264750efa8939680536098ded9f9e8df74
+  version: 2bf7e9c968f24c611e5663085d158b8c5ddabbc9
   subpackages:
   - blockchain
   - config/tendermint_test

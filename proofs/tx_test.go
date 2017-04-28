@@ -25,8 +25,8 @@ func TestTxProofs(t *testing.T) {
 	tx := types.Tx(btx)
 	br, err := cl.BroadcastTxCommit(tx)
 	require.Nil(err, "%+v", err)
-	require.EqualValues(0, br.CheckTx.GetCode())
-	require.EqualValues(0, br.DeliverTx.GetCode())
+	require.EqualValues(0, br.CheckTx.Code)
+	require.EqualValues(0, br.DeliverTx.Code)
 	h := br.Height
 
 	// let's get a proof for our tx

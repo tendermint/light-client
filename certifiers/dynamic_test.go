@@ -113,7 +113,7 @@ func TestDynamicUpdate(t *testing.T) {
 			// we update last seen height
 			assert.Equal(cert.LastHeight, tc.height)
 			// and we update the proper validators
-			assert.Equal(check.Header.ValidatorsHash, cert.Cert.Hash())
+			assert.EqualValues(check.Header.ValidatorsHash, cert.Cert.Hash())
 		} else {
 			assert.NotNil(err, "%d", tc.height)
 			// we don't update the height

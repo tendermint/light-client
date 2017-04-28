@@ -2,9 +2,9 @@ package proofs
 
 import (
 	"github.com/pkg/errors"
-	data "github.com/tendermint/go-wire/data"
 	merkle "github.com/tendermint/go-merkle"
 	wire "github.com/tendermint/go-wire"
+	data "github.com/tendermint/go-wire/data"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/rpc/client"
 )
@@ -29,13 +29,12 @@ func NewAppProver(node client.Client) AppProver {
 // Get tries to download a merkle hash for app state on this key from
 // the tendermint node.
 func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
-	res, err := a.node.ABCIQuery("/key", key, true)
+	resp, err := a.node.ABCIQuery("/key", key, true)
 	if err != nil {
 		return nil, err
 	}
 
 	// make sure the proof is the proper height
-	resp := res.Response
 	if !resp.Code.IsOK() {
 		return nil, errors.Errorf("Query error %d: %s", resp.Code, resp.Code.String())
 	}
