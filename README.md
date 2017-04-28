@@ -2,7 +2,7 @@
 
 Once you have built your amazing new ABCi app, possibly with the help of the [Basecoin framework](https://github.com/tendermint/basecoin/blob/develop/README.md) and the [example apps](https://github.com/tendermint/basecoin-examples/blob/master/README.md), you now want to make some sort of client to access it.
 
-Basecoin comes with a [nice simple cli](https://github.com/tendermint/basecoin-examples/blob/master/tutorial.md), that is nice for testing and developing your application, but is probably not the first thing you would hand off to the future users of your blockchain.  You want something pretty, something like a web page or mobile app.  But where do you start?  The [Tendermint rpc](https://tendermint.com/docs/internals/rpc) is documented and a good start, but there are style plenty of opaque hex strings (byte slices) returned that may need go code to decipher.  And how do your properly sign that Basecoin AppTx anyway?
+Basecoin comes with a [nice simple cli](https://github.com/tendermint/basecoin-examples/blob/master/tutorial.md), that is nice for testing and developing your application, but is probably not the first thing you would hand off to the future users of your blockchain.  You want something pretty, something like a web page or mobile app.  But where do you start?  The [Tendermint RPC](https://tendermint.com/docs/internals/rpc) is documented and a good start, but there are style plenty of opaque hex strings (byte slices) returned that may need go code to decipher.  And how do your properly sign that Basecoin AppTx anyway?
 
 If you're still with me, then you should take a deeper look at this repo.  The purpose here is to build a helper library to perform most common actions one would want to do with a client, make it extensible to easily support custom transaction and data types, and provide bindings to other languages.
 
@@ -14,14 +14,14 @@ This is an incomplete but usable state. The main purpose here is validating head
 
 The develop branch is tracking Tendermint 0.9.1 release and a number of refactors for internal libraries, and there should be another release soon.  There will also be some better api for this version.
 
-However, a number of desired features require some breaking changes to the Tendermint rpc itself, which are planned for 0.10, and that version of the light-client should be more secure in the face of malicious nodes.
+However, a number of desired features require some breaking changes to the Tendermint RPC itself, which are planned for 0.10, and that version of the light-client should be more secure in the face of malicious nodes.
 
 ### Let's go already
 
  1. Compile the code with `make install`
  2. Run a Basecoin 0.3.1 instance on some machine (or better yet, a cluster)
  3. Initialize the local client:
-    * Run `basecli init --chain_id <ID> --node <host>:<port>
+    * Run `basecli init --chain_id <ID> --node <host>:<port>`
     * This will ask you to confirm the validator set of the running cluster and verify the chain id is correct, check this step.
     * You must use `--force-reset` to overwrite this dir
     * You can also use `-r` or `--root` to store the chain config in a custom dir (and support two chains at once)
