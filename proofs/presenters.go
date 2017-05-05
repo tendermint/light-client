@@ -57,13 +57,27 @@ var _ Presenter = RawPresenter{}
 
 // RawPresenter just hex-encodes/decodes text.  Useful as default,
 // or to embed in other structs for the MakeKey implementation
-type RawPresenter struct{}
-
-func (_ RawPresenter) MakeKey(str string) ([]byte, error) {
-	r, err := hex.DecodeString(str)
-	return r, errors.WithStack(err)
+//
+// If you set a prefix, it will be prepended to all your data
+// after hex-decoding them
+type RawPresenter struct {
+	KeyMaker
 }
 
-func (_ RawPresenter) ParseData(raw []byte) (interface{}, error) {
+// ParseData on the raw-presenter, just provides a hex-encoding of the bytes
+func (p RawPresenter) ParseData(raw []byte) (interface{}, error) {
 	return data.Bytes(raw), nil
+}
+
+// KeyMaker can be embedded for a basic and flexible key encoder
+type KeyMaker struct {
+	Prefix []byte
+}
+
+func (k KeyMaker) MakeKey(str string) ([]byte, error) {
+	r, err := hex.DecodeString(str)
+	if err == nil && len(k.Prefix) > 0 {
+		r = append(k.Prefix, r...)
+	}
+	return r, errors.WithStack(err)
 }
