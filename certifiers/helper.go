@@ -8,7 +8,7 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-// we use this to simulate signing with many keys
+// Test Helper: ValKeys lets us simulate signing with many keys
 type ValKeys []crypto.PrivKey
 
 // GenValKeys produces an array of private keys to generate commits

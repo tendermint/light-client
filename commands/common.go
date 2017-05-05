@@ -9,15 +9,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	toml "github.com/pelletier/go-toml" // same as viper, different from tendermint, ugh...
+	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	keycmd "github.com/tendermint/go-crypto/cmd" // these usages can move to some common dir
+	// these usages can move to some common dir
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/certifiers/client"
 	"github.com/tendermint/light-client/certifiers/files"
+	"github.com/tendermint/tmlibs/cli"
 )
 
 var (
@@ -53,7 +55,7 @@ func AddBasicFlags(cmd *cobra.Command) {
 func GetProvider() certifiers.Provider {
 	if provider == nil {
 		// store the keys directory
-		rootDir := viper.GetString("root")
+		rootDir := viper.GetString(cli.HomeFlag)
 		provider = certifiers.NewCacheProvider(
 			certifiers.NewMemStoreProvider(),
 			files.NewProvider(rootDir),
@@ -77,7 +79,7 @@ func GetCertifier() (*certifiers.InquiringCertifier, error) {
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
-	root := viper.GetString(keycmd.RootFlag)
+	root := viper.GetString(cli.HomeFlag)
 
 	if viper.GetBool("force-reset") {
 		fmt.Println("Bye, bye data... wiping it all clean!")
@@ -100,33 +102,43 @@ func runInit(cmd *cobra.Command, args []string) error {
 	return err
 }
 
+type Config struct {
+	Chain    string `toml:"chainid,omitempty"`
+	Node     string `toml:"node,omitempty"`
+	Output   string `toml:"output,omitempty"`
+	Encoding string `toml:"encoding,omitempty"`
+}
+
+func setConfig(flags *pflag.FlagSet, f string, v *string) {
+	if flags.Changed(f) {
+		*v = viper.GetString(f)
+	}
+}
+
 func initConfigFile(cmd *cobra.Command) error {
 	flags := cmd.Flags()
-	tree := toml.TreeFromMap(map[string]interface{}{})
+	var cfg Config
 
 	required := []string{ChainFlag, NodeFlag}
 	for _, f := range required {
 		if !flags.Changed(f) {
 			return errors.Errorf(`"--%s" required`, f)
 		}
-		tree.Set(f, viper.Get(f))
 	}
 
-	optional := []string{keycmd.OutputFlag, "encoding"}
-	for _, f := range optional {
-		if flags.Changed(f) {
-			tree.Set(f, viper.Get(f))
-		}
-	}
+	setConfig(flags, ChainFlag, &cfg.Chain)
+	setConfig(flags, NodeFlag, &cfg.Node)
+	setConfig(flags, cli.OutputFlag, &cfg.Output)
+	setConfig(flags, cli.EncodingFlag, &cfg.Encoding)
 
-	out, err := os.Create(filepath.Join(viper.GetString("root"), ConfigFile))
+	out, err := os.Create(filepath.Join(viper.GetString(cli.HomeFlag), ConfigFile))
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	defer out.Close()
 
 	// save the config file
-	_, err = tree.WriteTo(out)
+	err = toml.NewEncoder(out).Encode(cfg)
 	if err != nil {
 		return errors.WithStack(err)
 	}

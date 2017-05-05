@@ -6,11 +6,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ctest "github.com/tendermint/go-common/test"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proofs"
 	merktest "github.com/tendermint/merkleeyes/testutil"
 	"github.com/tendermint/tendermint/rpc/client"
+	ctest "github.com/tendermint/tmlibs/test"
 )
 
 func getCurrentCheck(t *testing.T, cl client.Client) lc.Checkpoint {

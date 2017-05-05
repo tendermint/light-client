@@ -14,8 +14,9 @@ import (
 func TestProvider(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 
-	rpcAddr := rpctest.GetConfig().GetString("rpc_laddr")
-	chainID := rpctest.GetConfig().GetString("chain_id")
+	cfg := rpctest.GetConfig()
+	rpcAddr := cfg.RPCListenAddress
+	chainID := cfg.ChainID
 	p := client.NewHTTP(rpcAddr)
 	require.NotNil(t, p)
 

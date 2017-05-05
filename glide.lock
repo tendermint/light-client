@@ -7,6 +7,8 @@ imports:
   version: 4b348c1d33373d672edd83fc576892d0e46686d2
   subpackages:
   - btcec
+- name: github.com/BurntSushi/toml
+  version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
@@ -117,12 +119,8 @@ imports:
   subpackages:
   - edwards25519
   - extra25519
-- name: github.com/tendermint/go-common
-  version: f9e3db037330c8a8d61d3966de8473eaf01154fa
-  subpackages:
-  - test
 - name: github.com/tendermint/go-crypto
-  version: 197a2b270fd94ee03824b158e738fce62862d0b8
+  version: e71bbb2509b586f0b24f120b6ba57f32aefa1579
   subpackages:
   - cmd
   - keys
@@ -132,10 +130,6 @@ imports:
   - keys/server/types
   - keys/storage/filestorage
   - keys/storage/memstorage
-- name: github.com/tendermint/go-db
-  version: 9643f60bc2578693844aacf380a7c32e4c029fee
-- name: github.com/tendermint/go-merkle
-  version: 714d4d04557fd068a7c2a1748241ce8428015a96
 - name: github.com/tendermint/go-wire
   version: b53add0b622662731985485f3a19be7f684660b8
   subpackages:
@@ -146,14 +140,14 @@ imports:
   subpackages:
   - term
 - name: github.com/tendermint/merkleeyes
-  version: 0fab643ccac1a3f93b90e0e2682a5d1b9d17f8c4
+  version: c722818b460381bc5b82e38c73ff6e22a9df624d
   subpackages:
   - app
   - client
   - iavl
   - testutil
 - name: github.com/tendermint/tendermint
-  version: 2bf7e9c968f24c611e5663085d158b8c5ddabbc9
+  version: d2ae7e164af0bb9eb3dbeec3e0b54bbee440f537
   subpackages:
   - blockchain
   - config/tendermint_test
@@ -179,7 +173,7 @@ imports:
   - types
   - version
 - name: github.com/tendermint/tmlibs
-  version: df250b69416a35a943a6e2a92118667e9ef031d4
+  version: 706b9fbd671d5d49ecf1b2ea3bb34e51d61ff091
   subpackages:
   - autofile
   - clist

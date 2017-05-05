@@ -2,10 +2,10 @@ package proofs
 
 import (
 	"github.com/pkg/errors"
-	merkle "github.com/tendermint/go-merkle"
 	wire "github.com/tendermint/go-wire"
 	data "github.com/tendermint/go-wire/data"
 	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/merkleeyes/iavl"
 	"github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -82,7 +82,7 @@ func (p AppProof) Validate(check lc.Checkpoint) error {
 		return lc.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 
-	proof, err := merkle.ReadProof(p.Proof)
+	proof, err := iavl.ReadProof(p.Proof)
 	if err != nil {
 		return errors.WithStack(err)
 	}

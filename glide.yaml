@@ -1,5 +1,7 @@
 package: github.com/tendermint/light-client
 import:
+- package: github.com/BurntSushi/toml
+  version: ^0.3.0
 - package: github.com/tendermint/abci
   version: develop
   subpackages:
@@ -18,8 +20,9 @@ import:
   version: develop
   subpackages:
   - app
+  - iavl
 - package: github.com/tendermint/tendermint
-  version: bytes
+  version: develop
   subpackages:
   - config/tendermint_test
   - node
