@@ -60,7 +60,8 @@ var _ Presenter = RawPresenter{}
 type RawPresenter struct{}
 
 func (_ RawPresenter) MakeKey(str string) ([]byte, error) {
-	return hex.DecodeString(str)
+	r, err := hex.DecodeString(str)
+	return r, errors.WithStack(err)
 }
 
 func (_ RawPresenter) ParseData(raw []byte) (interface{}, error) {
