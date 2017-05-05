@@ -93,7 +93,7 @@ func (m Provider) GetByHeight(h int) (certifiers.Seed, error) {
 }
 
 // search for height, looks for a file with highest height < h
-// return certifiers.ErrIsSeedNotFoundErr() if not there...
+// return certifiers.ErrSeedNotFound() if not there...
 func (m Provider) searchForHeight(h int) (string, error) {
 	d, err := os.Open(m.checkDir)
 	if err != nil {
@@ -110,7 +110,7 @@ func (m Provider) searchForHeight(h int) (string, error) {
 	sort.Strings(files)
 	i := sort.SearchStrings(files, desired)
 	if i == 0 {
-		return "", certifiers.ErrIsSeedNotFoundErr()
+		return "", certifiers.ErrSeedNotFound()
 	}
 	found := files[i-1]
 	path := filepath.Join(m.checkDir, found)

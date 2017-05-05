@@ -46,14 +46,14 @@ func (m *MemStoreProvider) GetByHeight(h int) (Seed, error) {
 			return s, nil
 		}
 	}
-	return Seed{}, ErrIsSeedNotFoundErr()
+	return Seed{}, ErrSeedNotFound()
 }
 
 func (m *MemStoreProvider) GetByHash(hash []byte) (Seed, error) {
 	var err error
 	s, ok := m.byHash[m.encodeHash(hash)]
 	if !ok {
-		err = ErrIsSeedNotFoundErr()
+		err = ErrSeedNotFound()
 	}
 	return s, err
 }

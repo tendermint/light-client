@@ -66,7 +66,7 @@ func (c *InquiringCertifier) updateToHeight(h int) error {
 	}
 	start, end := c.Cert.LastHeight, seed.Height()
 	if end <= start {
-		return ErrIsNoPathFoundErr()
+		return ErrNoPathFound()
 	}
 	err = c.Update(seed.Checkpoint, seed.Validators)
 

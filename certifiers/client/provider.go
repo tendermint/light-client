@@ -44,7 +44,7 @@ func (p *Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 	p.updateHeight(vals.BlockHeight)
 	vhash := types.NewValidatorSet(vals.Validators).Hash()
 	if !bytes.Equal(hash, vhash) {
-		return seed, certifiers.ErrIsSeedNotFoundErr()
+		return seed, certifiers.ErrSeedNotFound()
 	}
 	return p.buildSeed(vals)
 }
@@ -64,7 +64,7 @@ func (p *Provider) GetByHeight(h int) (certifiers.Seed, error) {
 	}
 	p.updateHeight(vals.BlockHeight)
 	if vals.BlockHeight > h {
-		return seed, certifiers.ErrIsSeedNotFoundErr()
+		return seed, certifiers.ErrSeedNotFound()
 	}
 	return p.buildSeed(vals)
 }
