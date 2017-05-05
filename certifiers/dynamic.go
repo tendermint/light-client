@@ -7,6 +7,8 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
+var _ lc.Certifier = &DynamicCertifier{}
+
 // DynamicCertifier uses a StaticCertifier to evaluate the checkpoint
 // but allows for a change, if we present enough proof
 //
@@ -22,10 +24,6 @@ func NewDynamic(chainID string, vals *types.ValidatorSet) *DynamicCertifier {
 		Cert:       NewStatic(chainID, vals),
 		LastHeight: 0,
 	}
-}
-
-func (c *DynamicCertifier) assertCertifier() lc.Certifier {
-	return c
 }
 
 // Certify handles this with

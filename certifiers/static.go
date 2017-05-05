@@ -8,6 +8,8 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
+var _ lc.Certifier = &StaticCertifier{}
+
 // StaticCertifier assumes a static set of validators, set on
 // initilization and checks against them.
 //
@@ -31,10 +33,6 @@ func (c *StaticCertifier) Hash() []byte {
 		c.vhash = c.VSet.Hash()
 	}
 	return c.vhash
-}
-
-func (c *StaticCertifier) assertCertifier() lc.Certifier {
-	return c
 }
 
 func (c *StaticCertifier) Certify(check lc.Checkpoint) error {
