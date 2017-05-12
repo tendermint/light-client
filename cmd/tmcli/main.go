@@ -67,6 +67,7 @@ import (
 	keycmd "github.com/tendermint/go-crypto/cmd"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/commands/proofs"
+	"github.com/tendermint/light-client/commands/proxy"
 	"github.com/tendermint/light-client/commands/seeds"
 	"github.com/tendermint/tmlibs/cli"
 )
@@ -99,6 +100,7 @@ func init() {
 	// proofs.StatePresenters["app"] = pres
 	// proofs.TxPresenters["app"] = pres
 	TmCli.AddCommand(proofs.RootCmd)
+	TmCli.AddCommand(proxy.RootCmd)
 }
 
 func main() {
