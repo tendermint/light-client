@@ -16,8 +16,8 @@ var FutureHeight = (math.MaxInt32 - 5)
 // need to update to a given point, assuming knowledge of some previous
 // validator set
 type Seed struct {
-	lc.Checkpoint
-	Validators *types.ValidatorSet
+	lc.Checkpoint `json:"checkpoint"`
+	Validators    *types.ValidatorSet `json:"validator_set"`
 }
 
 func (s Seed) Height() int {
