@@ -1,12 +1,16 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/tendermint/go-wire/data"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/proofs"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	"github.com/tendermint/tendermint/types"
+	"github.com/tendermint/tmlibs/events"
 )
 
 var _ rpcclient.Client = Wrapper{}
@@ -17,7 +21,13 @@ type Wrapper struct {
 }
 
 func Wrap(c rpcclient.Client, cert *certifiers.InquiringCertifier) Wrapper {
-	return Wrapper{c, cert}
+	wrap := Wrapper{c, cert}
+	// if we wrap http client, then we can swap out the event switch to filter
+	if hc, ok := c.(*rpcclient.HTTP); ok {
+		evt := hc.WSEvents.EventSwitch
+		hc.WSEvents.EventSwitch = WrappedSwitch{evt, wrap}
+	}
+	return wrap
 }
 
 func (w Wrapper) ABCIQuery(path string, data data.Bytes, prove bool) (*ctypes.ResultABCIQuery, error) {
@@ -123,4 +133,56 @@ func (w Wrapper) Commit(height int) (*ctypes.ResultCommit, error) {
 		err = w.cert.Certify(check)
 	}
 	return r, err
+}
+
+type WrappedSwitch struct {
+	types.EventSwitch
+	client rpcclient.Client
+}
+
+func (s WrappedSwitch) FireEvent(event string, data events.EventData) {
+	tm, ok := data.(types.TMEventData)
+	if !ok {
+		fmt.Printf("bad type %#v\n", data)
+		return
+	}
+
+	// check to validate it if possible, and drop if not valid
+	switch t := tm.Unwrap().(type) {
+	case types.EventDataNewBlockHeader:
+		err := verifyHeader(s.client, t.Header)
+		if err != nil {
+			fmt.Printf("Invalid header: %#v\n", err)
+			return
+		}
+	case types.EventDataNewBlock:
+		err := verifyBlock(s.client, t.Block)
+		if err != nil {
+			fmt.Printf("Invalid block: %#v\n", err)
+			return
+		}
+	}
+
+	// looks good, we fire it
+	s.EventSwitch.FireEvent(event, data)
+}
+
+func verifyHeader(c rpcclient.Client, head *types.Header) error {
+	// get a checkpoint to verify from
+	commit, err := c.Commit(head.Height)
+	if err != nil {
+		return err
+	}
+	check := lc.CheckpointFromResult(commit)
+	return proofs.ValidateHeader(head, check)
+}
+
+func verifyBlock(c rpcclient.Client, block *types.Block) error {
+	// get a checkpoint to verify from
+	commit, err := c.Commit(block.Height)
+	if err != nil {
+		return err
+	}
+	check := lc.CheckpointFromResult(commit)
+	return proofs.ValidateBlock(block, check)
 }
