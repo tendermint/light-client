@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	certclient "github.com/tendermint/light-client/certifiers/client"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/tendermint/rpc/client"
 	rpc "github.com/tendermint/tendermint/rpc/lib/server"
@@ -36,8 +37,13 @@ func init() {
 
 func runProxy(cmd *cobra.Command, args []string) error {
 	// First, connect a client
-	c := client.NewHTTP(viper.GetString(commands.NodeFlag), "/websocket")
-	r := routes(c)
+	c := commands.GetNode()
+	cert, err := commands.GetCertifier()
+	if err != nil {
+		return err
+	}
+	sc := certclient.Wrap(c, cert)
+	r := routes(sc)
 
 	// build the handler...
 	mux := http.NewServeMux()
@@ -47,7 +53,7 @@ func runProxy(cmd *cobra.Command, args []string) error {
 	mux.HandleFunc(wsEndpoint, wm.WebsocketHandler)
 
 	// TODO: pass in a proper logger
-	_, err := rpc.StartHTTPServer(viper.GetString(bindFlag), mux)
+	_, err = rpc.StartHTTPServer(viper.GetString(bindFlag), mux)
 	if err != nil {
 		return nil
 	}
@@ -58,7 +64,7 @@ func runProxy(cmd *cobra.Command, args []string) error {
 }
 
 // First step, proxy with no checks....
-func routes(c *client.HTTP) map[string]*rpc.RPCFunc {
+func routes(c client.Client) map[string]*rpc.RPCFunc {
 	// // subscribe/unsubscribe are reserved for websocket events.
 	//  "subscribe":   rpc.NewWSRPCFunc(Subscribe, "event"),
 	//  "unsubscribe": rpc.NewWSRPCFunc(Unsubscribe, "event"),
@@ -66,7 +72,6 @@ func routes(c *client.HTTP) map[string]*rpc.RPCFunc {
 	return map[string]*rpc.RPCFunc{
 		// info API
 		"status":     rpc.NewRPCFunc(c.Status, ""),
-		"net_info":   rpc.NewRPCFunc(c.NetInfo, ""),
 		"blockchain": rpc.NewRPCFunc(c.BlockchainInfo, "minHeight,maxHeight"),
 		"genesis":    rpc.NewRPCFunc(c.Genesis, ""),
 		"block":      rpc.NewRPCFunc(c.Block, "height"),
@@ -84,5 +89,3 @@ func routes(c *client.HTTP) map[string]*rpc.RPCFunc {
 		"abci_info":  rpc.NewRPCFunc(c.ABCIInfo, ""),
 	}
 }
-
-// Step two, add some checks....

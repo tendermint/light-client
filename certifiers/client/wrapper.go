@@ -9,6 +9,8 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
+var _ rpcclient.Client = Wrapper{}
+
 type Wrapper struct {
 	rpcclient.Client
 	cert *certifiers.InquiringCertifier
@@ -64,8 +66,25 @@ func (w Wrapper) Tx(hash []byte, prove bool) (*ctypes.ResultTx, error) {
 
 func (w Wrapper) BlockchainInfo(minHeight, maxHeight int) (*ctypes.ResultBlockchainInfo, error) {
 	r, err := w.Client.BlockchainInfo(minHeight, maxHeight)
-	// TODO: verify headers...
-	return r, err
+	if err != nil {
+		return nil, err
+	}
+
+	// go and verify every blockmeta in the result....
+	for _, meta := range r.BlockMetas {
+		// get a checkpoint to verify from
+		c, err := w.Commit(meta.Header.Height)
+		if err != nil {
+			return nil, err
+		}
+		check := lc.CheckpointFromResult(c)
+		err = proofs.ValidateBlockMeta(meta, check)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return r, nil
 }
 
 func (w Wrapper) Block(height int) (*ctypes.ResultBlock, error) {
@@ -73,12 +92,23 @@ func (w Wrapper) Block(height int) (*ctypes.ResultBlock, error) {
 	if err != nil {
 		return nil, err
 	}
-	// c, err := w.Commit(height)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// get a checkpoint to verify from
+	c, err := w.Commit(height)
+	if err != nil {
+		return nil, err
+	}
+	check := lc.CheckpointFromResult(c)
 
-	return r, err
+	// now verify
+	err = proofs.ValidateBlockMeta(r.BlockMeta, check)
+	if err != nil {
+		return nil, err
+	}
+	err = proofs.ValidateBlock(r.Block, check)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 // Commit downloads the Commit and certifies it with the certifiers.
