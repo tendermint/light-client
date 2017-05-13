@@ -9,6 +9,7 @@ import (
 	certclient "github.com/tendermint/light-client/certifiers/client"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/rpc/core"
 	rpc "github.com/tendermint/tendermint/rpc/lib/server"
 )
 
@@ -43,12 +44,13 @@ func runProxy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	sc := certclient.Wrap(c, cert)
+	sc.Start()
 	r := routes(sc)
 
 	// build the handler...
 	mux := http.NewServeMux()
 	rpc.RegisterRPCFuncs(mux, r)
-	wm := rpc.NewWebsocketManager(r, nil)
+	wm := rpc.NewWebsocketManager(r, sc)
 	// wm.SetLogger(log.TestingLogger())
 	mux.HandleFunc(wsEndpoint, wm.WebsocketHandler)
 
@@ -65,11 +67,14 @@ func runProxy(cmd *cobra.Command, args []string) error {
 
 // First step, proxy with no checks....
 func routes(c client.Client) map[string]*rpc.RPCFunc {
-	// // subscribe/unsubscribe are reserved for websocket events.
-	//  "subscribe":   rpc.NewWSRPCFunc(Subscribe, "event"),
-	//  "unsubscribe": rpc.NewWSRPCFunc(Unsubscribe, "event"),
 
 	return map[string]*rpc.RPCFunc{
+		// Subscribe/unsubscribe are reserved for websocket events.
+		// We can just use the core tendermint impl, which uses the
+		// EventSwitch we registered in NewWebsocketManager above
+		"subscribe":   rpc.NewWSRPCFunc(core.Subscribe, "event"),
+		"unsubscribe": rpc.NewWSRPCFunc(core.Unsubscribe, "event"),
+
 		// info API
 		"status":     rpc.NewRPCFunc(c.Status, ""),
 		"blockchain": rpc.NewRPCFunc(c.BlockchainInfo, "minHeight,maxHeight"),
