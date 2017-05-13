@@ -147,7 +147,7 @@ imports:
   - iavl
   - testutil
 - name: github.com/tendermint/tendermint
-  version: d2ae7e164af0bb9eb3dbeec3e0b54bbee440f537
+  version: 07fe3e2f1345767fda9f31045da19bd277935afb
   subpackages:
   - blockchain
   - config/tendermint_test
