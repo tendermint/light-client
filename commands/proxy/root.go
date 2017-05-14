@@ -58,8 +58,9 @@ func runProxy(cmd *cobra.Command, args []string) error {
 	// build the handler...
 	mux := http.NewServeMux()
 	rpc.RegisterRPCFuncs(mux, r, logger)
-	wm := rpc.NewWebsocketManager(r, sc)
+	wm := rpc.NewWebsocketManager(r, c)
 	wm.SetLogger(logger)
+	core.SetLogger(logger)
 	mux.HandleFunc(wsEndpoint, wm.WebsocketHandler)
 
 	_, err = rpc.StartHTTPServer(viper.GetString(bindFlag), mux, logger)
