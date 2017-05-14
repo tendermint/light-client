@@ -1,5 +1,5 @@
-hash: c0b249aa1f8d60cd2a357d5f61ffbc5b8f639baf8d64f35c682c7ed8fdc977bb
-updated: 2017-05-12T12:23:15.310695876-04:00
+hash: 2dfec4a3906cda08d17bd45dfc16cccf0357b5b1d5c13d8edc75c802058f7528
+updated: 2017-05-13T20:29:35.421420692-04:00
 imports:
 - name: github.com/bgentry/speakeasy
   version: 4aabc24848ce5fd31929f7d1e4ea74d3709c14cd
@@ -19,6 +19,14 @@ imports:
   version: 95f809107225be108efcf10a3509e4ea6ceef3c4
 - name: github.com/fsnotify/fsnotify
   version: 4da3e2cfbabc9f751898f250b49f2439785783a1
+- name: github.com/go-kit/kit
+  version: d67bb4c202e3b91377d1079b110a6c9ce23ab2f8
+  subpackages:
+  - log
+  - log/level
+  - log/term
+- name: github.com/go-logfmt/logfmt
+  version: 390ab7935ee28ec6b286364bba9b4dd6410cb3d5
 - name: github.com/go-playground/locales
   version: 1e5f1161c6416a5ff48840eb8724a394e48cc534
   subpackages:
@@ -57,12 +65,10 @@ imports:
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmhodges/levigo
   version: c42d9e0ca023e2198120196f842701bb4c55d7b9
+- name: github.com/kr/logfmt
+  version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
 - name: github.com/magiconair/properties
   version: 51463bfca2576e06c62a8504b5c0f06d61312647
-- name: github.com/mattn/go-colorable
-  version: 9fdad7c47650b7d2e1da50644c1f4ba7f172f252
-- name: github.com/mattn/go-isatty
-  version: 56b76bdf51f7708750eac80fa38b952bb9f32639
 - name: github.com/mitchellh/mapstructure
   version: cc8532a8e9a55ea36402aa21efdf403a60d34096
 - name: github.com/pelletier/go-buffruneio
@@ -110,7 +116,7 @@ imports:
   - leveldb/table
   - leveldb/util
 - name: github.com/tendermint/abci
-  version: 8d8e35ae537538c9cf6808be3ca9dd7dab81b7f6
+  version: b662bc7d3439b3c2cce615e8c3502b762e133dbf
   subpackages:
   - client
   - example/dummy
@@ -131,14 +137,10 @@ imports:
   - keys/server/types
   - keys/storage/filestorage
 - name: github.com/tendermint/go-wire
-  version: b53add0b622662731985485f3a19be7f684660b8
+  version: 82d31b6afb3c438639bffc5e1c7318b9a55285b3
   subpackages:
   - data
   - data/base58
-- name: github.com/tendermint/log15
-  version: ae0f3d6450da9eac7074b439c8e1c3cabf0d5ce6
-  subpackages:
-  - term
 - name: github.com/tendermint/merkleeyes
   version: c722818b460381bc5b82e38c73ff6e22a9df624d
   subpackages:
@@ -147,7 +149,7 @@ imports:
   - iavl
   - testutil
 - name: github.com/tendermint/tendermint
-  version: 07fe3e2f1345767fda9f31045da19bd277935afb
+  version: f14f16729797cc364b194e0e37301b784814e909
   subpackages:
   - blockchain
   - config
@@ -173,7 +175,7 @@ imports:
   - types
   - version
 - name: github.com/tendermint/tmlibs
-  version: 706b9fbd671d5d49ecf1b2ea3bb34e51d61ff091
+  version: 8f5a175ff4c869fedde710615a11f5745ff69bf3
   subpackages:
   - autofile
   - cli
@@ -183,7 +185,6 @@ imports:
   - events
   - flowrate
   - log
-  - logger
   - merkle
   - test
 - name: golang.org/x/crypto

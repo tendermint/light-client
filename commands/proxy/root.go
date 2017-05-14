@@ -2,15 +2,20 @@ package proxy
 
 import (
 	"net/http"
-	"time"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	certclient "github.com/tendermint/light-client/certifiers/client"
-	"github.com/tendermint/light-client/commands"
+
+	cmn "github.com/tendermint/tmlibs/common"
+	"github.com/tendermint/tmlibs/log"
+
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/core"
 	rpc "github.com/tendermint/tendermint/rpc/lib/server"
+
+	certclient "github.com/tendermint/light-client/certifiers/client"
+	"github.com/tendermint/light-client/commands"
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -36,6 +41,9 @@ func init() {
 	RootCmd.Flags().String(bindFlag, ":8888", "Serve the proxy on the given port")
 }
 
+// TODO: pass in a proper logger
+var logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "main")
+
 func runProxy(cmd *cobra.Command, args []string) error {
 	// First, connect a client
 	c := commands.GetNode()
@@ -49,20 +57,21 @@ func runProxy(cmd *cobra.Command, args []string) error {
 
 	// build the handler...
 	mux := http.NewServeMux()
-	rpc.RegisterRPCFuncs(mux, r)
+	rpc.RegisterRPCFuncs(mux, r, logger)
 	wm := rpc.NewWebsocketManager(r, sc)
-	// wm.SetLogger(log.TestingLogger())
+	wm.SetLogger(logger)
 	mux.HandleFunc(wsEndpoint, wm.WebsocketHandler)
 
-	// TODO: pass in a proper logger
-	_, err = rpc.StartHTTPServer(viper.GetString(bindFlag), mux)
+	_, err = rpc.StartHTTPServer(viper.GetString(bindFlag), mux, logger)
 	if err != nil {
-		return nil
+		return err
 	}
-	// uhh... better way?
-	time.Sleep(1000 * time.Minute)
 
-	return err
+	cmn.TrapSignal(func() {
+		// TODO: close up shop
+	})
+
+	return nil
 }
 
 // First step, proxy with no checks....
