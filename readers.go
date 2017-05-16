@@ -1,6 +1,9 @@
 package lightclient
 
-import keys "github.com/tendermint/go-crypto/keys"
+import (
+	crypto "github.com/tendermint/go-crypto"
+	keys "github.com/tendermint/go-crypto/keys"
+)
 
 type Value interface {
 	Bytes() []byte
@@ -30,9 +33,11 @@ type SignableReader interface {
 //
 // If this returns anything that doesn't implement either keys.Signable, nor
 // Value, then it is considered an error
+//
+// The signer's pubkey (if any) is passed in, so we can enhace the tx
 type TxReader interface {
 	// this reads a given json input
-	ReadTxJSON([]byte) (interface{}, error)
+	ReadTxJSON([]byte, crypto.PubKey) (interface{}, error)
 	// this uses
-	ReadTxFlags(interface{}) (interface{}, error)
+	ReadTxFlags(interface{}, crypto.PubKey) (interface{}, error)
 }

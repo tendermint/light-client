@@ -60,6 +60,12 @@ func (p *Poster) RunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// get the pubkey for the tx prep
+	name := viper.GetString(NameFlag)
+	manager := keycmd.GetKeyManager()
+	info, _ := manager.Get(name) // error -> empty pubkey
+	pubkey := info.PubKey
+
 	// get input if provided
 	input := viper.GetString(InputFlag)
 	var tx interface{}
@@ -70,7 +76,7 @@ func (p *Poster) RunE(cmd *cobra.Command, args []string) error {
 		}
 
 		// parse the input
-		tx, err = reader.ReadTxJSON(raw)
+		tx, err = reader.ReadTxJSON(raw, pubkey)
 		if err != nil {
 			return err
 		}
@@ -80,7 +86,7 @@ func (p *Poster) RunE(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		tx, err = reader.ReadTxFlags(p.flagData)
+		tx, err = reader.ReadTxFlags(p.flagData, pubkey)
 		if err != nil {
 			return err
 		}
@@ -89,11 +95,10 @@ func (p *Poster) RunE(cmd *cobra.Command, args []string) error {
 	// sign if it is Signable
 	var packet []byte
 	if sign, ok := tx.(keys.Signable); ok {
-		name := viper.GetString(NameFlag)
 		if name == "" {
 			return errors.New("--name is required to sign tx")
 		}
-		packet, err = signTx(sign, name)
+		packet, err = signTx(manager, sign, name)
 		if err != nil {
 			return err
 		}
@@ -137,8 +142,7 @@ func readInput(file string) ([]byte, error) {
 	return ioutil.ReadAll(reader)
 }
 
-func signTx(tx keys.Signable, name string) ([]byte, error) {
-	manager := keycmd.GetKeyManager()
+func signTx(manager keys.Manager, tx keys.Signable, name string) ([]byte, error) {
 	prompt := fmt.Sprintf("Please enter passphrase for %s: ", name)
 	pass, err := speakeasy.Ask(prompt)
 	if err != nil {

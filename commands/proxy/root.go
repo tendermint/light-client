@@ -37,12 +37,45 @@ const (
 	wsEndpoint = "/websocket"
 )
 
+// func init() {
+// 	b := "--trace"
+// 	a := []string{"--log-level", "info", "debug", "error"}
+
+// 	if flags.trace {
+// 		logger = log.NewTraceLogger(logger)
+// 		if keyvals[i].(error) {
+// 			keyvals[i] = fmt.Sprintf("%+v")
+// 		}
+// 	}
+// }
+
+// func (t TraceLogger) Log(kvs ...interface{}) {
+// 	for i, kv := range kvs {
+// 		if e, ok := kv.(error); ok {
+// 			kvs[i] = TraceError{kv}
+// 		}
+// 	}
+// 	t.Logger.Log(kvs)
+// }
+
+// type TraceError struct {
+// 	E error
+// }
+
+// func (t TraceError) Error() string {
+// 	return fmt.Sprintf("%+v", t.E)
+// }
+
 func init() {
 	RootCmd.Flags().String(bindFlag, ":8888", "Serve the proxy on the given port")
 }
 
 // TODO: pass in a proper logger
 var logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "main")
+
+func init() {
+	logger, _ = log.NewFilterByLevel(logger, "info")
+}
 
 func runProxy(cmd *cobra.Command, args []string) error {
 	// First, connect a client
