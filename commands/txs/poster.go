@@ -54,8 +54,6 @@ func (p *Poster) CreateCommand() *cobra.Command {
 }
 
 func (p *Poster) RunE(cmd *cobra.Command, args []string) error {
-	fmt.Println("Got", p.name)
-
 	// get our reader
 	reader, err := p.maker.MakeReader()
 	if err != nil {
@@ -113,7 +111,7 @@ func (p *Poster) RunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	js, err := json.Marshal(bres)
+	js, err := json.MarshalIndent(bres, "", "  ")
 	if err != nil {
 		return err
 	}

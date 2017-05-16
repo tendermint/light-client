@@ -82,7 +82,7 @@ func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
 	}
 
 	// TODO: store the proof or do something more interesting than just printing
-	fmt.Println("Your data is 100% certified:")
+	// fmt.Println("Your data is 100% certified:")
 	fmt.Printf("Height: %d\n", proof.BlockHeight())
 	info, err := pres.ParseData(proof.Data())
 	if err != nil {
