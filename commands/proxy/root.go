@@ -71,10 +71,11 @@ func init() {
 }
 
 // TODO: pass in a proper logger
-var logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "main")
+var logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 
 func init() {
-	logger, _ = log.NewFilterByLevel(logger, "info")
+	logger = logger.With("module", "main")
+	logger = log.NewFilter(logger, log.AllowInfo())
 }
 
 func runProxy(cmd *cobra.Command, args []string) error {
