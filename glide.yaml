@@ -8,26 +8,26 @@ import:
 - package: github.com/spf13/pflag
 - package: github.com/spf13/viper
 - package: github.com/tendermint/go-crypto
-  version: develop
+  version: ~0.2.0
   subpackages:
   - cmd
   - keys
 - package: github.com/tendermint/go-wire
-  version: develop
+  version: ~0.6.2
   subpackages:
   - data
 - package: github.com/tendermint/merkleeyes
-  version: develop
+  version: ~0.2.0
   subpackages:
   - iavl
 - package: github.com/tendermint/tendermint
-  version: develop
+  version: ~0.10.0
   subpackages:
   - rpc/client
   - rpc/core/types
   - types
 - package: github.com/tendermint/tmlibs
-  version: develop
+  version: ~0.2.0
   subpackages:
   - cli
 - package: github.com/gorilla/mux
