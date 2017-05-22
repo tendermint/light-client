@@ -1,9 +1,9 @@
 package seeds
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/light-client/certifiers"
@@ -15,10 +15,11 @@ const (
 )
 
 var importCmd = &cobra.Command{
-	Use:   "import <file>",
-	Short: "Imports a new seed from the given file",
-	Long:  `Validate this file and update to the given seed if secure.`,
-	RunE:  importSeed,
+	Use:          "import <file>",
+	Short:        "Imports a new seed from the given file",
+	Long:         `Validate this file and update to the given seed if secure.`,
+	RunE:         importSeed,
+	SilenceUsage: true,
 }
 
 func init() {

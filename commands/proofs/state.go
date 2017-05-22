@@ -2,12 +2,12 @@ package proofs
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/proofs"
 	"github.com/tendermint/tendermint/rpc/client"
 )
+
+var StatePresenters = proofs.NewPresenters()
 
 var stateCmd = &cobra.Command{
 	Use:   "state",
@@ -22,14 +22,13 @@ data to other peers as needed.
 
 func init() {
 	stateProver := ProofCommander{
-		Prover: stateProver,
+		ProverFunc: stateProver,
+		Presenters: StatePresenters,
 	}
 	stateProver.Register(stateCmd)
 	RootCmd.AddCommand(stateCmd)
 }
 
-func stateProver() lc.Prover {
-	endpoint := viper.GetString(commands.NodeFlag)
-	node := client.NewHTTP(endpoint, "/websockets")
+func stateProver(node client.Client) lc.Prover {
 	return proofs.NewAppProver(node)
 }

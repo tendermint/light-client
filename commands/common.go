@@ -4,17 +4,24 @@ Package commands contains any general setup/helpers valid for all subcommands
 package commands
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	toml "github.com/pelletier/go-toml" // same as viper, different from tendermint, ugh...
+	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	keycmd "github.com/tendermint/go-keys/cmd" // these usages can move to some common dir
+	"github.com/tendermint/tmlibs/cli"
+	cmn "github.com/tendermint/tmlibs/common"
+
+	rpcclient "github.com/tendermint/tendermint/rpc/client"
+
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/certifiers/client"
 	"github.com/tendermint/light-client/certifiers/files"
@@ -29,6 +36,7 @@ const (
 	ChainFlag = "chainid"
 	NodeFlag  = "node"
 	SeedFlag  = "seed"
+	HashFlag  = "valhash"
 
 	ConfigFile = "config.toml"
 )
@@ -42,7 +50,9 @@ var InitCmd = &cobra.Command{
 
 func init() {
 	InitCmd.Flags().Bool("force-reset", false, "DANGEROUS: Wipe clean an existing client store")
+	InitCmd.Flags().Bool("save-keys", false, "LESS DANGEROUS: Combine with --force-reset to not delete private keys on reset")
 	InitCmd.Flags().String(SeedFlag, "", "Seed file to import (optional)")
+	InitCmd.Flags().String(HashFlag, "", "Trusted validator hash (must match to accept)")
 }
 
 func AddBasicFlags(cmd *cobra.Command) {
@@ -50,10 +60,14 @@ func AddBasicFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().String(NodeFlag, "", "<host>:<port> to tendermint rpc interface for this chain")
 }
 
+func GetNode() rpcclient.Client {
+	return rpcclient.NewHTTP(viper.GetString(NodeFlag), "/websocket")
+}
+
 func GetProvider() certifiers.Provider {
 	if provider == nil {
 		// store the keys directory
-		rootDir := viper.GetString("root")
+		rootDir := viper.GetString(cli.HomeFlag)
 		provider = certifiers.NewCacheProvider(
 			certifiers.NewMemStoreProvider(),
 			files.NewProvider(rootDir),
@@ -77,11 +91,10 @@ func GetCertifier() (*certifiers.InquiringCertifier, error) {
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
-	root := viper.GetString(keycmd.RootFlag)
+	root := viper.GetString(cli.HomeFlag)
 
 	if viper.GetBool("force-reset") {
-		fmt.Println("Bye, bye data... wiping it all clean!")
-		os.RemoveAll(root)
+		resetRoot(root, viper.GetBool("save-keys"))
 	}
 
 	err := checkEmpty(root)
@@ -100,33 +113,58 @@ func runInit(cmd *cobra.Command, args []string) error {
 	return err
 }
 
+func resetRoot(root string, saveKeys bool) {
+	tmp := filepath.Join(os.TempDir(), cmn.RandStr(16))
+	keys := filepath.Join(root, "keys")
+	if saveKeys {
+		fmt.Println("Saving private keys", tmp, keys)
+		os.Rename(keys, tmp)
+	}
+	fmt.Println("Bye, bye data... wiping it all clean!")
+	os.RemoveAll(root)
+	if saveKeys {
+		os.Mkdir(root, 0700)
+		os.Rename(tmp, keys)
+	}
+}
+
+type Config struct {
+	Chain    string `toml:"chainid,omitempty"`
+	Node     string `toml:"node,omitempty"`
+	Output   string `toml:"output,omitempty"`
+	Encoding string `toml:"encoding,omitempty"`
+}
+
+func setConfig(flags *pflag.FlagSet, f string, v *string) {
+	if flags.Changed(f) {
+		*v = viper.GetString(f)
+	}
+}
+
 func initConfigFile(cmd *cobra.Command) error {
 	flags := cmd.Flags()
-	tree := toml.TreeFromMap(map[string]interface{}{})
+	var cfg Config
 
 	required := []string{ChainFlag, NodeFlag}
 	for _, f := range required {
 		if !flags.Changed(f) {
 			return errors.Errorf(`"--%s" required`, f)
 		}
-		tree.Set(f, viper.Get(f))
 	}
 
-	optional := []string{keycmd.OutputFlag, "encoding"}
-	for _, f := range optional {
-		if flags.Changed(f) {
-			tree.Set(f, viper.Get(f))
-		}
-	}
+	setConfig(flags, ChainFlag, &cfg.Chain)
+	setConfig(flags, NodeFlag, &cfg.Node)
+	setConfig(flags, cli.OutputFlag, &cfg.Output)
+	setConfig(flags, cli.EncodingFlag, &cfg.Encoding)
 
-	out, err := os.Create(filepath.Join(viper.GetString("root"), ConfigFile))
+	out, err := os.Create(filepath.Join(viper.GetString(cli.HomeFlag), ConfigFile))
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	defer out.Close()
 
 	// save the config file
-	_, err = tree.WriteTo(out)
+	err = toml.NewEncoder(out).Encode(cfg)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -159,6 +197,28 @@ func initSeed() (err error) {
 		return err
 	}
 
+	// validate hash interactively or not
+	hash := viper.GetString(HashFlag)
+	if hash != "" {
+		var hashb []byte
+		hashb, err = hex.DecodeString(hash)
+		if err == nil && !bytes.Equal(hashb, seed.Hash()) {
+			err = errors.Errorf("Seed hash doesn't match expectation: %X", seed.Hash())
+		}
+	} else {
+		err = validateHash(seed)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// if accepted, store seed as current state
+	p.StoreSeed(seed)
+	return nil
+}
+
+func validateHash(seed certifiers.Seed) error {
 	// ask the user to verify the validator hash
 	fmt.Println("\nImportant: if this is incorrect, all interaction with the chain will be insecure!")
 	fmt.Printf("  Given validator hash valid: %X\n", seed.Hash())
@@ -167,9 +227,6 @@ func initSeed() (err error) {
 	if !valid {
 		return errors.New("Invalid validator hash, try init with proper seed later")
 	}
-
-	// if accepted, store seed as current state
-	p.StoreSeed(seed)
 	return nil
 }
 
@@ -187,7 +244,12 @@ func checkEmpty(root string) error {
 		return errors.WithStack(err)
 	}
 
-	if len(files) > 0 {
+	empty := len(files) == 0
+	if !empty && len(files) == 1 && files[0] == "keys" {
+		empty = true
+	}
+
+	if !empty {
 		return errors.Errorf(`"%s" contains data, cannot init`, root)
 	}
 	return nil

@@ -14,8 +14,9 @@ import (
 func TestProvider(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 
-	rpcAddr := rpctest.GetConfig().GetString("rpc_laddr")
-	chainID := rpctest.GetConfig().GetString("chain_id")
+	cfg := rpctest.GetConfig()
+	rpcAddr := cfg.RPCListenAddress
+	chainID := cfg.ChainID
 	p := client.NewHTTP(rpcAddr)
 	require.NotNil(t, p)
 
@@ -36,7 +37,7 @@ func TestProvider(t *testing.T) {
 	// can't get a lower one
 	seed, err = p.GetByHeight(sh - 1)
 	assert.NotNil(err)
-	assert.True(certifiers.SeedNotFound(err))
+	assert.True(certifiers.IsSeedNotFoundErr(err))
 
 	// also get by hash (given the match)
 	seed, err = p.GetByHash(vhash)
@@ -48,7 +49,7 @@ func TestProvider(t *testing.T) {
 	// get by hash fails without match
 	seed, err = p.GetByHash([]byte("foobar"))
 	assert.NotNil(err)
-	assert.True(certifiers.SeedNotFound(err))
+	assert.True(certifiers.IsSeedNotFoundErr(err))
 
 	// storing the seed silently ignored
 	err = p.StoreSeed(seed)

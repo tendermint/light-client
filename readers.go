@@ -1,6 +1,9 @@
 package lightclient
 
-import keys "github.com/tendermint/go-keys"
+import (
+	crypto "github.com/tendermint/go-crypto"
+	keys "github.com/tendermint/go-crypto/keys"
+)
 
 type Value interface {
 	Bytes() []byte
@@ -18,4 +21,23 @@ type ValueReader interface {
 
 type SignableReader interface {
 	ReadSignable(data []byte) (keys.Signable, error)
+}
+
+// TxReader is anything that can parse incoming transactions and place
+// them into a format to send to the node.
+//
+// Generally the results should implement keys.Signable, in which case they
+// will be signed before being posted.  However, there are also cases
+// the support unsigned tx (at least dummy, counter, merkleeyes...), which
+// can return an implementation of Value.
+//
+// If this returns anything that doesn't implement either keys.Signable, nor
+// Value, then it is considered an error
+//
+// The signer's pubkey (if any) is passed in, so we can enhace the tx
+type TxReader interface {
+	// this reads a given json input
+	ReadTxJSON([]byte, crypto.PubKey) (interface{}, error)
+	// this uses
+	ReadTxFlags(interface{}, crypto.PubKey) (interface{}, error)
 }

@@ -1,8 +1,7 @@
 package seeds
 
 import (
-	"errors"
-
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/light-client/commands"
@@ -14,7 +13,8 @@ var exportCmd = &cobra.Command{
 	Long: `Exports the most recent seed to a binary file.
 If desired, you can select by an older height or validator hash.
 `,
-	RunE: exportSeed,
+	RunE:         exportSeed,
+	SilenceUsage: true,
 }
 
 func init() {

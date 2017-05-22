@@ -7,6 +7,8 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
+var _ lc.Certifier = &DynamicCertifier{}
+
 // DynamicCertifier uses a StaticCertifier to evaluate the checkpoint
 // but allows for a change, if we present enough proof
 //
@@ -17,15 +19,11 @@ type DynamicCertifier struct {
 	LastHeight int
 }
 
-func NewDynamic(chainID string, vals []*types.Validator) *DynamicCertifier {
+func NewDynamic(chainID string, vals *types.ValidatorSet) *DynamicCertifier {
 	return &DynamicCertifier{
 		Cert:       NewStatic(chainID, vals),
 		LastHeight: 0,
 	}
-}
-
-func (c *DynamicCertifier) assertCertifier() lc.Certifier {
-	return c
 }
 
 // Certify handles this with
@@ -41,8 +39,8 @@ func (c *DynamicCertifier) Certify(check lc.Checkpoint) error {
 // Update will verify if this is a valid change and update
 // the certifying validator set if safe to do so.
 //
-// Returns an error if update is impossible (invalid proof or TooMuchChange)
-func (c *DynamicCertifier) Update(check lc.Checkpoint, vals []*types.Validator) error {
+// Returns an error if update is impossible (invalid proof or IsTooMuchChangeErr)
+func (c *DynamicCertifier) Update(check lc.Checkpoint, vset *types.ValidatorSet) error {
 	// ignore all checkpoints in the past -> only to the future
 	if check.Height() <= c.LastHeight {
 		return ErrPastTime()
@@ -53,7 +51,6 @@ func (c *DynamicCertifier) Update(check lc.Checkpoint, vals []*types.Validator) 
 	if err != nil {
 		return err
 	}
-	vset := types.NewValidatorSet(vals)
 
 	// TODO: now, make sure not too much change... meaning this commit
 	// would be approved by the currently known validator set
@@ -65,7 +62,7 @@ func (c *DynamicCertifier) Update(check lc.Checkpoint, vals []*types.Validator) 
 	}
 
 	// looks good, we can update
-	c.Cert = NewStatic(c.Cert.ChainID, vals)
+	c.Cert = NewStatic(c.Cert.ChainID, vset)
 	c.LastHeight = check.Height()
 	return nil
 }
@@ -107,7 +104,7 @@ func VerifyCommitAny(old, cur *types.ValidatorSet, chainID string,
 			continue
 		}
 		if precommit.Height != height {
-			return fmt.Errorf("Invalid commit -- wrong height: %v vs %v", height, precommit.Height)
+			return lc.ErrHeightMismatch(height, precommit.Height)
 		}
 		if precommit.Round != round {
 			return fmt.Errorf("Invalid commit -- wrong round: %v vs %v", round, precommit.Round)
@@ -136,11 +133,10 @@ func VerifyCommitAny(old, cur *types.ValidatorSet, chainID string,
 
 		// check new school
 		_, cv := cur.GetByIndex(idx)
-		// is this needed?
-		if !cv.PubKey.VerifyBytes(precommitSignBytes, precommit.Signature) {
-			return fmt.Errorf("Invalid commit -- invalid signature: %v", precommit)
+		if cv.PubKey.Equals(ov.PubKey) {
+			// make sure this is properly set in the current block as well
+			curVotingPower += cv.VotingPower
 		}
-		curVotingPower += cv.VotingPower
 	}
 
 	if oldVotingPower <= old.TotalVotingPower()*2/3 {

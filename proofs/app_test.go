@@ -6,11 +6,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ctest "github.com/tendermint/go-common/test"
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/proofs"
 	merktest "github.com/tendermint/merkleeyes/testutil"
 	"github.com/tendermint/tendermint/rpc/client"
+	ctest "github.com/tendermint/tmlibs/test"
 )
 
 func getCurrentCheck(t *testing.T, cl client.Client) lc.Checkpoint {
@@ -23,7 +23,7 @@ func getCheckForHeight(t *testing.T, cl client.Client, h int) lc.Checkpoint {
 	client.WaitForHeight(cl, h, nil)
 	commit, err := cl.Commit(h)
 	require.Nil(t, err, "%+v", err)
-	return lc.NewCheckpoint(commit)
+	return lc.CheckpointFromResult(commit)
 }
 
 func TestAppProofs(t *testing.T) {
@@ -39,8 +39,8 @@ func TestAppProofs(t *testing.T) {
 	k, v, tx := merktest.MakeTxKV()
 	br, err := cl.BroadcastTxCommit(tx)
 	require.Nil(err, "%+v", err)
-	require.EqualValues(0, br.CheckTx.GetCode())
-	require.EqualValues(0, br.DeliverTx.GetCode())
+	require.EqualValues(0, br.CheckTx.Code)
+	require.EqualValues(0, br.DeliverTx.Code)
 
 	// unfortunately we cannot tell the server to give us any height
 	// other than the most recent, so 0 is the only choice :(

@@ -2,10 +2,10 @@ package proofs
 
 import (
 	"github.com/pkg/errors"
-	data "github.com/tendermint/go-data"
-	merkle "github.com/tendermint/go-merkle"
 	wire "github.com/tendermint/go-wire"
+	data "github.com/tendermint/go-wire/data"
 	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/merkleeyes/iavl"
 	"github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -29,21 +29,20 @@ func NewAppProver(node client.Client) AppProver {
 // Get tries to download a merkle hash for app state on this key from
 // the tendermint node.
 func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
-	res, err := a.node.ABCIQuery("/key", key, true)
+	resp, err := a.node.ABCIQuery("/key", key, true)
 	if err != nil {
 		return nil, err
 	}
 
 	// make sure the proof is the proper height
-	resp := res.Response
 	if !resp.Code.IsOK() {
 		return nil, errors.Errorf("Query error %d: %s", resp.Code, resp.Code.String())
 	}
 	if len(resp.Key) == 0 || len(resp.Value) == 0 || len(resp.Proof) == 0 {
-		return nil, errors.New("Missing information in query response")
+		return nil, errors.New("No data returned for query")
 	}
 	if h != 0 && h != resp.Height {
-		return nil, errors.Errorf("Requested height %d, received %d", h, resp.Height)
+		return nil, lc.ErrHeightMismatch(int(h), int(resp.Height))
 	}
 	proof := AppProof{
 		Height: resp.Height,
@@ -54,27 +53,24 @@ func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
 	return proof, nil
 }
 
-func (a AppProver) Unmarshal(data []byte) (pr lc.Proof, err error) {
-	// to handle go-wire panics... ugh
-	defer func() {
-		if rec := recover(); rec != nil {
-			if e, ok := rec.(error); ok {
-				err = errors.WithStack(e)
-			} else {
-				err = errors.Errorf("Panic: %v", rec)
-			}
-		}
-	}()
+func (a AppProver) Unmarshal(data []byte) (lc.Proof, error) {
 	var proof AppProof
-	err = errors.WithStack(wire.ReadBinaryBytes(data, &proof))
+	err := errors.WithStack(wire.ReadBinaryBytes(data, &proof))
 	return proof, err
 }
 
+// AppProof containts a key-value pair at a given height.
+// It also contains the merkle proof from that key-value pair to the root hash,
+// which can be verified against a signed header.
 type AppProof struct {
 	Height uint64
 	Key    data.Bytes
 	Value  data.Bytes
 	Proof  data.Bytes
+}
+
+func (p AppProof) Data() []byte {
+	return p.Value
 }
 
 func (p AppProof) BlockHeight() uint64 {
@@ -83,11 +79,10 @@ func (p AppProof) BlockHeight() uint64 {
 
 func (p AppProof) Validate(check lc.Checkpoint) error {
 	if uint64(check.Height()) != p.Height {
-		return errors.Errorf("Trying to validate proof for block %d with header for block %d",
-			p.Height, check.Height())
+		return lc.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 
-	proof, err := merkle.ReadProof(p.Proof)
+	proof, err := iavl.ReadProof(p.Proof)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -25,7 +25,7 @@ type Checkpoint struct {
 	Commit *types.Commit `json:"commit"`
 }
 
-func NewCheckpoint(commit *rtypes.ResultCommit) Checkpoint {
+func CheckpointFromResult(commit *rtypes.ResultCommit) Checkpoint {
 	return Checkpoint{
 		Header: commit.Header,
 		Commit: commit.Commit,
@@ -54,25 +54,25 @@ func (c Checkpoint) ValidateBasic(chainID string) error {
 			c.Header.ChainID, chainID)
 	}
 
-	// make sure the commit is reasonable
 	if c.Commit == nil {
 		return errors.New("Checkpoint missing commits")
-	}
-	err := c.Commit.ValidateBasic()
-	if err != nil {
-		return errors.WithStack(err)
 	}
 
 	// make sure the header and commit match (height and hash)
 	if c.Commit.Height() != c.Header.Height {
-		return errors.Errorf("Commit height %d != header height %d",
-			c.Commit.Height(), c.Header.Height)
+		return ErrHeightMismatch(c.Commit.Height(), c.Header.Height)
 	}
 	hhash := c.Header.Hash()
 	chash := c.Commit.BlockID.Hash
 	if !bytes.Equal(hhash, chash) {
 		return errors.Errorf("Commits sign block %X header is block %X",
 			chash, hhash)
+	}
+
+	// make sure the commit is reasonable
+	err := c.Commit.ValidateBasic()
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	// looks good, we just need to make sure the signatures are really from

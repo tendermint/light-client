@@ -10,7 +10,7 @@ type InquiringCertifier struct {
 	Provider
 }
 
-func NewInquiring(chainID string, vals []*types.Validator, provider Provider) *InquiringCertifier {
+func NewInquiring(chainID string, vals *types.ValidatorSet, provider Provider) *InquiringCertifier {
 	return &InquiringCertifier{
 		Cert:     NewDynamic(chainID, vals),
 		Provider: provider,
@@ -23,7 +23,7 @@ func (c *InquiringCertifier) ChainID() string {
 
 func (c *InquiringCertifier) Certify(check lc.Checkpoint) error {
 	err := c.Cert.Certify(check)
-	if !ValidatorsChanged(err) {
+	if !IsValidatorsChangedErr(err) {
 		return err
 	}
 	err = c.updateToHash(check.Header.ValidatorsHash)
@@ -33,7 +33,7 @@ func (c *InquiringCertifier) Certify(check lc.Checkpoint) error {
 	return c.Cert.Certify(check)
 }
 
-func (c *InquiringCertifier) Update(check lc.Checkpoint, vals []*types.Validator) error {
+func (c *InquiringCertifier) Update(check lc.Checkpoint, vals *types.ValidatorSet) error {
 	err := c.Cert.Update(check, vals)
 	if err == nil {
 		c.StoreSeed(Seed{Checkpoint: check, Validators: vals})
@@ -42,7 +42,7 @@ func (c *InquiringCertifier) Update(check lc.Checkpoint, vals []*types.Validator
 }
 
 // updateToHash gets the validator hash we want to update to
-// if TooMuchChange, we try to find a path by binary search over height
+// if IsTooMuchChangeErr, we try to find a path by binary search over height
 func (c *InquiringCertifier) updateToHash(vhash []byte) error {
 	// try to get the match, and update
 	seed, err := c.GetByHash(vhash)
@@ -50,8 +50,8 @@ func (c *InquiringCertifier) updateToHash(vhash []byte) error {
 		return err
 	}
 	err = c.Cert.Update(seed.Checkpoint, seed.Validators)
-	// handle TooMuchChange by using divide and conquer
-	if TooMuchChange(err) {
+	// handle IsTooMuchChangeErr by using divide and conquer
+	if IsTooMuchChangeErr(err) {
 		err = c.updateToHeight(seed.Height())
 	}
 	return err
@@ -70,8 +70,8 @@ func (c *InquiringCertifier) updateToHeight(h int) error {
 	}
 	err = c.Update(seed.Checkpoint, seed.Validators)
 
-	// we can handle TooMuchChange specially
-	if !TooMuchChange(err) {
+	// we can handle IsTooMuchChangeErr specially
+	if !IsTooMuchChangeErr(err) {
 		return err
 	}
 

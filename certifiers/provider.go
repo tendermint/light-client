@@ -16,8 +16,8 @@ var FutureHeight = (math.MaxInt32 - 5)
 // need to update to a given point, assuming knowledge of some previous
 // validator set
 type Seed struct {
-	lc.Checkpoint
-	Validators []*types.Validator
+	lc.Checkpoint `json:"checkpoint"`
+	Validators    *types.ValidatorSet `json:"validator_set"`
 }
 
 func (s Seed) Height() int {
@@ -107,7 +107,7 @@ func NewCacheProvider(providers ...Provider) CacheProvider {
 // Aborts on first error it encounters (closest provider)
 func (c CacheProvider) StoreSeed(seed Seed) (err error) {
 	for _, p := range c.Providers {
-		err := p.StoreSeed(seed)
+		err = p.StoreSeed(seed)
 		if err != nil {
 			break
 		}
@@ -115,6 +115,19 @@ func (c CacheProvider) StoreSeed(seed Seed) (err error) {
 	return err
 }
 
+/*
+GetByHeight should return the closest possible match from all providers.
+
+The Cache is usually organized in order from cheapest call (memory)
+to most expensive calls (disk/network). However, since GetByHeight returns
+a Seed a h' <= h, if the memory has a seed at h-10, but the network would
+give us the exact match, a naive "stop at first non-error" would hide
+the actual desired results.
+
+Thus, we query each provider in order until we find an exact match
+or we finished querying them all.  If at least one returned a non-error,
+then this returns the best match (minimum h-h').
+*/
 func (c CacheProvider) GetByHeight(h int) (s Seed, err error) {
 	for _, p := range c.Providers {
 		var ts Seed

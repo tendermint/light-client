@@ -1,8 +1,6 @@
 package proofs
 
 import (
-	"bytes"
-
 	"github.com/pkg/errors"
 	wire "github.com/tendermint/go-wire"
 	lc "github.com/tendermint/light-client"
@@ -29,32 +27,24 @@ func NewTxProver(node client.Client) TxProver {
 
 // Get tries to download a merkle hash for app state on this key from
 // the tendermint node.
+//
+// Important: key must be Tx.Hash()
+// Height is completely ignored for now :(
 func (t TxProver) Get(key []byte, h uint64) (lc.Proof, error) {
-	block, err := t.node.Block(int(h))
+	res, err := t.node.Tx(key, true)
 	if err != nil {
 		return nil, err
 	}
 
+	// and build a proof for lighter storage
 	proof := TxProof{
-		Height: uint64(block.Block.Height),
-		Txs:    block.Block.Txs,
+		Height: uint64(res.Height),
+		Proof:  res.Proof,
 	}
-	// sets the index if key is there, otherwise sets error
-	err = proof.SetTx(key)
 	return proof, err
 }
 
 func (t TxProver) Unmarshal(data []byte) (pr lc.Proof, err error) {
-	// to handle go-wire panics... ugh
-	defer func() {
-		if rec := recover(); rec != nil {
-			if e, ok := rec.(error); ok {
-				err = errors.WithStack(e)
-			} else {
-				err = errors.Errorf("Panic: %v", rec)
-			}
-		}
-	}()
 	var proof TxProof
 	err = errors.WithStack(wire.ReadBinaryBytes(data, &proof))
 	return proof, err
@@ -63,24 +53,11 @@ func (t TxProver) Unmarshal(data []byte) (pr lc.Proof, err error) {
 // TxProof checks ALL txs for one block... we need a better way!
 type TxProof struct {
 	Height uint64
-	Index  int
-	Txs    types.Txs
+	Proof  types.TxProof
 }
 
-// Tx returns the selected transaction from the block
-func (p TxProof) Tx() []byte {
-	return p.Txs[p.Index]
-}
-
-// SetTx sets the index for the specified tx, returns an error if not present
-func (p *TxProof) SetTx(tx []byte) error {
-	for i, t := range p.Txs {
-		if bytes.Equal(tx, t) {
-			p.Index = i
-			return nil
-		}
-	}
-	return errors.Errorf("Specified Tx not found in block (numtxs = %d)", len(p.Txs))
+func (p TxProof) Data() []byte {
+	return p.Proof.Data
 }
 
 func (p TxProof) BlockHeight() uint64 {
@@ -89,25 +66,12 @@ func (p TxProof) BlockHeight() uint64 {
 
 func (p TxProof) Validate(check lc.Checkpoint) error {
 	if uint64(check.Height()) != p.Height {
-		return errors.Errorf("Trying to validate proof for block %d with header for block %d",
-			p.Height, check.Height())
+		return lc.ErrHeightMismatch(int(p.Height), check.Height())
 	}
-
-	hash := p.Txs.Hash()
-	if !bytes.Equal(check.Header.DataHash, hash) {
-		return errors.Errorf("Hash mismatch: checkpoint = %X, proof = %X",
-			check.Header.DataHash, hash)
-	}
-
-	return nil
+	return p.Proof.Validate(check.Header.DataHash)
 }
 
 func (p TxProof) Marshal() ([]byte, error) {
 	data := wire.BinaryBytes(p)
 	return data, nil
 }
-
-// TODO: one tx plus proof.... need changes in the
-// func (c Checkpoint) CheckTx(tx types.Tx) error {
-//   return nil
-// }

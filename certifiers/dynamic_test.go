@@ -24,7 +24,7 @@ func TestDynamicCert(t *testing.T) {
 
 	cases := []struct {
 		keys        certifiers.ValKeys
-		vals        []*types.Validator
+		vals        *types.ValidatorSet
 		height      int
 		first, last int  // who actually signs
 		proper      bool // true -> expect no error
@@ -51,7 +51,7 @@ func TestDynamicCert(t *testing.T) {
 		} else {
 			assert.NotNil(err)
 			if tc.changed {
-				assert.True(certifiers.ValidatorsChanged(err), "%+v", err)
+				assert.True(certifiers.IsValidatorsChangedErr(err), "%+v", err)
 			}
 		}
 	}
@@ -79,7 +79,7 @@ func TestDynamicUpdate(t *testing.T) {
 	// we try to update with some blocks
 	cases := []struct {
 		keys        certifiers.ValKeys
-		vals        []*types.Validator
+		vals        *types.ValidatorSet
 		height      int
 		first, last int  // who actually signs
 		proper      bool // true -> expect no error
@@ -113,13 +113,13 @@ func TestDynamicUpdate(t *testing.T) {
 			// we update last seen height
 			assert.Equal(cert.LastHeight, tc.height)
 			// and we update the proper validators
-			assert.Equal(check.Header.ValidatorsHash, cert.Cert.Hash())
+			assert.EqualValues(check.Header.ValidatorsHash, cert.Cert.Hash())
 		} else {
 			assert.NotNil(err, "%d", tc.height)
 			// we don't update the height
 			assert.NotEqual(cert.LastHeight, tc.height)
 			if tc.changed {
-				assert.True(certifiers.TooMuchChange(err),
+				assert.True(certifiers.IsTooMuchChangeErr(err),
 					"%d: %+v", tc.height, err)
 			}
 		}

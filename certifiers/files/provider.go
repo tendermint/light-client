@@ -83,7 +83,7 @@ func (m Provider) GetByHeight(h int) (certifiers.Seed, error) {
 	// first we look for exact match, then search...
 	path := filepath.Join(m.checkDir, m.encodeHeight(h))
 	seed, err := certifiers.LoadSeed(path)
-	if certifiers.SeedNotFound(err) {
+	if certifiers.IsSeedNotFoundErr(err) {
 		path, err = m.searchForHeight(h)
 		if err == nil {
 			seed, err = certifiers.LoadSeed(path)

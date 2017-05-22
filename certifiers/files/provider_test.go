@@ -51,11 +51,11 @@ func TestFileProvider(t *testing.T) {
 	// check provider is empty
 	seed, err := p.GetByHeight(20)
 	require.NotNil(err)
-	assert.True(certifiers.SeedNotFound(err))
+	assert.True(certifiers.IsSeedNotFoundErr(err))
 
 	seed, err = p.GetByHash(seeds[3].Hash())
 	require.NotNil(err)
-	assert.True(certifiers.SeedNotFound(err))
+	assert.True(certifiers.IsSeedNotFoundErr(err))
 
 	// now add them all to the provider
 	for _, s := range seeds {
@@ -90,5 +90,5 @@ func TestFileProvider(t *testing.T) {
 	// and proper error for too low
 	_, err = p.GetByHeight(5)
 	assert.NotNil(err)
-	assert.True(certifiers.SeedNotFound(err))
+	assert.True(certifiers.IsSeedNotFoundErr(err))
 }

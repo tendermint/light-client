@@ -22,7 +22,7 @@ func TestStaticCert(t *testing.T) {
 
 	cases := []struct {
 		keys        certifiers.ValKeys
-		vals        []*types.Validator
+		vals        *types.ValidatorSet
 		height      int
 		first, last int  // who actually signs
 		proper      bool // true -> expect no error
@@ -48,7 +48,7 @@ func TestStaticCert(t *testing.T) {
 		} else {
 			assert.NotNil(err)
 			if tc.changed {
-				assert.True(certifiers.ValidatorsChanged(err), "%+v", err)
+				assert.True(certifiers.IsValidatorsChangedErr(err), "%+v", err)
 			}
 		}
 	}

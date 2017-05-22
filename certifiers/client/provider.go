@@ -71,7 +71,7 @@ func (p *Provider) GetByHeight(h int) (certifiers.Seed, error) {
 
 func (p *Provider) buildSeed(vals *ctypes.ResultValidators) (certifiers.Seed, error) {
 	seed := certifiers.Seed{
-		Validators: vals.Validators,
+		Validators: types.NewValidatorSet(vals.Validators),
 	}
 	// looks good, now get the commits and build a seed
 	commit, err := p.node.Commit(vals.BlockHeight)

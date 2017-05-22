@@ -1,5 +1,5 @@
 /*
-basecli is an example cli build on light-client that interacts with a
+tmcli is an example cli build on light-client that interacts with a
 tendermint node running basecoin.
 
 The only basecoin-specific logic should be set up in this main file,
@@ -7,7 +7,7 @@ all other packages should support multiple abci apps.
 
 The commands are run in cobra/viper as per tendermint standard
 
-All data is stored in a data dir, set as --data, or default ~/.basecli
+All data is stored in a data dir, set as --data, or default ~/.tmcli
 
 Commands
 
@@ -34,17 +34,19 @@ FIRST: test that current basecoin-proxy command works against v0.9/v0.4 release
   * export
   * import (--dry-run)
 
-basecli proof state list --key <k> --height <h>
-basecli proof state get <key> --height <h>
-basecli proof state export <key> --height <h>
+tmcli proof state get --app=<app> --key=<key> --height=<h>
 
-basecli proof tx list -> hashes
-basecli proof tx get <hash>
-basecli proof tx export <hash>
+tmcli proof tx get --app=<app> --key=<key>
+
 
 NEXT:
 * tx - at least support sending via cli, if not all plugins...
     at this point we would replace the entire basecoin cli
+  * <app> (dynamically registered)
+    * <type> (dynamically registered)
+      * --input=<filename|->: load json from a file or stdin
+      * --data.XYZ=ABC: dynamically created flags from the tx type
+  TODO: register these app/type parsers
 
 LATER:
 * proxy - runs an http server to post and sign tx, make queries, and
@@ -62,38 +64,46 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	keycmd "github.com/tendermint/go-keys/cmd"
+	keycmd "github.com/tendermint/go-crypto/cmd"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/commands/proofs"
+	"github.com/tendermint/light-client/commands/proxy"
 	"github.com/tendermint/light-client/commands/seeds"
+	"github.com/tendermint/tmlibs/cli"
 )
 
-// BaseCli represents the base command when called without any subcommands
-var BaseCli = &cobra.Command{
-	Use:   "basecli",
-	Short: "Light client for basecoin",
-	Long: `Basecli is a full-fledged light-client app for basecoin.
+// TmCli represents the base command when called without any subcommands
+var TmCli = &cobra.Command{
+	Use:   "tmcli",
+	Short: "Light client for tendermint",
+	Long: `Tmcli is a full-fledged, but generic light-client app for tendermint.
 
 You can manager keys, sync validator sets, requests proofs, and
 post transactions. All functionality exposed as a cli tool as well as
-over a JSON API.`,
+over a JSON API.
+
+This works with raw hex-encoded bytes for transactions and state data.
+It is intended to be imported in a specific abci app and customized with
+some parsing code to enable a customized cli that is aware of the
+app-specific data structures.
+`,
 }
 
 func init() {
-	commands.AddBasicFlags(BaseCli)
+	commands.AddBasicFlags(TmCli)
 
 	// set up the various commands to use
-	BaseCli.AddCommand(keycmd.RootCmd)
-	BaseCli.AddCommand(commands.InitCmd)
-	BaseCli.AddCommand(seeds.RootCmd)
-	BaseCli.AddCommand(proofs.RootCmd)
+	TmCli.AddCommand(keycmd.RootCmd)
+	TmCli.AddCommand(commands.InitCmd)
+	TmCli.AddCommand(seeds.RootCmd)
+	// TODO: when subclassing register some parsers with
+	// proofs.StatePresenters["app"] = pres
+	// proofs.TxPresenters["app"] = pres
+	TmCli.AddCommand(proofs.RootCmd)
+	TmCli.AddCommand(proxy.RootCmd)
 }
 
 func main() {
-	keycmd.PrepareMainCmd(BaseCli, "TM", os.ExpandEnv("$HOME/.basecli"))
-	BaseCli.Execute()
-	// err := BaseCli.Execute()
-	// if err != nil {
-	// 	fmt.Printf("%+v\n", err)
-	// }
+	cmd := cli.PrepareMainCmd(TmCli, "TM", os.ExpandEnv("$HOME/.tmcli"))
+	cmd.Execute()
 }

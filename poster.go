@@ -1,7 +1,7 @@
 package lightclient
 
 import (
-	keys "github.com/tendermint/go-keys"
+	keys "github.com/tendermint/go-crypto/keys"
 	"github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
