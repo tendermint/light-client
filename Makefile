@@ -38,5 +38,5 @@ get_vendor_deps: tools
 	glide install
 
 tools:
-	@go get github.com/davecheney/godoc2md
+	#@go get github.com/davecheney/godoc2md
 	@go get github.com/Masterminds/glide
