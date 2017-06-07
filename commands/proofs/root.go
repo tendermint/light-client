@@ -36,7 +36,13 @@ func (p *ProofCommander) Init() {
 	p.Prover = p.ProverFunc(p.node)
 }
 
-func (p ProofCommander) Register(parent *cobra.Command) {
+func (p ProofCommander) Register(parent *cobra.Command, cmdReg func(ProofCommander) *cobra.Command) {
+	// we add each subcommand here, so we can register the
+	// ProofCommander in one swoop
+	parent.AddCommand(cmdReg(p))
+}
+
+func (p ProofCommander) RegisterGet(parent *cobra.Command) {
 	// we add each subcommand here, so we can register the
 	// ProofCommander in one swoop
 	parent.AddCommand(p.GetCmd())

@@ -13,11 +13,12 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 )
 
+// GetCmd creates the get command for a proof
 func (p ProofCommander) GetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "get",
 		Short:        "Get a proof from the tendermint node",
-		RunE:         p.doGet,
+		RunE:         p.getCmd,
 		SilenceUsage: true,
 	}
 	cmd.Flags().Int(heightFlag, 0, "Height to query (skip to use latest block)")
@@ -26,16 +27,25 @@ func (p ProofCommander) GetCmd() *cobra.Command {
 	return cmd
 }
 
-func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
+func (p ProofCommander) getCmd(cmd *cobra.Command, args []string) error {
 	app := viper.GetString(appFlag)
-	pres, err := p.Lookup(app)
-	if err != nil {
-		return err
-	}
 
 	rawkey := viper.GetString(keyFlag)
 	if rawkey == "" {
 		return errors.New("missing required flag: --" + keyFlag)
+	}
+
+	height := viper.GetInt(heightFlag)
+
+	return p.DoGet(app, rawkey, height)
+}
+
+// DoGet performs the get command directly from the proof (not from the CLI)
+func (p ProofCommander) DoGet(app, rawkey string, height int) error {
+
+	pres, err := p.Lookup(app)
+	if err != nil {
+		return err
 	}
 
 	// prepare the query in an app-dependent manner
@@ -46,13 +56,11 @@ func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
 
 	// instantiate the prover instance and get a proof from the server
 	p.Init()
-	h := viper.GetInt(heightFlag)
-	proof, err := p.Get(key, uint64(h))
+	proof, err := p.Get(key, uint64(height))
 	if err != nil {
 		return err
 	}
 	ph := int(proof.BlockHeight())
-
 	// here is the certifier, root of all knowledge
 	cert, err := commands.GetCertifier()
 	if err != nil {
@@ -69,7 +77,10 @@ func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	check := lc.Checkpoint{commit.Header, commit.Commit}
+	check := lc.Checkpoint{
+		Header: commit.Header,
+		Commit: commit.Commit,
+	}
 	err = cert.Certify(check)
 	if err != nil {
 		return err

@@ -25,7 +25,7 @@ func init() {
 		ProverFunc: txProver,
 		Presenters: TxPresenters,
 	}
-	txProver.Register(txCmd)
+	txProver.RegisterGet(txCmd)
 	RootCmd.AddCommand(txCmd)
 }
 
