@@ -7,8 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	data "github.com/tendermint/go-wire/data"
+	data "github.com/tendermint/go-data"
 	lc "github.com/tendermint/light-client"
+	lightclient "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/tendermint/rpc/client"
 )
@@ -37,34 +38,56 @@ func (p ProofCommander) getCmd(cmd *cobra.Command, args []string) error {
 
 	height := viper.GetInt(heightFlag)
 
-	return p.DoGet(app, rawkey, height)
-}
-
-// DoGet performs the get command directly from the proof (not from the CLI)
-func (p ProofCommander) DoGet(app, rawkey string, height int) error {
+	//get the proof
+	proof, err := p.GetProof(app, rawkey, height)
+	if err != nil {
+		return err
+	}
 
 	pres, err := p.Lookup(app)
 	if err != nil {
 		return err
 	}
-
-	// prepare the query in an app-dependent manner
-	key, err := pres.MakeKey(rawkey)
+	info, err := pres.ParseData(proof.Data())
+	if err != nil {
+		return err
+	}
+	data, err := data.ToJSON(info)
 	if err != nil {
 		return err
 	}
 
+	// TODO: store the proof or do something more interesting than just printing
+	fmt.Printf("Height: %d\n", proof.BlockHeight())
+	fmt.Println(string(data))
+	return nil
+}
+
+// GetProof performs the get command directly from the proof (not from the CLI)
+func (p ProofCommander) GetProof(app, rawkey string, height int) (proof lightclient.Proof, err error) {
+
+	pres, err := p.Lookup(app)
+	if err != nil {
+		return
+	}
+
+	// prepare the query in an app-dependent manner
+	key, err := pres.MakeKey(rawkey)
+	if err != nil {
+		return
+	}
+
 	// instantiate the prover instance and get a proof from the server
 	p.Init()
-	proof, err := p.Get(key, uint64(height))
+	proof, err = p.Get(key, uint64(height))
 	if err != nil {
-		return err
+		return
 	}
 	ph := int(proof.BlockHeight())
 	// here is the certifier, root of all knowledge
 	cert, err := commands.GetCertifier()
 	if err != nil {
-		return err
+		return
 	}
 
 	// get and validate a signed header for this proof
@@ -75,7 +98,7 @@ func (p ProofCommander) DoGet(app, rawkey string, height int) error {
 	client.WaitForHeight(p.node, ph, nil)
 	commit, err := p.node.Commit(ph)
 	if err != nil {
-		return err
+		return
 	}
 	check := lc.Checkpoint{
 		Header: commit.Header,
@@ -83,26 +106,14 @@ func (p ProofCommander) DoGet(app, rawkey string, height int) error {
 	}
 	err = cert.Certify(check)
 	if err != nil {
-		return err
+		return
 	}
 
 	// validate the proof against the certified header to ensure data integrity
 	err = proof.Validate(check)
 	if err != nil {
-		return err
+		return
 	}
 
-	// TODO: store the proof or do something more interesting than just printing
-	// fmt.Println("Your data is 100% certified:")
-	fmt.Printf("Height: %d\n", proof.BlockHeight())
-	info, err := pres.ParseData(proof.Data())
-	if err != nil {
-		return err
-	}
-	data, err := data.ToJSON(info)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(data))
-	return nil
+	return proof, err
 }
