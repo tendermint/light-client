@@ -32,3 +32,8 @@ func init() {
 func stateProver(node client.Client) lc.Prover {
 	return proofs.NewAppProver(node)
 }
+
+// RegisterProofStateSubcommand registers a subcommand to proof state cmd
+func RegisterProofStateSubcommand(cmd *cobra.Command) {
+	stateCmd.AddCommand(cmd)
+}
