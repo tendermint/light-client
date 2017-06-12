@@ -20,13 +20,13 @@ data to other peers as needed.
 `,
 }
 
-var stateProverCommander = ProofCommander{
+var StateProverCommander = ProofCommander{
 	ProverFunc: stateProver,
 	Presenters: StatePresenters,
 }
 
 func init() {
-	stateProverCommander.RegisterGet(stateCmd)
+	StateProverCommander.RegisterGet(stateCmd)
 	RootCmd.AddCommand(stateCmd)
 }
 
@@ -35,6 +35,6 @@ func stateProver(node client.Client) lc.Prover {
 }
 
 // RegisterProofStateSubcommand registers a subcommand to proof state cmd
-func RegisterProofStateSubcommand(cmdReg func(ProofCommander) *cobra.Command) {
-	stateProverCommander.Register(stateCmd, cmdReg)
+func RegisterProofStateSubcommand(cmdReg *cobra.Command) {
+	stateCmd.AddCommand(cmdReg)
 }

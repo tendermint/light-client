@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/viper"
 	data "github.com/tendermint/go-data"
 	lc "github.com/tendermint/light-client"
-	lightclient "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/tendermint/rpc/client"
 )
@@ -38,20 +37,28 @@ func (p ProofCommander) getCmd(cmd *cobra.Command, args []string) error {
 
 	height := viper.GetInt(heightFlag)
 
-	//get the proof
-	proof, err := p.GetProof(app, rawkey, height)
-	if err != nil {
-		return err
-	}
-
 	pres, err := p.Lookup(app)
 	if err != nil {
 		return err
 	}
+
+	// prepare the query in an app-dependent manner
+	key, err := pres.MakeKey(rawkey)
+	if err != nil {
+		return err
+	}
+
+	//get the proof
+	proof, err := p.GetProof(key, height)
+	if err != nil {
+		return err
+	}
+
 	info, err := pres.ParseData(proof.Data())
 	if err != nil {
 		return err
 	}
+
 	data, err := data.ToJSON(info)
 	if err != nil {
 		return err
@@ -64,18 +71,7 @@ func (p ProofCommander) getCmd(cmd *cobra.Command, args []string) error {
 }
 
 // GetProof performs the get command directly from the proof (not from the CLI)
-func (p ProofCommander) GetProof(app, rawkey string, height int) (proof lightclient.Proof, err error) {
-
-	pres, err := p.Lookup(app)
-	if err != nil {
-		return
-	}
-
-	// prepare the query in an app-dependent manner
-	key, err := pres.MakeKey(rawkey)
-	if err != nil {
-		return
-	}
+func (p ProofCommander) GetProof(key []byte, height int) (proof lc.Proof, err error) {
 
 	// instantiate the prover instance and get a proof from the server
 	p.Init()
