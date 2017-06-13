@@ -81,3 +81,7 @@ func (k KeyMaker) MakeKey(str string) ([]byte, error) {
 	}
 	return r, errors.WithStack(err)
 }
+
+func ParseHexKey(str string) ([]byte, error) {
+	return KeyMaker{}.MakeKey(str)
+}
