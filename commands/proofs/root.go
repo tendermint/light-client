@@ -39,7 +39,18 @@ func (p *ProofCommander) Init() {
 func (p ProofCommander) RegisterGet(parent *cobra.Command) {
 	// we add each subcommand here, so we can register the
 	// ProofCommander in one swoop
-	parent.AddCommand(p.GetCmd())
+	parent.AddCommand(p.MakeGetCmd(
+		true,
+		"get",
+		"Get a proof from the tendermint node",
+	))
+}
+func (p ProofCommander) RegisterList(parent *cobra.Command) {
+	parent.AddCommand(p.MakeGetCmd(
+		false,
+		"list",
+		"Get a list proof from the tendermint node",
+	))
 }
 
 const (

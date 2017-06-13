@@ -7,7 +7,8 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 )
 
-var StatePresenters = proofs.NewPresenters()
+var StateGetPresenters = proofs.NewPresenters()
+var StateListPresenters = proofs.NewPresenters()
 
 var stateCmd = &cobra.Command{
 	Use:   "state",
@@ -20,13 +21,19 @@ data to other peers as needed.
 `,
 }
 
-var StateProverCommander = ProofCommander{
+var StateGetProverCommander = ProofCommander{
 	ProverFunc: stateProver,
-	Presenters: StatePresenters,
+	Presenters: StateGetPresenters,
+}
+
+var StateListProverCommander = ProofCommander{
+	ProverFunc: stateProver,
+	Presenters: StateListPresenters,
 }
 
 func init() {
-	StateProverCommander.RegisterGet(stateCmd)
+	StateGetProverCommander.RegisterGet(stateCmd)
+	StateListProverCommander.RegisterList(stateCmd)
 	RootCmd.AddCommand(stateCmd)
 }
 

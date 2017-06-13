@@ -13,61 +13,68 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 )
 
-// GetCmd creates the get command for a proof
-func (p ProofCommander) GetCmd() *cobra.Command {
+// MakeGetCmd creates the get or list command for a proof
+func (p ProofCommander) MakeGetCmd(includeKey bool, use, desc string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "get",
-		Short:        "Get a proof from the tendermint node",
-		RunE:         p.getCmd,
+		Use:          use,
+		Short:        desc,
+		RunE:         p.makeGetCmd(includeKey),
 		SilenceUsage: true,
 	}
 	cmd.Flags().Int(heightFlag, 0, "Height to query (skip to use latest block)")
 	cmd.Flags().String(appFlag, "raw", "App to use to interpret data")
-	cmd.Flags().String(keyFlag, "", "Key to query on")
+	if includeKey {
+		cmd.Flags().String(keyFlag, "", "Key to query on")
+	}
 	return cmd
 }
 
-func (p ProofCommander) getCmd(cmd *cobra.Command, args []string) error {
-	app := viper.GetString(appFlag)
+func (p ProofCommander) makeGetCmd(includeKey bool) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		app := viper.GetString(appFlag)
 
-	rawkey := viper.GetString(keyFlag)
-	if rawkey == "" {
-		return errors.New("missing required flag: --" + keyFlag)
+		var rawkey string
+		if includeKey {
+			rawkey = viper.GetString(keyFlag)
+			if rawkey == "" {
+				return errors.New("missing required flag: --" + keyFlag)
+			}
+		}
+
+		height := viper.GetInt(heightFlag)
+
+		pres, err := p.Lookup(app)
+		if err != nil {
+			return err
+		}
+
+		// prepare the query in an app-dependent manner
+		key, err := pres.MakeKey(rawkey)
+		if err != nil {
+			return err
+		}
+
+		//get the proof
+		proof, err := p.GetProof(key, height)
+		if err != nil {
+			return err
+		}
+
+		info, err := pres.ParseData(proof.Data())
+		if err != nil {
+			return err
+		}
+
+		data, err := data.ToJSON(info)
+		if err != nil {
+			return err
+		}
+
+		// TODO: store the proof or do something more interesting than just printing
+		fmt.Printf("Height: %d\n", proof.BlockHeight())
+		fmt.Println(string(data))
+		return nil
 	}
-
-	height := viper.GetInt(heightFlag)
-
-	pres, err := p.Lookup(app)
-	if err != nil {
-		return err
-	}
-
-	// prepare the query in an app-dependent manner
-	key, err := pres.MakeKey(rawkey)
-	if err != nil {
-		return err
-	}
-
-	//get the proof
-	proof, err := p.GetProof(key, height)
-	if err != nil {
-		return err
-	}
-
-	info, err := pres.ParseData(proof.Data())
-	if err != nil {
-		return err
-	}
-
-	data, err := data.ToJSON(info)
-	if err != nil {
-		return err
-	}
-
-	// TODO: store the proof or do something more interesting than just printing
-	fmt.Printf("Height: %d\n", proof.BlockHeight())
-	fmt.Println(string(data))
-	return nil
 }
 
 // GetProof performs the get command directly from the proof (not from the CLI)
