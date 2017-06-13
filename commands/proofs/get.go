@@ -1,9 +1,10 @@
 package proofs
 
 import (
+	"github.com/tendermint/tendermint/rpc/client"
+
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
-	"github.com/tendermint/tendermint/rpc/client"
 )
 
 // GetProof performs the get command directly from the proof (not from the CLI)

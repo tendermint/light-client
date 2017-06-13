@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 
 	"github.com/pkg/errors"
+
 	data "github.com/tendermint/go-wire/data"
 )
 

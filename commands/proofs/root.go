@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/tendermint/go-wire/data"
 
@@ -13,7 +14,6 @@ import (
 
 const (
 	heightFlag = "height"
-	keyFlag    = "key"
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -32,7 +32,7 @@ func init() {
 	RootCmd.Flags().Int(heightFlag, 0, "Height to query (skip to use latest block)")
 
 	RootCmd.AddCommand(txCmd)
-	RootCmd.AddCommand(stateCmd)
+	RootCmd.AddCommand(keyCmd)
 }
 
 // ParseHexKey parses the key flag as hex and converts to bytes or returns error
@@ -50,6 +50,10 @@ func ParseHexKey(args []string, prefix []byte) ([]byte, error) {
 	}
 	// with tx, we always just parse key as hex and use to lookup
 	return proofs.KeyMaker{prefix}.MakeKey(rawkey)
+}
+
+func GetHeight() int {
+	return viper.GetInt(heightFlag)
 }
 
 // OutputProof prints the proof to stdout

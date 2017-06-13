@@ -2,25 +2,26 @@ package proofs
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+
 	"github.com/tendermint/go-wire/data"
+
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/proofs"
 )
 
-var stateCmd = &cobra.Command{
+var keyCmd = &cobra.Command{
 	Use:   "key [key]",
 	Short: "Handle proofs for state of abci app",
 	Long: `This will look up a given key in the abci app, verify the proof,
 and output it as hex.
 
 If you want json output, use an app-specific command that knows key and value structure.`,
-	RunE: doStateQuery,
+	RunE: doKeyQuery,
 }
 
-func doStateQuery(cmd *cobra.Command, args []string) error {
+func doKeyQuery(cmd *cobra.Command, args []string) error {
 	// parse cli
-	height := viper.GetInt(heightFlag)
+	height := GetHeight()
 	bkey, err := ParseHexKey(args, nil)
 	if err != nil {
 		return err

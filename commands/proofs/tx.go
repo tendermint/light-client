@@ -2,7 +2,7 @@ package proofs
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+
 	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/proofs"
 )
@@ -23,7 +23,7 @@ data to other peers as needed.
 
 func doTxQuery(cmd *cobra.Command, args []string) error {
 	// parse cli
-	height := viper.GetInt(heightFlag)
+	height := GetHeight()
 	bkey, err := ParseHexKey(args, nil)
 	if err != nil {
 		return err
