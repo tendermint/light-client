@@ -97,10 +97,14 @@ func init() {
 	TmCli.AddCommand(commands.InitCmd)
 	TmCli.AddCommand(commands.ResetCmd)
 	TmCli.AddCommand(seeds.RootCmd)
-	// TODO: when subclassing register some parsers with
-	// proofs.StatePresenters["app"] = pres
-	// proofs.TxPresenters["app"] = pres
-	TmCli.AddCommand(proofs.RootCmd)
+
+	// note: here you will want to register custom app-specific code
+	pr := proofs.RootCmd
+	// these are default parsers, but you optional in your app
+	pr.AddCommand(proofs.TxCmd)
+	pr.AddCommand(proofs.KeyCmd)
+	TmCli.AddCommand(pr)
+
 	TmCli.AddCommand(proxy.RootCmd)
 }
 

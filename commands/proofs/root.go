@@ -30,9 +30,6 @@ data to other peers as needed.
 
 func init() {
 	RootCmd.Flags().Int(heightFlag, 0, "Height to query (skip to use latest block)")
-
-	RootCmd.AddCommand(txCmd)
-	RootCmd.AddCommand(keyCmd)
 }
 
 // ParseHexKey parses the key flag as hex and converts to bytes or returns error

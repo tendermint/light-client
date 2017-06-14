@@ -9,7 +9,7 @@ import (
 
 var TxPresenters = proofs.NewPresenters()
 
-var txCmd = &cobra.Command{
+var TxCmd = &cobra.Command{
 	Use:   "tx [txhash]",
 	Short: "Handle proofs of commited txs",
 	Long: `Proofs allows you to validate abci state with merkle proofs.

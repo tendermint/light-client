@@ -9,7 +9,7 @@ import (
 	"github.com/tendermint/light-client/proofs"
 )
 
-var keyCmd = &cobra.Command{
+var KeyCmd = &cobra.Command{
 	Use:   "key [key]",
 	Short: "Handle proofs for state of abci app",
 	Long: `This will look up a given key in the abci app, verify the proof,
