@@ -1,5 +1,5 @@
 hash: 2dfec4a3906cda08d17bd45dfc16cccf0357b5b1d5c13d8edc75c802058f7528
-updated: 2017-05-17T12:04:15.510172586+02:00
+updated: 2017-06-14T15:00:29.712196734+02:00
 imports:
 - name: github.com/bgentry/speakeasy
   version: 4aabc24848ce5fd31929f7d1e4ea74d3709c14cd
@@ -43,9 +43,9 @@ imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/handlers
-  version: 3a5767ca75ece5f7f1440b1d16975247f8d8b221
+  version: a4043c62cc2329bacda331d33fc908ab11ef0ec3
 - name: github.com/gorilla/mux
-  version: 392c28fe23e1c45ddba891b0320b3b5df220beea
+  version: bcd8bc72b08df0f70df986b97f95590779502d31
 - name: github.com/gorilla/websocket
   version: a91eba7f97777409bc2c443f5534d41dd20c5720
 - name: github.com/hashicorp/hcl
@@ -114,7 +114,7 @@ imports:
   - leveldb/table
   - leveldb/util
 - name: github.com/tendermint/abci
-  version: d3e3eca3fed6dad4e56612ce55b29509e0bee318
+  version: 864d1f80b36b440bde030a5c18d8ac3aa8c2949d
   subpackages:
   - client
   - example/dummy
@@ -173,7 +173,7 @@ imports:
   - types
   - version
 - name: github.com/tendermint/tmlibs
-  version: 67f558cff0d3fc08eac951fcc39cf999101e36da
+  version: 8af1c70a8be17543eb33e9bfbbcdd8371e3201cc
   subpackages:
   - autofile
   - cli
