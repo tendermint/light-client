@@ -2,3 +2,4 @@
 vendor
 .keys
 tmcli
+shunit2
