@@ -2,46 +2,43 @@ package proofs
 
 import (
 	"github.com/spf13/cobra"
-	lc "github.com/tendermint/light-client"
+
+	"github.com/tendermint/go-wire/data"
+
+	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/proofs"
-	"github.com/tendermint/tendermint/rpc/client"
 )
 
-var StateGetPresenters = proofs.NewPresenters()
-var StateListPresenters = proofs.NewPresenters()
-
-var stateCmd = &cobra.Command{
-	Use:   "state",
+var keyCmd = &cobra.Command{
+	Use:   "key [key]",
 	Short: "Handle proofs for state of abci app",
-	Long: `Proofs allows you to validate abci state with merkle proofs.
+	Long: `This will look up a given key in the abci app, verify the proof,
+and output it as hex.
 
-These proofs tie the data to a checkpoint, which is managed by "seeds".
-Here we can validate these proofs and import/export them to prove specific
-data to other peers as needed.
-`,
+If you want json output, use an app-specific command that knows key and value structure.`,
+	RunE: doKeyQuery,
 }
 
-var StateGetProverCommander = ProofCommander{
-	ProverFunc: stateProver,
-	Presenters: StateGetPresenters,
-}
+func doKeyQuery(cmd *cobra.Command, args []string) error {
+	// parse cli
+	height := GetHeight()
+	bkey, err := ParseHexKey(args, nil)
+	if err != nil {
+		return err
+	}
 
-var StateListProverCommander = ProofCommander{
-	ProverFunc: stateProver,
-	Presenters: StateListPresenters,
-}
+	// get the proof -> this will be used by all prover commands
+	node := commands.GetNode()
+	prover := proofs.NewAppProver(node)
+	proof, err := GetProof(node, prover, bkey, height)
+	if err != nil {
+		return err
+	}
 
-func init() {
-	StateGetProverCommander.RegisterGet(stateCmd)
-	StateListProverCommander.RegisterList(stateCmd)
-	RootCmd.AddCommand(stateCmd)
-}
+	// state just returns raw hex....
+	info := data.Bytes(proof.Data())
 
-func stateProver(node client.Client) lc.Prover {
-	return proofs.NewAppProver(node)
-}
-
-// RegisterProofStateSubcommand registers a subcommand to proof state cmd
-func RegisterProofStateSubcommand(cmdReg *cobra.Command) {
-	stateCmd.AddCommand(cmdReg)
+	// we can reuse this output for other commands for text/json
+	// unless they do something special like store a file to disk
+	return OutputProof(info, proof.BlockHeight())
 }

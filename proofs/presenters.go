@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 
 	"github.com/pkg/errors"
+
 	data "github.com/tendermint/go-wire/data"
 )
 
@@ -80,4 +81,8 @@ func (k KeyMaker) MakeKey(str string) ([]byte, error) {
 		r = append(k.Prefix, r...)
 	}
 	return r, errors.WithStack(err)
+}
+
+func ParseHexKey(str string) ([]byte, error) {
+	return KeyMaker{}.MakeKey(str)
 }
