@@ -140,14 +140,14 @@ func initConfigFile(cmd *cobra.Command) error {
 
 func initSeed() (err error) {
 	// create a provider....
-	p := GetProvider()
+	trust, source := GetProviders()
 
 	// load a seed file, or get data from the provider
 	var seed certifiers.Seed
 	seedFile := viper.GetString(SeedFlag)
 	if seedFile == "" {
 		fmt.Println("Loading validator set from tendermint rpc...")
-		seed, err = certifiers.LatestSeed(p)
+		seed, err = certifiers.LatestSeed(source)
 	} else {
 		fmt.Printf("Loading validators from file %s\n", seedFile)
 		seed, err = certifiers.LoadSeed(seedFile)
@@ -180,7 +180,7 @@ func initSeed() (err error) {
 	}
 
 	// if accepted, store seed as current state
-	p.StoreSeed(seed)
+	trust.StoreSeed(seed)
 	return nil
 }
 

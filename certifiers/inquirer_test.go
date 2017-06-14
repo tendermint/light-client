@@ -11,7 +11,8 @@ import (
 
 func TestInquirerValidPath(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
-	p := certifiers.NewMemStoreProvider()
+	trust := certifiers.NewMemStoreProvider()
+	source := certifiers.NewMemStoreProvider()
 
 	// set up the validators to generate test blocks
 	var vote int64 = 10
@@ -20,7 +21,7 @@ func TestInquirerValidPath(t *testing.T) {
 
 	// initialize a certifier with the initial state
 	chainID := "inquiry-test"
-	cert := certifiers.NewInquiring(chainID, vals, p)
+	cert := certifiers.NewInquiring(chainID, vals, trust, source)
 
 	// construct a bunch of seeds, each with one more height than the last
 	count := 50
@@ -43,7 +44,7 @@ func TestInquirerValidPath(t *testing.T) {
 
 	// add a few seed in the middle should be insufficient
 	for i := 10; i < 13; i++ {
-		err := cert.StoreSeed(seeds[i])
+		err := cert.SeedSource.StoreSeed(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -51,7 +52,7 @@ func TestInquirerValidPath(t *testing.T) {
 
 	// with more info, we succeed
 	for i := 0; i < count; i++ {
-		err := cert.StoreSeed(seeds[i])
+		err := cert.SeedSource.StoreSeed(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -60,7 +61,8 @@ func TestInquirerValidPath(t *testing.T) {
 
 func TestInquirerMinimalPath(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
-	p := certifiers.NewMemStoreProvider()
+	trust := certifiers.NewMemStoreProvider()
+	source := certifiers.NewMemStoreProvider()
 
 	// set up the validators to generate test blocks
 	var vote int64 = 10
@@ -69,7 +71,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 
 	// initialize a certifier with the initial state
 	chainID := "minimal-path"
-	cert := certifiers.NewInquiring(chainID, vals, p)
+	cert := certifiers.NewInquiring(chainID, vals, trust, source)
 
 	// construct a bunch of seeds, each with one more height than the last
 	count := 12
@@ -91,7 +93,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 
 	// add a few seed in the middle should be insufficient
 	for i := 5; i < 8; i++ {
-		err := cert.StoreSeed(seeds[i])
+		err := cert.SeedSource.StoreSeed(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -99,7 +101,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 
 	// with more info, we succeed
 	for i := 0; i < count; i++ {
-		err := cert.StoreSeed(seeds[i])
+		err := cert.SeedSource.StoreSeed(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
