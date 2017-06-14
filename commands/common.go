@@ -4,6 +4,8 @@ Package commands contains any general setup/helpers valid for all subcommands
 package commands
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -17,7 +19,8 @@ import (
 )
 
 var (
-	provider certifiers.Provider
+	trustedProv certifiers.Provider
+	sourceProv  certifiers.Provider
 )
 
 const (
@@ -34,28 +37,32 @@ func GetNode() rpcclient.Client {
 	return rpcclient.NewHTTP(viper.GetString(NodeFlag), "/websocket")
 }
 
-func GetProvider() certifiers.Provider {
-	if provider == nil {
-		// store the keys directory
+func GetProviders() (trusted certifiers.Provider, source certifiers.Provider) {
+	if trustedProv == nil || sourceProv == nil {
+		// initialize provider with files stored in homedir
 		rootDir := viper.GetString(cli.HomeFlag)
-		provider = certifiers.NewCacheProvider(
+		trustedProv = certifiers.NewCacheProvider(
 			certifiers.NewMemStoreProvider(),
 			files.NewProvider(rootDir),
-			client.NewHTTP(viper.GetString(NodeFlag)),
 		)
+		sourceProv = client.NewHTTP(viper.GetString(NodeFlag))
 	}
-	return provider
+	return trustedProv, sourceProv
 }
 
 func GetCertifier() (*certifiers.InquiringCertifier, error) {
 	// load up the latest store....
-	p := GetProvider()
-	// this should get the most recent verified seed
-	seed, err := certifiers.LatestSeed(p)
+	trust, source := GetProviders()
+
+	// this gets the most recent verified seed
+	seed, err := certifiers.LatestSeed(trust)
+	if certifiers.IsSeedNotFoundErr(err) {
+		return nil, errors.New("Please run init first to establish a root of trust")
+	}
 	if err != nil {
 		return nil, err
 	}
 	cert := certifiers.NewInquiring(
-		viper.GetString(ChainFlag), seed.Validators, p)
+		viper.GetString(ChainFlag), seed.Validators, trust, source)
 	return cert, nil
 }
