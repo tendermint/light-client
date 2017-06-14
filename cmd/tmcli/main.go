@@ -95,6 +95,7 @@ func init() {
 	// set up the various commands to use
 	TmCli.AddCommand(keycmd.RootCmd)
 	TmCli.AddCommand(commands.InitCmd)
+	TmCli.AddCommand(commands.ResetCmd)
 	TmCli.AddCommand(seeds.RootCmd)
 	// TODO: when subclassing register some parsers with
 	// proofs.StatePresenters["app"] = pres

@@ -38,9 +38,14 @@ var InitCmd = &cobra.Command{
 	RunE:  runInit,
 }
 
+var ResetCmd = &cobra.Command{
+	Use:   "reset_all",
+	Short: "DANGEROUS: Wipe out all client data, including keys",
+	RunE:  runResetAll,
+}
+
 func init() {
-	InitCmd.Flags().Bool("force-reset", false, "DANGEROUS: Wipe clean an existing client store")
-	InitCmd.Flags().Bool("save-keys", false, "LESS DANGEROUS: Combine with --force-reset to not delete private keys on reset")
+	InitCmd.Flags().Bool("force-reset", false, "Wipe clean an existing client store, except for keys")
 	InitCmd.Flags().String(SeedFlag, "", "Seed file to import (optional)")
 	InitCmd.Flags().String(HashFlag, "", "Trusted validator hash (must match to accept)")
 }
@@ -49,7 +54,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	root := viper.GetString(cli.HomeFlag)
 
 	if viper.GetBool("force-reset") {
-		resetRoot(root, viper.GetBool("save-keys"))
+		resetRoot(root, true)
 	}
 
 	err := checkEmpty(root)
@@ -66,6 +71,12 @@ func runInit(cmd *cobra.Command, args []string) error {
 	err = initSeed()
 
 	return err
+}
+
+func runResetAll(cmd *cobra.Command, args []string) error {
+	root := viper.GetString(cli.HomeFlag)
+	resetRoot(root, false)
+	return nil
 }
 
 func resetRoot(root string, saveKeys bool) {
