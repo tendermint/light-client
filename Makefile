@@ -9,7 +9,6 @@ install: get_vendor_deps
 build:
 	go build ./cmd/...
 
-
 test/shunit2:
 	wget "https://raw.githubusercontent.com/kward/shunit2/master/source/2.1/src/shunit2" \
 		-q -O test/shunit2

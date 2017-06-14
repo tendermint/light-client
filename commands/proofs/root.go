@@ -66,5 +66,4 @@ func OutputProof(info interface{}, height uint64) error {
 	fmt.Printf("Height: %d\n", height)
 	fmt.Println(string(res))
 	return nil
-
 }
