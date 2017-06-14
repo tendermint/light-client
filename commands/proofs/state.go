@@ -22,7 +22,7 @@ If you want json output, use an app-specific command that knows key and value st
 func doKeyQuery(cmd *cobra.Command, args []string) error {
 	// parse cli
 	height := GetHeight()
-	bkey, err := ParseHexKey(args, nil)
+	bkey, err := ParseHexKey(args, "key")
 	if err != nil {
 		return err
 	}

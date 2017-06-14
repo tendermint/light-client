@@ -36,20 +36,20 @@ func init() {
 }
 
 // ParseHexKey parses the key flag as hex and converts to bytes or returns error
-// if prefix is non-nil, it prepends this constant to the given key (eg. "base/a/")
-func ParseHexKey(args []string, prefix []byte) ([]byte, error) {
+// argname is used to customize the error message
+func ParseHexKey(args []string, argname string) ([]byte, error) {
 	if len(args) == 0 {
-		return nil, errors.New("Missing required key argument")
+		return nil, errors.Errorf("Missing required argument [%s]", argname)
 	}
 	if len(args) > 1 {
-		return nil, errors.Errorf("Only accepts one key argument")
+		return nil, errors.Errorf("Only accepts one argument [%s]", argname)
 	}
 	rawkey := args[0]
 	if rawkey == "" {
-		return nil, errors.New("Cannot query on empty key")
+		return nil, errors.Errorf("[%s] argument must be non-empty ", argname)
 	}
 	// with tx, we always just parse key as hex and use to lookup
-	return proofs.KeyMaker{prefix}.MakeKey(rawkey)
+	return proofs.ParseHexKey(rawkey)
 }
 
 func GetHeight() int {
