@@ -1,17 +1,24 @@
 package proofs
 
 import (
+	"fmt"
+
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/commands"
+
+	"github.com/tendermint/go-wire/data"
+
 	"github.com/tendermint/light-client/proofs"
-	"github.com/tendermint/tendermint/rpc/client"
+)
+
+const (
+	heightFlag = "height"
 )
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "proof",
+	Use:   "query",
 	Short: "Get and store merkle proofs for blockchain data",
 	Long: `Proofs allows you to validate data and merkle proofs.
 
@@ -21,29 +28,46 @@ data to other peers as needed.
 `,
 }
 
-type ProofCommander struct {
-	node client.Client
-	lc.Prover
-	ProverFunc func(client.Client) lc.Prover
-	proofs.Presenters
+func init() {
+	RootCmd.Flags().Int(heightFlag, 0, "Height to query (skip to use latest block)")
+
+	RootCmd.AddCommand(txCmd)
+	RootCmd.AddCommand(keyCmd)
 }
 
-// Init uses configuration info to create a network connection
-// as well as initializing the prover
-func (p *ProofCommander) Init() {
-	endpoint := viper.GetString(commands.NodeFlag)
-	p.node = client.NewHTTP(endpoint, "/websockets")
-	p.Prover = p.ProverFunc(p.node)
+// ParseHexKey parses the key flag as hex and converts to bytes or returns error
+// argname is used to customize the error message
+func ParseHexKey(args []string, argname string) ([]byte, error) {
+	if len(args) == 0 {
+		return nil, errors.Errorf("Missing required argument [%s]", argname)
+	}
+	if len(args) > 1 {
+		return nil, errors.Errorf("Only accepts one argument [%s]", argname)
+	}
+	rawkey := args[0]
+	if rawkey == "" {
+		return nil, errors.Errorf("[%s] argument must be non-empty ", argname)
+	}
+	// with tx, we always just parse key as hex and use to lookup
+	return proofs.ParseHexKey(rawkey)
 }
 
-func (p ProofCommander) Register(parent *cobra.Command) {
-	// we add each subcommand here, so we can register the
-	// ProofCommander in one swoop
-	parent.AddCommand(p.GetCmd())
+func GetHeight() int {
+	return viper.GetInt(heightFlag)
 }
 
-const (
-	heightFlag = "height"
-	appFlag    = "app"
-	keyFlag    = "key"
-)
+// OutputProof prints the proof to stdout
+// reuse this for printing proofs and we should enhance this for text/json,
+// better presentation of height
+func OutputProof(info interface{}, height uint64) error {
+	res, err := data.ToJSON(info)
+	if err != nil {
+		return err
+	}
+
+	// TODO: store the proof or do something more interesting than just printing
+	fmt.Printf("Height: %d\n", height)
+	fmt.Println(string(res))
+	return nil
+
+}
