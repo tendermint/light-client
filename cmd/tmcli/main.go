@@ -69,6 +69,7 @@ import (
 	"github.com/tendermint/light-client/commands/proofs"
 	"github.com/tendermint/light-client/commands/proxy"
 	"github.com/tendermint/light-client/commands/seeds"
+	"github.com/tendermint/light-client/commands/txs"
 	"github.com/tendermint/tmlibs/cli"
 )
 
@@ -104,6 +105,10 @@ func init() {
 	pr.AddCommand(proofs.TxCmd)
 	pr.AddCommand(proofs.KeyCmd)
 	TmCli.AddCommand(pr)
+
+	// here is how you would add the custom txs... but don't really add demo
+	txs.RootCmd.AddCommand(txs.DemoCmd)
+	TmCli.AddCommand(txs.RootCmd)
 
 	TmCli.AddCommand(proxy.RootCmd)
 }

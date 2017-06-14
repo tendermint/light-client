@@ -1,8 +1,12 @@
 package txs
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
-	"github.com/tendermint/go-wire/data"
+	"github.com/spf13/viper"
+	wire "github.com/tendermint/go-wire"
+	lightclient "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
 )
 
@@ -12,19 +16,45 @@ var DemoCmd = &cobra.Command{
 	RunE:  runDemo,
 }
 
+const (
+	UserFlag = "user"
+	AgeFlag  = "age"
+)
+
 // do something like this in main.go to enable it
 // txs.RootCmd.AddCommand(txs.DemoCmd)
+func init() {
+	DemoCmd.Flags().String(UserFlag, "", "username you want")
+	DemoCmd.Flags().Int(AgeFlag, 0, "your age... for real like")
+}
 
-// runDemo is not used!  This is just to serve as a demo
-// of how to construct your command
+type DemoTx struct {
+	User string `json:"user"`
+	Age  int    `json:"age"`
+}
+
+func (d DemoTx) Bytes() []byte {
+	return wire.BinaryBytes(&d)
+}
+
+// this is what we implement for a non-signable tx
+var _ lightclient.Value = DemoTx{}
+
+// runDemo is an example of how to make a tx
 func runDemo(cmd *cobra.Command, args []string) error {
-	tx, err := LoadJSON(map[string]interface{}{})
+	var templ DemoTx
+	tx, err := LoadJSON(&templ)
 	if err != nil {
 		return err
 	}
 	if tx == nil {
-		// custom flag parsing...
-		tx = data.Bytes([]byte("foo"))
+		// parse custom flags
+		templ.User = viper.GetString(UserFlag)
+		templ.Age = viper.GetInt(AgeFlag)
+		if templ.Age < 18 {
+			return errors.New("Sorry, dude, you're too young to blockchain!")
+		}
+		tx = templ
 	}
 
 	// TODO: add this pubkey to the loaded tx somehow

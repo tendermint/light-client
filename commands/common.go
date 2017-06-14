@@ -45,7 +45,8 @@ func GetProviders() (trusted certifiers.Provider, source certifiers.Provider) {
 			certifiers.NewMemStoreProvider(),
 			files.NewProvider(rootDir),
 		)
-		sourceProv = client.NewHTTP(viper.GetString(NodeFlag))
+		node := viper.GetString(NodeFlag)
+		sourceProv = client.NewHTTP(node)
 	}
 	return trustedProv, sourceProv
 }
