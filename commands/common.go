@@ -24,7 +24,7 @@ var (
 )
 
 const (
-	ChainFlag = "chainid"
+	ChainFlag = "chain-id"
 	NodeFlag  = "node"
 )
 

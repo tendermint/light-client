@@ -95,7 +95,7 @@ func resetRoot(root string, saveKeys bool) {
 }
 
 type Config struct {
-	Chain    string `toml:"chainid,omitempty"`
+	Chain    string `toml:"chain-id,omitempty"`
 	Node     string `toml:"node,omitempty"`
 	Output   string `toml:"output,omitempty"`
 	Encoding string `toml:"encoding,omitempty"`
