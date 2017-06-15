@@ -93,24 +93,25 @@ app-specific data structures.
 func init() {
 	commands.AddBasicFlags(TmCli)
 
-	// set up the various commands to use
-	TmCli.AddCommand(keycmd.RootCmd)
-	TmCli.AddCommand(commands.InitCmd)
-	TmCli.AddCommand(commands.ResetCmd)
-	TmCli.AddCommand(seeds.RootCmd)
-
 	// note: here you will want to register custom app-specific code
 	pr := proofs.RootCmd
 	// these are default parsers, but you optional in your app
 	pr.AddCommand(proofs.TxCmd)
 	pr.AddCommand(proofs.KeyCmd)
-	TmCli.AddCommand(pr)
 
-	// here is how you would add the custom txs... but don't really add demo
-	txs.RootCmd.AddCommand(txs.DemoCmd)
-	TmCli.AddCommand(txs.RootCmd)
+	// here is how you would add the custom txs... but don't really add demo in your app
+	tr := txs.RootCmd
+	tr.AddCommand(txs.DemoCmd)
 
-	TmCli.AddCommand(proxy.RootCmd)
+	// set up the various commands to use
+	TmCli.AddCommand(
+		commands.InitCmd,
+		commands.ResetCmd,
+		keycmd.RootCmd,
+		seeds.RootCmd,
+		pr,
+		tr,
+		proxy.RootCmd)
 }
 
 func main() {

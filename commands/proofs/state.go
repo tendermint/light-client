@@ -19,10 +19,12 @@ If you want json output, use an app-specific command that knows key and value st
 	RunE: doKeyQuery,
 }
 
+// Note: we cannot yse GetAndParseAppProof here, as we don't use go-wire to
+// parse the object, but rather return the raw bytes
 func doKeyQuery(cmd *cobra.Command, args []string) error {
 	// parse cli
 	height := GetHeight()
-	bkey, err := ParseHexKey(args, "key")
+	key, err := ParseHexKey(args, "key")
 	if err != nil {
 		return err
 	}
@@ -30,7 +32,7 @@ func doKeyQuery(cmd *cobra.Command, args []string) error {
 	// get the proof -> this will be used by all prover commands
 	node := commands.GetNode()
 	prover := proofs.NewAppProver(node)
-	proof, err := GetProof(node, prover, bkey, height)
+	proof, err := GetProof(node, prover, key, height)
 	if err != nil {
 		return err
 	}

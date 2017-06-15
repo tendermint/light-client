@@ -9,6 +9,8 @@ import (
 	lightclient "github.com/tendermint/light-client"
 )
 
+/*** this is how to build a command ***/
+
 var DemoCmd = &cobra.Command{
 	Use:   "demo",
 	Short: "Demo tx creation",
@@ -26,26 +28,6 @@ func init() {
 	DemoCmd.Flags().String(UserFlag, "", "username you want")
 	DemoCmd.Flags().Int(AgeFlag, 0, "your age... for real like")
 }
-
-type DemoTx struct {
-	User string `json:"user"`
-	Age  int    `json:"age"`
-}
-
-func (d DemoTx) Bytes() []byte {
-	return wire.BinaryBytes(&d)
-}
-
-func (d DemoTx) ValidateBasic() error {
-	// validate both inputs here...
-	if d.Age < 18 {
-		return errors.New("Sorry, dude, you're too young to blockchain!")
-	}
-	return nil
-}
-
-// this is what we implement for a non-signable tx
-var _ lightclient.Value = DemoTx{}
 
 // runDemo is an example of how to make a tx
 func runDemo(cmd *cobra.Command, args []string) error {
@@ -74,3 +56,25 @@ func runDemo(cmd *cobra.Command, args []string) error {
 	// output result
 	return OutputTx(bres)
 }
+
+/*** this is the tx struct ***/
+
+type DemoTx struct {
+	User string `json:"user"`
+	Age  int    `json:"age"`
+}
+
+func (d DemoTx) Bytes() []byte {
+	return wire.BinaryBytes(&d)
+}
+
+func (d DemoTx) ValidateBasic() error {
+	// validate both inputs here...
+	if d.Age < 18 {
+		return errors.New("Sorry, dude, you're too young to blockchain!")
+	}
+	return nil
+}
+
+// this is what we implement for a non-signable tx
+var _ lightclient.Value = DemoTx{}
