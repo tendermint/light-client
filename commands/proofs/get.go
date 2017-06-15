@@ -100,17 +100,20 @@ func GetHeight() int {
 	return viper.GetInt(heightFlag)
 }
 
+type proof struct {
+	Height uint64      `json:"height"`
+	Data   interface{} `json:"data"`
+}
+
 // OutputProof prints the proof to stdout
 // reuse this for printing proofs and we should enhance this for text/json,
 // better presentation of height
 func OutputProof(info interface{}, height uint64) error {
-	res, err := data.ToJSON(info)
+	wrap := proof{height, info}
+	res, err := data.ToJSON(wrap)
 	if err != nil {
 		return err
 	}
-
-	// TODO: store the proof or do something more interesting than just printing
-	fmt.Printf("Height: %d\n", height)
 	fmt.Println(string(res))
 	return nil
 }
