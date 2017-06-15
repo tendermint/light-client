@@ -1,14 +1,13 @@
 DOC_PKGS:=./certifiers ./extensions ./extensions/basecoin ./proxy ./proxy/types ./tx
 REPO:=github.com/tendermint/light-client
 
-.PHONY: install build test list_pkg docs clean_docs get_vendor_deps tools shunit $(DOC_PKGS)
+.PHONY: install build test list_pkg docs clean_docs get_vendor_deps tools $(DOC_PKGS)
 
 install: get_vendor_deps
 	go install ./cmd/...
 
 build:
 	go build ./cmd/...
-
 
 test/shunit2:
 	wget "https://raw.githubusercontent.com/kward/shunit2/master/source/2.1/src/shunit2" \

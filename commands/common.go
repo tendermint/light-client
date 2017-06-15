@@ -33,6 +33,10 @@ func AddBasicFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().String(NodeFlag, "", "<host>:<port> to tendermint rpc interface for this chain")
 }
 
+func GetChainID() string {
+	return viper.GetString(ChainFlag)
+}
+
 func GetNode() rpcclient.Client {
 	return rpcclient.NewHTTP(viper.GetString(NodeFlag), "/websocket")
 }
@@ -45,7 +49,8 @@ func GetProviders() (trusted certifiers.Provider, source certifiers.Provider) {
 			certifiers.NewMemStoreProvider(),
 			files.NewProvider(rootDir),
 		)
-		sourceProv = client.NewHTTP(viper.GetString(NodeFlag))
+		node := viper.GetString(NodeFlag)
+		sourceProv = client.NewHTTP(node)
 	}
 	return trustedProv, sourceProv
 }
