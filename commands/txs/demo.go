@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/viper"
 	wire "github.com/tendermint/go-wire"
 	lightclient "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/commands"
 )
 
 var DemoCmd = &cobra.Command{
@@ -37,41 +36,41 @@ func (d DemoTx) Bytes() []byte {
 	return wire.BinaryBytes(&d)
 }
 
+func (d DemoTx) ValidateBasic() error {
+	// validate both inputs here...
+	if d.Age < 18 {
+		return errors.New("Sorry, dude, you're too young to blockchain!")
+	}
+	return nil
+}
+
 // this is what we implement for a non-signable tx
 var _ lightclient.Value = DemoTx{}
 
 // runDemo is an example of how to make a tx
 func runDemo(cmd *cobra.Command, args []string) error {
-	var templ DemoTx
-	tx, err := LoadJSON(&templ)
+	templ := new(DemoTx)
+
+	// load data from json or flags
+	found, err := LoadJSON(templ)
 	if err != nil {
 		return err
 	}
-	if tx == nil {
+	if !found {
 		// parse custom flags
 		templ.User = viper.GetString(UserFlag)
 		templ.Age = viper.GetInt(AgeFlag)
-		if templ.Age < 18 {
-			return errors.New("Sorry, dude, you're too young to blockchain!")
-		}
-		tx = templ
 	}
 
 	// TODO: add this pubkey to the loaded tx somehow
 	// pubkey := GetSigner()
 
-	packet, err := Sign(tx)
+	// Sign if needed and post.  This it the work-horse
+	bres, err := SignAndPostTx(templ)
 	if err != nil {
 		return err
 	}
 
-	// post the bytes
-	node := commands.GetNode()
-	bres, err := node.BroadcastTxCommit(packet)
-	if err != nil {
-		return err
-	}
-
-	// output them
+	// output result
 	return OutputTx(bres)
 }
