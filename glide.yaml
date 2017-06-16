@@ -17,7 +17,7 @@ import:
   subpackages:
   - data
 - package: github.com/tendermint/merkleeyes
-  version: ~0.2.0
+  version: ~0.2.2
   subpackages:
   - iavl
 - package: github.com/tendermint/tendermint
@@ -27,7 +27,7 @@ import:
   - rpc/core/types
   - types
 - package: github.com/tendermint/tmlibs
-  version: ~0.2.0
+  version: ~0.2.2
   subpackages:
   - cli
 - package: github.com/gorilla/mux
