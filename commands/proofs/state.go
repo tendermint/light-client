@@ -2,33 +2,45 @@ package proofs
 
 import (
 	"github.com/spf13/cobra"
-	lc "github.com/tendermint/light-client"
+
+	"github.com/tendermint/go-wire/data"
+
+	"github.com/tendermint/light-client/commands"
 	"github.com/tendermint/light-client/proofs"
-	"github.com/tendermint/tendermint/rpc/client"
 )
 
-var StatePresenters = proofs.NewPresenters()
-
-var stateCmd = &cobra.Command{
-	Use:   "state",
+var KeyCmd = &cobra.Command{
+	Use:   "key [key]",
 	Short: "Handle proofs for state of abci app",
-	Long: `Proofs allows you to validate abci state with merkle proofs.
+	Long: `This will look up a given key in the abci app, verify the proof,
+and output it as hex.
 
-These proofs tie the data to a checkpoint, which is managed by "seeds".
-Here we can validate these proofs and import/export them to prove specific
-data to other peers as needed.
-`,
+If you want json output, use an app-specific command that knows key and value structure.`,
+	RunE: doKeyQuery,
 }
 
-func init() {
-	stateProver := ProofCommander{
-		ProverFunc: stateProver,
-		Presenters: StatePresenters,
+// Note: we cannot yse GetAndParseAppProof here, as we don't use go-wire to
+// parse the object, but rather return the raw bytes
+func doKeyQuery(cmd *cobra.Command, args []string) error {
+	// parse cli
+	height := GetHeight()
+	key, err := ParseHexKey(args, "key")
+	if err != nil {
+		return err
 	}
-	stateProver.Register(stateCmd)
-	RootCmd.AddCommand(stateCmd)
-}
 
-func stateProver(node client.Client) lc.Prover {
-	return proofs.NewAppProver(node)
+	// get the proof -> this will be used by all prover commands
+	node := commands.GetNode()
+	prover := proofs.NewAppProver(node)
+	proof, err := GetProof(node, prover, key, height)
+	if err != nil {
+		return err
+	}
+
+	// state just returns raw hex....
+	info := data.Bytes(proof.Data())
+
+	// we can reuse this output for other commands for text/json
+	// unless they do something special like store a file to disk
+	return OutputProof(info, proof.BlockHeight())
 }

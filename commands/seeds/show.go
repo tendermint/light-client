@@ -54,12 +54,12 @@ func loadSeed(p certifiers.Provider, h int, hash, file string) (seed certifiers.
 }
 
 func showSeed(cmd *cobra.Command, args []string) error {
-	p := commands.GetProvider()
+	trust, _ := commands.GetProviders()
 
 	h := viper.GetInt(heightFlag)
 	hash := viper.GetString(hashFlag)
 	file := viper.GetString(fileFlag)
-	seed, err := loadSeed(p, h, hash, file)
+	seed, err := loadSeed(trust, h, hash, file)
 	if err != nil {
 		return err
 	}

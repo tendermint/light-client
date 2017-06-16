@@ -1,17 +1,14 @@
 package proofs
 
-import (
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/commands"
-	"github.com/tendermint/light-client/proofs"
-	"github.com/tendermint/tendermint/rpc/client"
+import "github.com/spf13/cobra"
+
+const (
+	heightFlag = "height"
 )
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "proof",
+	Use:   "query",
 	Short: "Get and store merkle proofs for blockchain data",
 	Long: `Proofs allows you to validate data and merkle proofs.
 
@@ -21,29 +18,6 @@ data to other peers as needed.
 `,
 }
 
-type ProofCommander struct {
-	node client.Client
-	lc.Prover
-	ProverFunc func(client.Client) lc.Prover
-	proofs.Presenters
+func init() {
+	RootCmd.Flags().Int(heightFlag, 0, "Height to query (skip to use latest block)")
 }
-
-// Init uses configuration info to create a network connection
-// as well as initializing the prover
-func (p *ProofCommander) Init() {
-	endpoint := viper.GetString(commands.NodeFlag)
-	p.node = client.NewHTTP(endpoint, "/websockets")
-	p.Prover = p.ProverFunc(p.node)
-}
-
-func (p ProofCommander) Register(parent *cobra.Command) {
-	// we add each subcommand here, so we can register the
-	// ProofCommander in one swoop
-	parent.AddCommand(p.GetCmd())
-}
-
-const (
-	heightFlag = "height"
-	appFlag    = "app"
-	keyFlag    = "key"
-)

@@ -25,9 +25,8 @@ func updateSeed(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// this should get the latest from the node, but quietly uses the
-	// most recent on disk if not available...
-	seed, err := certifiers.LatestSeed(cert)
+	// get the lastest from our source
+	seed, err := certifiers.LatestSeed(cert.SeedSource)
 	if err != nil {
 		return err
 	}

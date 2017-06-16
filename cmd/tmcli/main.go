@@ -69,6 +69,7 @@ import (
 	"github.com/tendermint/light-client/commands/proofs"
 	"github.com/tendermint/light-client/commands/proxy"
 	"github.com/tendermint/light-client/commands/seeds"
+	"github.com/tendermint/light-client/commands/txs"
 	"github.com/tendermint/tmlibs/cli"
 )
 
@@ -92,15 +93,25 @@ app-specific data structures.
 func init() {
 	commands.AddBasicFlags(TmCli)
 
+	// note: here you will want to register custom app-specific code
+	pr := proofs.RootCmd
+	// these are default parsers, but you optional in your app
+	pr.AddCommand(proofs.TxCmd)
+	pr.AddCommand(proofs.KeyCmd)
+
+	// here is how you would add the custom txs... but don't really add demo in your app
+	tr := txs.RootCmd
+	tr.AddCommand(txs.DemoCmd)
+
 	// set up the various commands to use
-	TmCli.AddCommand(keycmd.RootCmd)
-	TmCli.AddCommand(commands.InitCmd)
-	TmCli.AddCommand(seeds.RootCmd)
-	// TODO: when subclassing register some parsers with
-	// proofs.StatePresenters["app"] = pres
-	// proofs.TxPresenters["app"] = pres
-	TmCli.AddCommand(proofs.RootCmd)
-	TmCli.AddCommand(proxy.RootCmd)
+	TmCli.AddCommand(
+		commands.InitCmd,
+		commands.ResetCmd,
+		keycmd.RootCmd,
+		seeds.RootCmd,
+		pr,
+		tr,
+		proxy.RootCmd)
 }
 
 func main() {

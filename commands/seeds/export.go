@@ -30,10 +30,10 @@ func exportSeed(cmd *cobra.Command, args []string) error {
 	path := args[0]
 
 	// load the seed as specified
-	p := commands.GetProvider()
+	trust, _ := commands.GetProviders()
 	h := viper.GetInt(heightFlag)
 	hash := viper.GetString(hashFlag)
-	seed, err := loadSeed(p, h, hash, "")
+	seed, err := loadSeed(trust, h, hash, "")
 	if err != nil {
 		return err
 	}

@@ -4,59 +4,51 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	data "github.com/tendermint/go-wire/data"
+
+	wire "github.com/tendermint/go-wire"
+	"github.com/tendermint/go-wire/data"
+
+	"github.com/tendermint/tendermint/rpc/client"
+
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/commands"
-	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/light-client/proofs"
 )
 
-func (p ProofCommander) GetCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:          "get",
-		Short:        "Get a proof from the tendermint node",
-		RunE:         p.doGet,
-		SilenceUsage: true,
+// GetAndParseAppProof does most of the work of the query commands, but is quite
+// opinionated, so if you want more control, set up the items and call GetProof
+// directly.  Notably, it always uses go-wire.ReadBinaryBytes to deserialize,
+// and Height and Node from standard flags.
+//
+// It will try to get the proof for the given key.  If it is successful,
+// it will return the proof and also unserialize proof.Data into the data
+// argument (so pass in a pointer to the appropriate struct)
+func GetAndParseAppProof(key []byte, data interface{}) (lc.Proof, error) {
+	height := GetHeight()
+	node := commands.GetNode()
+	prover := proofs.NewAppProver(node)
+
+	proof, err := GetProof(node, prover, key, height)
+	if err != nil {
+		return proof, err
 	}
-	cmd.Flags().Int(heightFlag, 0, "Height to query (skip to use latest block)")
-	cmd.Flags().String(appFlag, "raw", "App to use to interpret data")
-	cmd.Flags().String(keyFlag, "", "Key to query on")
-	return cmd
+
+	err = wire.ReadBinaryBytes(proof.Data(), data)
+	return proof, err
 }
 
-func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
-	app := viper.GetString(appFlag)
-	pres, err := p.Lookup(app)
+// GetProof performs the get command directly from the proof (not from the CLI)
+func GetProof(node client.Client, prover lc.Prover, key []byte, height int) (proof lc.Proof, err error) {
+	proof, err = prover.Get(key, uint64(height))
 	if err != nil {
-		return err
-	}
-
-	rawkey := viper.GetString(keyFlag)
-	if rawkey == "" {
-		return errors.New("missing required flag: --" + keyFlag)
-	}
-
-	// prepare the query in an app-dependent manner
-	key, err := pres.MakeKey(rawkey)
-	if err != nil {
-		return err
-	}
-
-	// instantiate the prover instance and get a proof from the server
-	p.Init()
-	h := viper.GetInt(heightFlag)
-	proof, err := p.Get(key, uint64(h))
-	if err != nil {
-		return err
+		return
 	}
 	ph := int(proof.BlockHeight())
-
 	// here is the certifier, root of all knowledge
 	cert, err := commands.GetCertifier()
 	if err != nil {
-		return err
+		return
 	}
 
 	// get and validate a signed header for this proof
@@ -64,34 +56,64 @@ func (p ProofCommander) doGet(cmd *cobra.Command, args []string) error {
 	// FIXME: cannot use cert.GetByHeight for now, as it also requires
 	// Validators and will fail on querying tendermint for non-current height.
 	// When this is supported, we should use it instead...
-	client.WaitForHeight(p.node, ph, nil)
-	commit, err := p.node.Commit(ph)
+	client.WaitForHeight(node, ph, nil)
+	commit, err := node.Commit(ph)
 	if err != nil {
-		return err
+		return
 	}
-	check := lc.Checkpoint{commit.Header, commit.Commit}
+	check := lc.Checkpoint{
+		Header: commit.Header,
+		Commit: commit.Commit,
+	}
 	err = cert.Certify(check)
 	if err != nil {
-		return err
+		return
 	}
 
 	// validate the proof against the certified header to ensure data integrity
 	err = proof.Validate(check)
 	if err != nil {
-		return err
+		return
 	}
 
-	// TODO: store the proof or do something more interesting than just printing
-	// fmt.Println("Your data is 100% certified:")
-	fmt.Printf("Height: %d\n", proof.BlockHeight())
-	info, err := pres.ParseData(proof.Data())
+	return proof, err
+}
+
+// ParseHexKey parses the key flag as hex and converts to bytes or returns error
+// argname is used to customize the error message
+func ParseHexKey(args []string, argname string) ([]byte, error) {
+	if len(args) == 0 {
+		return nil, errors.Errorf("Missing required argument [%s]", argname)
+	}
+	if len(args) > 1 {
+		return nil, errors.Errorf("Only accepts one argument [%s]", argname)
+	}
+	rawkey := args[0]
+	if rawkey == "" {
+		return nil, errors.Errorf("[%s] argument must be non-empty ", argname)
+	}
+	// with tx, we always just parse key as hex and use to lookup
+	return proofs.ParseHexKey(rawkey)
+}
+
+func GetHeight() int {
+	return viper.GetInt(heightFlag)
+}
+
+type proof struct {
+	Height uint64      `json:"height"`
+	Data   interface{} `json:"data"`
+}
+
+// OutputProof prints the proof to stdout
+// reuse this for printing proofs and we should enhance this for text/json,
+// better presentation of height
+func OutputProof(info interface{}, height uint64) error {
+	wrap := proof{height, info}
+	res, err := data.ToJSON(wrap)
 	if err != nil {
 		return err
 	}
-	data, err := data.ToJSON(info)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(data))
+	fmt.Println(string(res))
 	return nil
 }
