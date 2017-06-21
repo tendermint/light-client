@@ -16,9 +16,11 @@ test/shunit2:
 test_cli: test/shunit2
 	@./test/keys.sh
 
+test: build test_unit test_cli
+
 # note that we start tendermint nodes in rpc/tests and extensions/basecoin
 # we cannot currently run these tests in parallel
-test: build
+test_unit:
 	go test -p 1 `glide novendor`
 
 # run list_pkg manually to make DOC_PKGS -> Makefile won that fight

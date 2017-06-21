@@ -15,7 +15,7 @@ func TestProvider(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 
 	cfg := rpctest.GetConfig()
-	rpcAddr := cfg.RPCListenAddress
+	rpcAddr := cfg.RPC.ListenAddress
 	chainID := cfg.ChainID
 	p := client.NewHTTP(rpcAddr)
 	require.NotNil(t, p)
