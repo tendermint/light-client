@@ -225,7 +225,8 @@ func askForConfirmation() bool {
 	var resp string
 	_, err := fmt.Scanln(&resp)
 	if err != nil {
-		panic(err)
+		fmt.Println("Please type yes or no and then press enter:")
+		return askForConfirmation()
 	}
 	resp = strings.ToLower(resp)
 	if resp == "y" || resp == "yes" {
