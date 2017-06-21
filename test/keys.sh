@@ -14,17 +14,15 @@ oneTimeSetUp() {
 newKey(){
   assertNotNull "keyname required" "$1"
   KEYPASS=${2:-qwertyuiop}
-  (echo $KEYPASS; echo $KEYPASS) | tmcli keys new $1 >/dev/null 2>&1
+  echo $KEYPASS | tmcli keys new $1 >/dev/null 2>&1
   assertTrue "created $1" $?
 }
 
 testMakeKeys() {
   USER=demouser
-  assertFalse "already user $USER" "tmcli keys list | grep $USER"
-  assertEquals "1" `tmcli keys list | wc -l`
+  assertFalse "already user $USER" "tmcli keys get $USER"
   newKey $USER
-  assertTrue "no user $USER" "tmcli keys list | grep $USER"
-  assertEquals "2" `tmcli keys list | wc -l`
+  assertTrue "no user $USER" "tmcli keys get $USER"
 }
 
 # load and run these tests with shunit2!

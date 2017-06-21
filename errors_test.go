@@ -16,3 +16,13 @@ func TestErrorHeight(t *testing.T) {
 	assert.False(t, IsHeightMismatchErr(e2))
 	assert.False(t, IsHeightMismatchErr(nil))
 }
+
+func TestErrorNoData(t *testing.T) {
+	e1 := ErrNoData()
+	e1.Error()
+	assert.True(t, IsNoDataErr(e1))
+
+	e2 := errors.New("foobar")
+	assert.False(t, IsNoDataErr(e2))
+	assert.False(t, IsNoDataErr(nil))
+}

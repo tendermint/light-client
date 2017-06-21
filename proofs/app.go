@@ -39,7 +39,7 @@ func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
 		return nil, errors.Errorf("Query error %d: %s", resp.Code, resp.Code.String())
 	}
 	if len(resp.Key) == 0 || len(resp.Value) == 0 || len(resp.Proof) == 0 {
-		return nil, errors.New("No data returned for query")
+		return nil, lc.ErrNoData()
 	}
 	if h != 0 && h != resp.Height {
 		return nil, lc.ErrHeightMismatch(int(h), int(resp.Height))

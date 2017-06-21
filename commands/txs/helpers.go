@@ -1,13 +1,16 @@
 package txs
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/bgentry/speakeasy"
+	"github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 
@@ -112,7 +115,7 @@ func OutputTx(res *ctypes.ResultBroadcastTxCommit) error {
 
 func signTx(manager keys.Manager, tx keys.Signable, name string) ([]byte, error) {
 	prompt := fmt.Sprintf("Please enter passphrase for %s: ", name)
-	pass, err := speakeasy.Ask(prompt)
+	pass, err := getPassword(prompt)
 	if err != nil {
 		return nil, err
 	}
@@ -140,4 +143,32 @@ func readInput(file string) ([]byte, error) {
 	// and read it all!
 	data, err := ioutil.ReadAll(reader)
 	return data, errors.WithStack(err)
+}
+
+// if we read from non-tty, we just need to init the buffer reader once,
+// in case we try to read multiple passwords
+var buf *bufio.Reader
+
+func inputIsTty() bool {
+	return isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
+}
+
+func stdinPassword() (string, error) {
+	if buf == nil {
+		buf = bufio.NewReader(os.Stdin)
+	}
+	pass, err := buf.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(pass), nil
+}
+
+func getPassword(prompt string) (pass string, err error) {
+	if inputIsTty() {
+		pass, err = speakeasy.Ask(prompt)
+	} else {
+		pass, err = stdinPassword()
+	}
+	return
 }
