@@ -8,7 +8,7 @@ import:
 - package: github.com/spf13/pflag
 - package: github.com/spf13/viper
 - package: github.com/tendermint/go-crypto
-  version: ~0.2.0
+  version: ~0.2.1
   subpackages:
   - cmd
   - keys
@@ -17,7 +17,7 @@ import:
   subpackages:
   - data
 - package: github.com/tendermint/merkleeyes
-  version: ~0.2.2
+  version: ~0.2.3
   subpackages:
   - iavl
 - package: github.com/tendermint/tendermint
