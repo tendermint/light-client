@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	data "github.com/tendermint/go-wire/data"
+	cmn "github.com/tendermint/tmlibs/common"
 )
 
 const Raw = "raw"
@@ -76,7 +77,7 @@ type KeyMaker struct {
 }
 
 func (k KeyMaker) MakeKey(str string) ([]byte, error) {
-	r, err := hex.DecodeString(str)
+	r, err := hex.DecodeString(cmn.StripHex(str))
 	if err == nil && len(k.Prefix) > 0 {
 		r = append(k.Prefix, r...)
 	}
