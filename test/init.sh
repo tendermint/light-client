@@ -14,7 +14,7 @@ oneTimeSetUp() {
   GENESIS_FILE=${SERVER}/genesis.json
   CHAIN_ID=$(cat ${GENESIS_FILE} | jq .chain_id | tr -d \")
 
-  printf "starting...\n"
+  printf "starting tendermint...\n"
   tendermint node --proxy_app=dummy --home="$SERVER" >> "$SERVER_LOG" 2>&1 &
   sleep 5
   PID_SERVER=$!
@@ -27,7 +27,7 @@ oneTimeSetUp() {
 }
 
 oneTimeTearDown() {
-  printf "\nstoping..."
+  printf "\nstopping tendermint..."
   kill -9 $PID_SERVER >/dev/null 2>&1
   sleep 1
 }
@@ -87,8 +87,7 @@ test04acceptGenesisFile() {
   assertFalse "ls ${TMHOME} 2>/dev/null >&2"
 
   # init properly
-  tmcli init --node=tcp://localhost:46657 --genesis=${GENESIS_FILE}
-  #> /dev/null 2>&1
+  tmcli init --node=tcp://localhost:46657 --genesis=${GENESIS_FILE} > /dev/null 2>&1
   assertTrue "initialized light-client" $?
   checkDir $TMHOME 3
 }
