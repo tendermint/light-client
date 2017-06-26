@@ -54,21 +54,11 @@ func init() {
 
 func runInit(cmd *cobra.Command, args []string) error {
 	root := viper.GetString(cli.HomeFlag)
-
 	if viper.GetBool("force-reset") {
 		resetRoot(root, true)
 	}
 
-	err := doInit(cmd, root)
-
-	// clean up dir if init fails
-	if err != nil {
-		resetRoot(root, true)
-	}
-	return err
-}
-
-func doInit(cmd *cobra.Command, root string) error {
+	// make sure we don't have an existing client initialized
 	inited, err := WasInited(root)
 	if err != nil {
 		return err
@@ -77,14 +67,21 @@ func doInit(cmd *cobra.Command, root string) error {
 		return errors.Errorf("%s already is initialized, --force-reset if you really want to wipe it out", root)
 	}
 
-	err = initConfigFile(cmd)
+	// clean up dir if init fails
+	err = doInit(cmd, root)
+	if err != nil {
+		resetRoot(root, true)
+	}
+	return err
+}
+
+// doInit actually creates all the files, on error, we should revert it all
+func doInit(cmd *cobra.Command, root string) error {
+	err := initConfigFile(cmd)
 	if err != nil {
 		return err
 	}
-
-	// TODO: accept and validate seed
 	err = initSeed()
-
 	return err
 }
 

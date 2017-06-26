@@ -15,6 +15,7 @@ test/shunit2:
 
 test_cli: test/shunit2
 	@./test/keys.sh
+	@./test/init.sh
 
 test: build test_unit test_cli
 
