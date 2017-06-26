@@ -119,6 +119,7 @@ func resetRoot(root string, saveKeys bool) {
 // is only run if basecli was properly init'd
 func RequireInit(cmd *cobra.Command, args []string) error {
 	root := viper.GetString(cli.HomeFlag)
+	fmt.Println("root", root)
 	init, err := WasInited(root)
 	if err != nil {
 		return err
@@ -137,7 +138,7 @@ func WasInited(root string) (bool, error) {
 	// make sure there is a directory here in any case
 	os.MkdirAll(root, dirPerm)
 
-	// check there is a config.toml file
+	// check if there is a config.toml file
 	cfgFile := filepath.Join(root, "config.toml")
 	_, err := os.Stat(cfgFile)
 	if os.IsNotExist(err) {
@@ -147,7 +148,7 @@ func WasInited(root string) (bool, error) {
 		return false, errors.WithStack(err)
 	}
 
-	// check there are non-empty checkpoints and validators dirs
+	// check if there are non-empty checkpoints and validators dirs
 	dirs := []string{
 		filepath.Join(root, files.CheckDir),
 		filepath.Join(root, files.ValDir),
@@ -202,8 +203,8 @@ func isEmpty(dir string) (bool, error) {
 	}
 	defer d.Close()
 
-	// read to see if any files here...
-	files, err := d.Readdirnames(5)
+	// read to see if any (at least one) files here...
+	files, err := d.Readdirnames(1)
 	if err == io.EOF {
 		return true, nil
 	}
