@@ -18,7 +18,7 @@ var importCmd = &cobra.Command{
 	Use:          "import <file>",
 	Short:        "Imports a new seed from the given file",
 	Long:         `Validate this file and update to the given seed if secure.`,
-	RunE:         importSeed,
+	RunE:         commands.RequireInit(importSeed),
 	SilenceUsage: true,
 }
 
@@ -28,10 +28,6 @@ func init() {
 }
 
 func importSeed(cmd *cobra.Command, args []string) error {
-	if err := commands.RequireInit(cmd); err != nil {
-		return err
-	}
-
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide an input file")
 	}

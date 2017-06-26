@@ -23,7 +23,7 @@ var showCmd = &cobra.Command{
 	Long: `Shows the most recent downloaded key by default.
 If desired, you can select by height, validator hash, or a file.
 `,
-	RunE:         showSeed,
+	RunE:         commands.RequireInit(showSeed),
 	SilenceUsage: true,
 }
 
@@ -54,10 +54,6 @@ func loadSeed(p certifiers.Provider, h int, hash, file string) (seed certifiers.
 }
 
 func showSeed(cmd *cobra.Command, args []string) error {
-	if err := commands.RequireInit(cmd); err != nil {
-		return err
-	}
-
 	trust, _ := commands.GetProviders()
 
 	h := viper.GetInt(heightFlag)

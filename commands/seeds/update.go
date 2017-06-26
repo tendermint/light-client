@@ -11,7 +11,7 @@ import (
 var updateCmd = &cobra.Command{
 	Use:          "update",
 	Short:        "Update seed to current chain state if possible",
-	RunE:         updateSeed,
+	RunE:         commands.RequireInit(updateSeed),
 	SilenceUsage: true,
 }
 
@@ -20,10 +20,6 @@ func init() {
 }
 
 func updateSeed(cmd *cobra.Command, args []string) error {
-	if err := commands.RequireInit(cmd); err != nil {
-		return err
-	}
-
 	cert, err := commands.GetCertifier()
 	if err != nil {
 		return err

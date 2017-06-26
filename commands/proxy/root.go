@@ -28,7 +28,7 @@ All calls that can be tracked back to a block header by a proof
 will be verified before passing them back to the caller. Other that
 that it will present the same interface as a full tendermint node,
 just with added trust and running locally.`,
-	RunE:         runProxy,
+	RunE:         commands.RequireInit(runProxy),
 	SilenceUsage: true,
 }
 
@@ -50,10 +50,6 @@ func init() {
 }
 
 func runProxy(cmd *cobra.Command, args []string) error {
-	if err := commands.RequireInit(cmd); err != nil {
-		return err
-	}
-
 	// First, connect a client
 	c := commands.GetNode()
 	cert, err := commands.GetCertifier()

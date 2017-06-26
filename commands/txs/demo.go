@@ -15,7 +15,7 @@ import (
 var DemoCmd = &cobra.Command{
 	Use:   "demo",
 	Short: "Demo tx creation",
-	RunE:  runDemo,
+	RunE:  commands.RequireInit(runDemo),
 }
 
 const (
@@ -32,10 +32,6 @@ func init() {
 
 // runDemo is an example of how to make a tx
 func runDemo(cmd *cobra.Command, args []string) error {
-	if err := commands.RequireInit(cmd); err != nil {
-		return err
-	}
-
 	templ := new(DemoTx)
 
 	// load data from json or flags

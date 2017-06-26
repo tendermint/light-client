@@ -13,7 +13,7 @@ var exportCmd = &cobra.Command{
 	Long: `Exports the most recent seed to a binary file.
 If desired, you can select by an older height or validator hash.
 `,
-	RunE:         exportSeed,
+	RunE:         commands.RequireInit(exportSeed),
 	SilenceUsage: true,
 }
 
@@ -24,10 +24,6 @@ func init() {
 }
 
 func exportSeed(cmd *cobra.Command, args []string) error {
-	if err := commands.RequireInit(cmd); err != nil {
-		return err
-	}
-
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide a filepath to output")
 	}

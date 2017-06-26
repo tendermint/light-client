@@ -16,16 +16,12 @@ var KeyCmd = &cobra.Command{
 and output it as hex.
 
 If you want json output, use an app-specific command that knows key and value structure.`,
-	RunE: doKeyQuery,
+	RunE: commands.RequireInit(doKeyQuery),
 }
 
 // Note: we cannot yse GetAndParseAppProof here, as we don't use go-wire to
 // parse the object, but rather return the raw bytes
 func doKeyQuery(cmd *cobra.Command, args []string) error {
-	if err := commands.RequireInit(cmd); err != nil {
-		return err
-	}
-
 	// parse cli
 	height := GetHeight()
 	key, err := ParseHexKey(args, "key")

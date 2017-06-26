@@ -107,7 +107,6 @@ func resetRoot(root string, saveKeys bool) {
 	if saveKeys {
 		os.Rename(keys, tmp)
 	}
-	fmt.Println("Bye, bye data... wiping it all clean!")
 	os.RemoveAll(root)
 	if saveKeys {
 		os.Mkdir(root, 0700)
@@ -115,22 +114,30 @@ func resetRoot(root string, saveKeys bool) {
 	}
 }
 
-// RequireInit should be called at the beginning of a command to make
-// sure that the client is initialized.
+type Runable func(cmd *cobra.Command, args []string) error
+
+// Any commands that require and init'ed light-client directory
+// should wrap their RunE command with RequireInit
+// to make sure that the client is initialized.
 //
 // This cannot be called during PersistentPreRun,
 // as they are called from the most specific command first, and root last,
 // and the root command sets up viper, which is needed to find the home dir.
-func RequireInit(cmd *cobra.Command) error {
-	root := viper.GetString(cli.HomeFlag)
-	init, err := WasInited(root)
-	if err != nil {
-		return err
+func RequireInit(run Runable) Runable {
+	return func(cmd *cobra.Command, args []string) error {
+		// first check if we were Init'ed and if not, return an error
+		root := viper.GetString(cli.HomeFlag)
+		init, err := WasInited(root)
+		if err != nil {
+			return err
+		}
+		if !init {
+			return errors.Errorf("You must run '%s init' first", cmd.Root().Name())
+		}
+
+		// otherwise, run the wrappped command
+		return run(cmd, args)
 	}
-	if !init {
-		return errors.Errorf("You must run '%s init' first", cmd.Root().Name())
-	}
-	return nil
 }
 
 // WasInited returns true if a light-client was previously initialized
