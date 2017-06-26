@@ -28,6 +28,10 @@ func init() {
 }
 
 func importSeed(cmd *cobra.Command, args []string) error {
+	if err := commands.RequireInit(cmd); err != nil {
+		return err
+	}
+
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide an input file")
 	}

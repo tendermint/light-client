@@ -22,6 +22,10 @@ data to other peers as needed.
 }
 
 func doTxQuery(cmd *cobra.Command, args []string) error {
+	if err := commands.RequireInit(cmd); err != nil {
+		return err
+	}
+
 	// parse cli
 	height := GetHeight()
 	bkey, err := ParseHexKey(args, "txhash")

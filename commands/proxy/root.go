@@ -28,44 +28,14 @@ All calls that can be tracked back to a block header by a proof
 will be verified before passing them back to the caller. Other that
 that it will present the same interface as a full tendermint node,
 just with added trust and running locally.`,
-	RunE:              runProxy,
-	PersistentPreRunE: commands.RequireInit,
-	SilenceUsage:      true,
+	RunE:         runProxy,
+	SilenceUsage: true,
 }
 
 const (
 	bindFlag   = "serve"
 	wsEndpoint = "/websocket"
 )
-
-// func init() {
-// 	b := "--trace"
-// 	a := []string{"--log-level", "info", "debug", "error"}
-
-// 	if flags.trace {
-// 		logger = log.NewTraceLogger(logger)
-// 		if keyvals[i].(error) {
-// 			keyvals[i] = fmt.Sprintf("%+v")
-// 		}
-// 	}
-// }
-
-// func (t TraceLogger) Log(kvs ...interface{}) {
-// 	for i, kv := range kvs {
-// 		if e, ok := kv.(error); ok {
-// 			kvs[i] = TraceError{kv}
-// 		}
-// 	}
-// 	t.Logger.Log(kvs)
-// }
-
-// type TraceError struct {
-// 	E error
-// }
-
-// func (t TraceError) Error() string {
-// 	return fmt.Sprintf("%+v", t.E)
-// }
 
 func init() {
 	RootCmd.Flags().String(bindFlag, ":8888", "Serve the proxy on the given port")
@@ -80,6 +50,10 @@ func init() {
 }
 
 func runProxy(cmd *cobra.Command, args []string) error {
+	if err := commands.RequireInit(cmd); err != nil {
+		return err
+	}
+
 	// First, connect a client
 	c := commands.GetNode()
 	cert, err := commands.GetCertifier()

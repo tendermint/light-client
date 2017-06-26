@@ -20,6 +20,10 @@ func init() {
 }
 
 func updateSeed(cmd *cobra.Command, args []string) error {
+	if err := commands.RequireInit(cmd); err != nil {
+		return err
+	}
+
 	cert, err := commands.GetCertifier()
 	if err != nil {
 		return err

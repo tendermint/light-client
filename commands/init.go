@@ -115,11 +115,18 @@ func resetRoot(root string, saveKeys bool) {
 	}
 }
 
-// RequireInit can be used in PreRunE to ensure that the command
-// is only run if basecli was properly init'd
-func RequireInit(cmd *cobra.Command, args []string) error {
+// RequireInit should be called at the beginning of a command to make
+// sure that the client is initialized.
+//
+//  if err := commands.RequireInit(cmd); err != nil {
+//    return err
+//  }
+//
+// I tried using PersistentPreRun,
+// but it seems that it is called for the commands before root,
+// so viper is not set up when this was called.
+func RequireInit(cmd *cobra.Command) error {
 	root := viper.GetString(cli.HomeFlag)
-	fmt.Println("root", root)
 	init, err := WasInited(root)
 	if err != nil {
 		return err

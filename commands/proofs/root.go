@@ -1,9 +1,6 @@
 package proofs
 
-import (
-	"github.com/spf13/cobra"
-	"github.com/tendermint/light-client/commands"
-)
+import "github.com/spf13/cobra"
 
 const (
 	heightFlag = "height"
@@ -19,7 +16,6 @@ These proofs tie the data to a checkpoint, which is managed by "seeds".
 Here we can validate these proofs and import/export them to prove specific
 data to other peers as needed.
 `,
-	PersistentPreRunE: commands.RequireInit,
 }
 
 func init() {

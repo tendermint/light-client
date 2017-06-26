@@ -24,6 +24,10 @@ func init() {
 }
 
 func exportSeed(cmd *cobra.Command, args []string) error {
+	if err := commands.RequireInit(cmd); err != nil {
+		return err
+	}
+
 	if len(args) != 1 || len(args[0]) == 0 {
 		return errors.New("You must provide a filepath to output")
 	}

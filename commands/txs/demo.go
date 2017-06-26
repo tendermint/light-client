@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	wire "github.com/tendermint/go-wire"
 	lightclient "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/commands"
 )
 
 /*** this is how to build a command ***/
@@ -31,6 +32,10 @@ func init() {
 
 // runDemo is an example of how to make a tx
 func runDemo(cmd *cobra.Command, args []string) error {
+	if err := commands.RequireInit(cmd); err != nil {
+		return err
+	}
+
 	templ := new(DemoTx)
 
 	// load data from json or flags
