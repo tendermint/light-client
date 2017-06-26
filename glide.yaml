@@ -21,7 +21,7 @@ import:
   subpackages:
   - iavl
 - package: github.com/tendermint/tendermint
-  version: develop
+  version: feature/554-embed-commands
   subpackages:
   - rpc/client
   - rpc/core/types

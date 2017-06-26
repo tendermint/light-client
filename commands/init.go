@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +18,10 @@ import (
 	"github.com/tendermint/tmlibs/cli"
 	cmn "github.com/tendermint/tmlibs/common"
 
+	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
+
 	"github.com/tendermint/light-client/certifiers"
+	"github.com/tendermint/light-client/certifiers/files"
 )
 
 var (
@@ -25,8 +29,9 @@ var (
 )
 
 const (
-	SeedFlag = "seed"
-	HashFlag = "valhash"
+	SeedFlag    = "seed"
+	HashFlag    = "valhash"
+	GenesisFlag = "genesis"
 
 	ConfigFile = "config.toml"
 )
@@ -48,16 +53,36 @@ func init() {
 	InitCmd.Flags().Bool("force-reset", false, "Wipe clean an existing client store, except for keys")
 	InitCmd.Flags().String(SeedFlag, "", "Seed file to import (optional)")
 	InitCmd.Flags().String(HashFlag, "", "Trusted validator hash (must match to accept)")
+	InitCmd.Flags().String(GenesisFlag, "", "Genesis file with chainid and validators (optional)")
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
 	root := viper.GetString(cli.HomeFlag)
-
 	if viper.GetBool("force-reset") {
 		resetRoot(root, true)
 	}
 
-	err := checkEmpty(root)
+	// make sure we don't have an existing client initialized
+	inited, err := WasInited(root)
+	if err != nil {
+		return err
+	}
+	if inited {
+		return errors.Errorf("%s already is initialized, --force-reset if you really want to wipe it out", root)
+	}
+
+	// clean up dir if init fails
+	err = doInit(cmd, root)
+	if err != nil {
+		resetRoot(root, true)
+	}
+	return err
+}
+
+// doInit actually creates all the files, on error, we should revert it all
+func doInit(cmd *cobra.Command, root string) error {
+	// read the genesis file if present, and populate --chain-id and --valhash
+	err := checkGenesis(cmd)
 	if err != nil {
 		return err
 	}
@@ -66,10 +91,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	// TODO: accept and validate seed
 	err = initSeed()
-
 	return err
 }
 
@@ -83,15 +105,124 @@ func resetRoot(root string, saveKeys bool) {
 	tmp := filepath.Join(os.TempDir(), cmn.RandStr(16))
 	keys := filepath.Join(root, "keys")
 	if saveKeys {
-		fmt.Println("Saving private keys", tmp, keys)
 		os.Rename(keys, tmp)
 	}
-	fmt.Println("Bye, bye data... wiping it all clean!")
 	os.RemoveAll(root)
 	if saveKeys {
 		os.Mkdir(root, 0700)
 		os.Rename(tmp, keys)
 	}
+}
+
+type Runable func(cmd *cobra.Command, args []string) error
+
+// Any commands that require and init'ed light-client directory
+// should wrap their RunE command with RequireInit
+// to make sure that the client is initialized.
+//
+// This cannot be called during PersistentPreRun,
+// as they are called from the most specific command first, and root last,
+// and the root command sets up viper, which is needed to find the home dir.
+func RequireInit(run Runable) Runable {
+	return func(cmd *cobra.Command, args []string) error {
+		// first check if we were Init'ed and if not, return an error
+		root := viper.GetString(cli.HomeFlag)
+		init, err := WasInited(root)
+		if err != nil {
+			return err
+		}
+		if !init {
+			return errors.Errorf("You must run '%s init' first", cmd.Root().Name())
+		}
+
+		// otherwise, run the wrappped command
+		return run(cmd, args)
+	}
+}
+
+// WasInited returns true if a light-client was previously initialized
+// in this directory.  Important to ensure proper behavior.
+//
+// Returns error if we have filesystem errors
+func WasInited(root string) (bool, error) {
+	// make sure there is a directory here in any case
+	os.MkdirAll(root, dirPerm)
+
+	// check if there is a config.toml file
+	cfgFile := filepath.Join(root, "config.toml")
+	_, err := os.Stat(cfgFile)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	// check if there are non-empty checkpoints and validators dirs
+	dirs := []string{
+		filepath.Join(root, files.CheckDir),
+		filepath.Join(root, files.ValDir),
+	}
+	// if any of these dirs is empty, then we have no data
+	for _, d := range dirs {
+		empty, err := isEmpty(d)
+		if err != nil {
+			return false, err
+		}
+		if empty {
+			return false, nil
+		}
+	}
+
+	// looks like we have everything
+	return true, nil
+}
+
+func checkGenesis(cmd *cobra.Command) error {
+	genesis := viper.GetString(GenesisFlag)
+	if genesis == "" {
+		return nil
+	}
+
+	doc, err := tcmd.ParseGenesisFile(genesis)
+	if err != nil {
+		return err
+	}
+
+	flags := cmd.Flags()
+	flags.Set(ChainFlag, doc.ChainID)
+	hash := doc.ValidatorHash()
+	hexHash := hex.EncodeToString(hash)
+	flags.Set(HashFlag, hexHash)
+
+	return nil
+}
+
+// isEmpty returns false if we can read files in this dir.
+// if it doesn't exist, read issues, etc... return true
+//
+// TODO: should we handle errors otherwise?
+func isEmpty(dir string) (bool, error) {
+	// check if we can read the directory, missing is fine, other error is not
+	d, err := os.Open(dir)
+	if os.IsNotExist(err) {
+		return true, nil
+	}
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+	defer d.Close()
+
+	// read to see if any (at least one) files here...
+	files, err := d.Readdirnames(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+	empty := len(files) == 0
+	return empty, nil
 }
 
 type Config struct {
@@ -192,31 +323,6 @@ func validateHash(seed certifiers.Seed) error {
 	valid := askForConfirmation()
 	if !valid {
 		return errors.New("Invalid validator hash, try init with proper seed later")
-	}
-	return nil
-}
-
-func checkEmpty(root string) error {
-	// we create the keys dir on startup, anything else is a sign of error
-	os.MkdirAll(root, dirPerm)
-	dir, err := os.Open(root)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer dir.Close()
-
-	files, err := dir.Readdirnames(-1)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	empty := len(files) == 0
-	if !empty && len(files) == 1 && files[0] == "keys" {
-		empty = true
-	}
-
-	if !empty {
-		return errors.Errorf(`"%s" contains data, cannot init`, root)
 	}
 	return nil
 }

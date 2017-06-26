@@ -18,7 +18,7 @@ These proofs tie the data to a checkpoint, which is managed by "seeds".
 Here we can validate these proofs and import/export them to prove specific
 data to other peers as needed.
 `,
-	RunE: doTxQuery,
+	RunE: commands.RequireInit(doTxQuery),
 }
 
 func doTxQuery(cmd *cobra.Command, args []string) error {
