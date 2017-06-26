@@ -1,6 +1,9 @@
 package seeds
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+	"github.com/tendermint/light-client/commands"
+)
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -12,4 +15,5 @@ Since all security in a PoS system is based on having the correct validator
 set, it is important to inspect the seeds to maintain the security, which
 is used to verify all header and merkle proofs.
 `,
+	PersistentPreRunE: commands.RequireInit,
 }

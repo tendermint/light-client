@@ -28,8 +28,9 @@ All calls that can be tracked back to a block header by a proof
 will be verified before passing them back to the caller. Other that
 that it will present the same interface as a full tendermint node,
 just with added trust and running locally.`,
-	RunE:         runProxy,
-	SilenceUsage: true,
+	RunE:              runProxy,
+	PersistentPreRunE: commands.RequireInit,
+	SilenceUsage:      true,
 }
 
 const (

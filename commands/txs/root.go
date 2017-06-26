@@ -1,6 +1,9 @@
 package txs
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+	"github.com/tendermint/light-client/commands"
+)
 
 const (
 	NameFlag  = "name"
@@ -9,8 +12,9 @@ const (
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "tx",
-	Short: "Create and post transactions to the node",
+	Use:               "tx",
+	Short:             "Create and post transactions to the node",
+	PersistentPreRunE: commands.RequireInit,
 }
 
 func init() {
