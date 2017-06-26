@@ -82,6 +82,17 @@ test03noDoubleInit() {
   checkDir $TMHOME 3
 }
 
+test04acceptGenesisFile() {
+  export TMHOME=${BASE}/client-04
+  assertFalse "ls ${TMHOME} 2>/dev/null >&2"
+
+  # init properly
+  tmcli init --node=tcp://localhost:46657 --genesis=${GENESIS_FILE}
+  #> /dev/null 2>&1
+  assertTrue "initialized light-client" $?
+  checkDir $TMHOME 3
+}
+
 # XXX Ex: checkDir $DIR $FILES
 # Makes sure directory exists and has the given number of files
 checkDir() {

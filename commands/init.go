@@ -18,6 +18,8 @@ import (
 	"github.com/tendermint/tmlibs/cli"
 	cmn "github.com/tendermint/tmlibs/common"
 
+	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
+
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/certifiers/files"
 )
@@ -27,8 +29,9 @@ var (
 )
 
 const (
-	SeedFlag = "seed"
-	HashFlag = "valhash"
+	SeedFlag    = "seed"
+	HashFlag    = "valhash"
+	GenesisFlag = "genesis"
 
 	ConfigFile = "config.toml"
 )
@@ -50,6 +53,7 @@ func init() {
 	InitCmd.Flags().Bool("force-reset", false, "Wipe clean an existing client store, except for keys")
 	InitCmd.Flags().String(SeedFlag, "", "Seed file to import (optional)")
 	InitCmd.Flags().String(HashFlag, "", "Trusted validator hash (must match to accept)")
+	InitCmd.Flags().String(GenesisFlag, "", "Genesis file with chainid and validators (optional)")
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
@@ -77,7 +81,13 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 // doInit actually creates all the files, on error, we should revert it all
 func doInit(cmd *cobra.Command, root string) error {
-	err := initConfigFile(cmd)
+	// read the genesis file if present, and populate --chain-id and --valhash
+	err := checkGenesis(cmd)
+	if err != nil {
+		return err
+	}
+
+	err = initConfigFile(cmd)
 	if err != nil {
 		return err
 	}
@@ -141,6 +151,26 @@ func WasInited(root string) (bool, error) {
 
 	// looks like we have everything
 	return true, nil
+}
+
+func checkGenesis(cmd *cobra.Command) error {
+	genesis := viper.GetString(GenesisFlag)
+	if genesis == "" {
+		return nil
+	}
+
+	doc, err := tcmd.ParseGenesisFile(genesis)
+	if err != nil {
+		return err
+	}
+
+	flags := cmd.Flags()
+	flags.Set(ChainFlag, doc.ChainID)
+	hash := doc.ValidatorHash()
+	hexHash := hex.EncodeToString(hash)
+	flags.Set(HashFlag, hexHash)
+
+	return nil
 }
 
 // isEmpty returns false if we can read files in this dir.
