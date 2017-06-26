@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	cmn "github.com/tendermint/tmlibs/common"
 
 	"github.com/tendermint/light-client/certifiers"
+	"github.com/tendermint/light-client/certifiers/files"
 )
 
 var (
@@ -57,9 +59,22 @@ func runInit(cmd *cobra.Command, args []string) error {
 		resetRoot(root, true)
 	}
 
-	err := checkEmpty(root)
+	err := doInit(cmd, root)
+
+	// clean up dir if init fails
+	if err != nil {
+		resetRoot(root, true)
+	}
+	return err
+}
+
+func doInit(cmd *cobra.Command, root string) error {
+	inited, err := WasInited(root)
 	if err != nil {
 		return err
+	}
+	if inited {
+		return errors.Errorf("%s already is initialized, --force-reset if you really want to wipe it out", root)
 	}
 
 	err = initConfigFile(cmd)
@@ -83,7 +98,6 @@ func resetRoot(root string, saveKeys bool) {
 	tmp := filepath.Join(os.TempDir(), cmn.RandStr(16))
 	keys := filepath.Join(root, "keys")
 	if saveKeys {
-		fmt.Println("Saving private keys", tmp, keys)
 		os.Rename(keys, tmp)
 	}
 	fmt.Println("Bye, bye data... wiping it all clean!")
@@ -92,6 +106,71 @@ func resetRoot(root string, saveKeys bool) {
 		os.Mkdir(root, 0700)
 		os.Rename(tmp, keys)
 	}
+}
+
+// WasInited returns true if a light-client was previously initialized
+// in this directory.  Important to ensure proper behavior.
+//
+// Returns error if we have filesystem errors
+func WasInited(root string) (bool, error) {
+	// make sure there is a directory here in any case
+	os.MkdirAll(root, dirPerm)
+
+	// check there is a config.toml file
+	cfgFile := filepath.Join(root, "config.toml")
+	_, err := os.Stat(cfgFile)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	// check there are non-empty checkpoints and validators dirs
+	dirs := []string{
+		filepath.Join(root, files.CheckDir),
+		filepath.Join(root, files.ValDir),
+	}
+	// if any of these dirs is empty, then we have no data
+	for _, d := range dirs {
+		empty, err := isEmpty(d)
+		if err != nil {
+			return false, err
+		}
+		if empty {
+			return false, nil
+		}
+	}
+
+	// looks like we have everything
+	return true, nil
+}
+
+// isEmpty returns false if we can read files in this dir.
+// if it doesn't exist, read issues, etc... return true
+//
+// TODO: should we handle errors otherwise?
+func isEmpty(dir string) (bool, error) {
+	// check if we can read the directory, missing is fine, other error is not
+	d, err := os.Open(dir)
+	if os.IsNotExist(err) {
+		return true, nil
+	}
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+	defer d.Close()
+
+	// read to see if any files here...
+	files, err := d.Readdirnames(5)
+	if err == io.EOF {
+		return true, nil
+	}
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+	empty := len(files) == 0
+	return empty, nil
 }
 
 type Config struct {
@@ -192,31 +271,6 @@ func validateHash(seed certifiers.Seed) error {
 	valid := askForConfirmation()
 	if !valid {
 		return errors.New("Invalid validator hash, try init with proper seed later")
-	}
-	return nil
-}
-
-func checkEmpty(root string) error {
-	// we create the keys dir on startup, anything else is a sign of error
-	os.MkdirAll(root, dirPerm)
-	dir, err := os.Open(root)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer dir.Close()
-
-	files, err := dir.Readdirnames(-1)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	empty := len(files) == 0
-	if !empty && len(files) == 1 && files[0] == "keys" {
-		empty = true
-	}
-
-	if !empty {
-		return errors.Errorf(`"%s" contains data, cannot init`, root)
 	}
 	return nil
 }
