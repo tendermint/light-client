@@ -14,7 +14,7 @@ oneTimeSetUp() {
   GENESIS_FILE=${SERVER}/genesis.json
   CHAIN_ID=$(cat ${GENESIS_FILE} | jq .chain_id | tr -d \")
 
-  printf "starting tendermint...\n"
+  printf "starting...\n"
   tendermint node --proxy_app=dummy --home="$SERVER" >> "$SERVER_LOG" 2>&1 &
   sleep 5
   PID_SERVER=$!
@@ -27,7 +27,7 @@ oneTimeSetUp() {
 }
 
 oneTimeTearDown() {
-  printf "\nstoping tendermint..."
+  printf "\nstoping..."
   kill -9 $PID_SERVER >/dev/null 2>&1
   sleep 1
 }
@@ -46,7 +46,7 @@ test02badInit() {
   assertFalse "ls ${TMHOME} 2>/dev/null >&2"
 
   # no node where we go
-  echo y | tmcli init --node=tcp://localhost:9999 --chain-id="bad-chain-id" > /dev/null 2>&1
+  echo y | tmcli init --node=tcp://localhost:9999 --chain-id="${CHAIN_ID}" > /dev/null 2>&1
   assertFalse "invalid init" $?
   # dir there, but empty...
   checkDir $TMHOME 0

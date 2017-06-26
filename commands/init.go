@@ -118,13 +118,9 @@ func resetRoot(root string, saveKeys bool) {
 // RequireInit should be called at the beginning of a command to make
 // sure that the client is initialized.
 //
-//  if err := commands.RequireInit(cmd); err != nil {
-//    return err
-//  }
-//
-// I tried using PersistentPreRun,
-// but it seems that it is called for the commands before root,
-// so viper is not set up when this was called.
+// This cannot be called during PersistentPreRun,
+// as they are called from the most specific command first, and root last,
+// and the root command sets up viper, which is needed to find the home dir.
 func RequireInit(cmd *cobra.Command) error {
 	root := viper.GetString(cli.HomeFlag)
 	init, err := WasInited(root)
