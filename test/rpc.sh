@@ -65,6 +65,45 @@ test01getInsecure() {
   assertEquals "dummy info" '"{\"size\":0}"' "$DATA"
 }
 
+test02getSecure() {
+  HEIGHT=$(tmcli rpc status | jq .latest_block_height)
+  assertTrue "get status" "$?"
+
+  # check block produces something reasonable
+  assertFalse "missing height" "tmcli rpc block"
+  BLOCK=$(tmcli rpc block --height=$HEIGHT)
+  assertTrue "get block" "$?"
+  MHEIGHT=$(echo $BLOCK | jq .block_meta.header.height)
+  assertEquals "meta height" "${HEIGHT}" "${MHEIGHT}"
+  BHEIGHT=$(echo $BLOCK | jq .block.header.height)
+  assertEquals "meta height" "${HEIGHT}" "${BHEIGHT}"
+
+  # check commit produces something reasonable
+  assertFalse "missing height" "tmcli rpc commit"
+  let "CHEIGHT = $HEIGHT - 1"
+  COMMIT=$(tmcli rpc commit --height=$CHEIGHT)
+  assertTrue "get commit" "$?"
+  HHEIGHT=$(echo $COMMIT | jq .header.height)
+  assertEquals "commit height" "${CHEIGHT}" "${HHEIGHT}"
+  assertEquals "canonical" "true" $(echo $COMMIT | jq .canonical)
+  BSIG=$(echo $BLOCK | jq .block.last_commit)
+  CSIG=$(echo $COMMIT | jq .commit)
+  assertEquals "block and commit" "$BSIG" "$CSIG"
+
+  # now let's get some headers
+  # assertFalse "missing height" "tmcli rpc headers"
+  HEADERS=$(tmcli rpc headers --min=$CHEIGHT --max=$HEIGHT)
+  assertTrue "get headers" "$?"
+  assertEquals "proper height" "$HEIGHT" $(echo $HEADERS | jq '.last_height')
+  assertEquals "two headers" "2" $(echo $HEADERS | jq '.block_metas | length')
+  # should we check these headers?
+  CHEAD=$(echo $COMMIT | jq .header)
+  # most recent first, so the commit header is second....
+  HHEAD=$(echo $HEADERS | jq .block_metas[1].header)
+  assertEquals "commit and header" "$CHEAD" "$HHEAD"
+
+}
+
 # load and run these tests with shunit2!
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #get this files directory
 . $DIR/shunit2

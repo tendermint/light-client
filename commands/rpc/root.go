@@ -25,6 +25,8 @@ func init() {
 		genesisCmd,
 		validatorsCmd,
 		blockCmd,
+		commitCmd,
+		headersCmd,
 	)
 }
 
