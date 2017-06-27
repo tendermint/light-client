@@ -12,12 +12,20 @@ import (
 	"github.com/tendermint/light-client/commands"
 )
 
+const (
+	FlagDelta  = "delta"
+	FlagHeight = "height"
+	FlagMax    = "max"
+	FlagMin    = "min"
+)
+
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "rpc",
 	Short: "Query the tendermint rpc, validating everything with a proof",
 }
 
+// TODO: add support for subscribing to events????
 func init() {
 	RootCmd.AddCommand(
 		statusCmd,
@@ -27,6 +35,7 @@ func init() {
 		blockCmd,
 		commitCmd,
 		headersCmd,
+		waitCmd,
 	)
 }
 
@@ -54,20 +63,3 @@ func printResult(res interface{}) error {
 	fmt.Println(string(json))
 	return nil
 }
-
-// // First step, proxy with no checks....
-// func routes(c client.Client) map[string]*rpc.RPCFunc {
-
-// 	return map[string]*rpc.RPCFunc{
-// 		// Subscribe/unsubscribe are reserved for websocket events.
-// 		// We can just use the core tendermint impl, which uses the
-// 		// EventSwitch we registered in NewWebsocketManager above
-// 		"subscribe":   rpc.NewWSRPCFunc(core.Subscribe, "event"),
-// 		"unsubscribe": rpc.NewWSRPCFunc(core.Unsubscribe, "event"),
-
-// 		// info API
-// 		"blockchain": rpc.NewRPCFunc(c.BlockchainInfo, "minHeight,maxHeight"),
-// 		"block":      rpc.NewRPCFunc(c.Block, "height"),
-// 		"commit":     rpc.NewRPCFunc(c.Commit, "height"),
-// 	}
-// }

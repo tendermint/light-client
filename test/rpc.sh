@@ -101,7 +101,24 @@ test02getSecure() {
   # most recent first, so the commit header is second....
   HHEAD=$(echo $HEADERS | jq .block_metas[1].header)
   assertEquals "commit and header" "$CHEAD" "$HHEAD"
+}
 
+test03waiting() {
+  START=$(tmcli rpc status | jq .latest_block_height)
+  assertTrue "get status" "$?"
+
+  let "NEXT = $START + 5"
+  assertFalse "no args" "tmcli rpc wait"
+  assertFalse "too long" "tmcli rpc wait --height=1234"
+  assertTrue "normal wait" "tmcli rpc wait --height=$NEXT"
+
+  STEP=$(tmcli rpc status | jq .latest_block_height)
+  assertEquals "wait until height" "$NEXT" "$STEP"
+
+  let "NEXT = $STEP + 3"
+  assertTrue "tmcli rpc wait --delta=3"
+  STEP=$(tmcli rpc status | jq .latest_block_height)
+  assertEquals "wait for delta" "$NEXT" "$STEP"
 }
 
 # load and run these tests with shunit2!

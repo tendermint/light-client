@@ -6,12 +6,6 @@ import (
 	"github.com/tendermint/light-client/commands"
 )
 
-const (
-	FlagHeight = "height"
-	FlagMax    = "max"
-	FlagMin    = "min"
-)
-
 func init() {
 	blockCmd.Flags().Int(FlagHeight, -1, "block height")
 	commitCmd.Flags().Int(FlagHeight, -1, "block height")
@@ -26,7 +20,11 @@ var blockCmd = &cobra.Command{
 }
 
 func runBlock(cmd *cobra.Command, args []string) error {
-	c := commands.GetNode()
+	c, err := getSecureNode()
+	if err != nil {
+		return err
+	}
+
 	h := viper.GetInt(FlagHeight)
 	block, err := c.Block(h)
 	if err != nil {
@@ -42,7 +40,11 @@ var commitCmd = &cobra.Command{
 }
 
 func runCommit(cmd *cobra.Command, args []string) error {
-	c := commands.GetNode()
+	c, err := getSecureNode()
+	if err != nil {
+		return err
+	}
+
 	h := viper.GetInt(FlagHeight)
 	commit, err := c.Commit(h)
 	if err != nil {
@@ -58,7 +60,11 @@ var headersCmd = &cobra.Command{
 }
 
 func runHeaders(cmd *cobra.Command, args []string) error {
-	c := commands.GetNode()
+	c, err := getSecureNode()
+	if err != nil {
+		return err
+	}
+
 	min := viper.GetInt(FlagMin)
 	max := viper.GetInt(FlagMax)
 	headers, err := c.BlockchainInfo(min, max)
