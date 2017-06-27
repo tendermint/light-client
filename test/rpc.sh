@@ -58,6 +58,11 @@ test01getInsecure() {
   assertTrue "sensible heights: $SHEIGHT / $VHEIGHT" "test $VHEIGHT -ge $SHEIGHT"
   VCNT=$(echo ${VALS} | jq '.validators | length')
   assertEquals "one validator" "1" "$VCNT"
+
+  INFO=$(tmcli rpc info)
+  assertTrue "get info" "$?"
+  DATA=$(echo $INFO | jq .response.data)
+  assertEquals "dummy info" '"{\"size\":0}"' "$DATA"
 }
 
 # load and run these tests with shunit2!

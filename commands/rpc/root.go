@@ -21,8 +21,10 @@ var RootCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(
 		statusCmd,
+		infoCmd,
 		genesisCmd,
 		validatorsCmd,
+		blockCmd,
 	)
 }
 
@@ -62,21 +64,8 @@ func printResult(res interface{}) error {
 // 		"unsubscribe": rpc.NewWSRPCFunc(core.Unsubscribe, "event"),
 
 // 		// info API
-// 		"status":     rpc.NewRPCFunc(c.Status, ""),
 // 		"blockchain": rpc.NewRPCFunc(c.BlockchainInfo, "minHeight,maxHeight"),
-// 		"genesis":    rpc.NewRPCFunc(c.Genesis, ""),
 // 		"block":      rpc.NewRPCFunc(c.Block, "height"),
 // 		"commit":     rpc.NewRPCFunc(c.Commit, "height"),
-// 		"tx":         rpc.NewRPCFunc(c.Tx, "hash,prove"),
-// 		"validators": rpc.NewRPCFunc(c.Validators, ""),
-
-// 		// broadcast API
-// 		"broadcast_tx_commit": rpc.NewRPCFunc(c.BroadcastTxCommit, "tx"),
-// 		"broadcast_tx_sync":   rpc.NewRPCFunc(c.BroadcastTxSync, "tx"),
-// 		"broadcast_tx_async":  rpc.NewRPCFunc(c.BroadcastTxAsync, "tx"),
-
-// 		// abci API
-// 		"abci_query": rpc.NewRPCFunc(c.ABCIQuery, "path,data,prove"),
-// 		"abci_info":  rpc.NewRPCFunc(c.ABCIInfo, ""),
 // 	}
 // }
