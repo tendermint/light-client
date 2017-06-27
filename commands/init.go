@@ -18,7 +18,7 @@ import (
 	"github.com/tendermint/tmlibs/cli"
 	cmn "github.com/tendermint/tmlibs/common"
 
-	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
+	"github.com/tendermint/tendermint/types"
 
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/certifiers/files"
@@ -184,7 +184,7 @@ func checkGenesis(cmd *cobra.Command) error {
 		return nil
 	}
 
-	doc, err := tcmd.ParseGenesisFile(genesis)
+	doc, err := types.GenesisDocFromFile(genesis)
 	if err != nil {
 		return err
 	}
