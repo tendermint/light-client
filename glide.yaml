@@ -8,7 +8,7 @@ import:
 - package: github.com/spf13/pflag
 - package: github.com/spf13/viper
 - package: github.com/tendermint/go-crypto
-  version: ~0.2.1
+  version: ~0.2.2
   subpackages:
   - cmd
   - keys
@@ -17,11 +17,11 @@ import:
   subpackages:
   - data
 - package: github.com/tendermint/merkleeyes
-  version: ~0.2.3
+  version: ~0.2.4
   subpackages:
   - iavl
 - package: github.com/tendermint/tendermint
-  version: ~0.10.0
+  version: ~0.10.1
   subpackages:
   - rpc/client
   - rpc/core/types
@@ -35,7 +35,7 @@ import:
 - package: github.com/gorilla/handlers
   version: ^1.1.0
 - package: github.com/pelletier/go-toml
-  version: ^0.5.0
+  version: ^1.0.0
 testImport:
 - package: github.com/stretchr/testify
   subpackages:

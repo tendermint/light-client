@@ -1,5 +1,5 @@
-hash: 2dfec4a3906cda08d17bd45dfc16cccf0357b5b1d5c13d8edc75c802058f7528
-updated: 2017-06-27T11:57:54.972257272+02:00
+hash: e299688f1f083defe754ed20c250bf652db4b411ed447cf9afc6f7b6f5924a3e
+updated: 2017-06-28T13:55:18.276211937+02:00
 imports:
 - name: github.com/bgentry/speakeasy
   version: 4aabc24848ce5fd31929f7d1e4ea74d3709c14cd
@@ -11,6 +11,10 @@ imports:
   version: 637e656429416087660c84436a2a035d69d54e2e
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
+- name: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  subpackages:
+  - spew
 - name: github.com/ebuchman/fail-test
   version: 95f809107225be108efcf10a3509e4ea6ceef3c4
 - name: github.com/fsnotify/fsnotify
@@ -72,9 +76,13 @@ imports:
 - name: github.com/pelletier/go-buffruneio
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
-  version: 13d49d4606eb801b8f01ae542b4afc4c6ee3d84a
+  version: 5ccdfb18c776b740aecaf085c4d9a2779199c279
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
 - name: github.com/spf13/afero
   version: 9be650865eab0c12963d8753212f4f9c66cdcf12
   subpackages:
@@ -89,6 +97,11 @@ imports:
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/spf13/viper
   version: 0967fc9aceab2ce9da34061253ac10fb99bba5b2
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert
+  - require
 - name: github.com/syndtr/goleveldb
   version: 8c81ea47d4c41a385645e133e15510fc6a2a74b4
   subpackages:
@@ -117,7 +130,7 @@ imports:
   - edwards25519
   - extra25519
 - name: github.com/tendermint/go-crypto
-  version: d31cfbaeaa4d930798ec327b52917975f3203c11
+  version: 95b7c9e09c49b91bfbb71bb63dd514eb55450f16
   subpackages:
   - cmd
   - keys
@@ -132,17 +145,16 @@ imports:
   - data
   - data/base58
 - name: github.com/tendermint/merkleeyes
-  version: ce7de05896f560ddcc9207f65fea9901835dd238
+  version: 102aaf5a8ffda1846413fb22805a94def2045b9f
   subpackages:
   - app
   - client
   - iavl
   - testutil
 - name: github.com/tendermint/tendermint
-  version: 3065059da7bb57714f08c7a6fcb97e4b36be0194
+  version: 2e0a4aafa7c2d9a7d855b93adf0b63f1fe2eed76
   subpackages:
   - blockchain
-  - cmd/tendermint/commands
   - config
   - consensus
   - mempool
@@ -166,7 +178,7 @@ imports:
   - types
   - version
 - name: github.com/tendermint/tmlibs
-  version: efb56aaea7517220bb3f42ff87b8004d554a17ff
+  version: 7ce4da1eee6004d627e780c8fe91e96d9b99e459
   subpackages:
   - autofile
   - cli
@@ -235,17 +247,4 @@ imports:
   version: 6d8c18553ea1ac493d049edd6f102f52e618f085
 - name: gopkg.in/yaml.v2
   version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
-testImports:
-- name: github.com/davecgh/go-spew
-  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
-  subpackages:
-  - spew
-- name: github.com/pmezard/go-difflib
-  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
-  subpackages:
-  - difflib
-- name: github.com/stretchr/testify
-  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
-  subpackages:
-  - assert
-  - require
+testImports: []
