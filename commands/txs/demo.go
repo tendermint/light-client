@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	wire "github.com/tendermint/go-wire"
 	lightclient "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/commands"
 )
 
 /*** this is how to build a command ***/
@@ -14,7 +15,7 @@ import (
 var DemoCmd = &cobra.Command{
 	Use:   "demo",
 	Short: "Demo tx creation",
-	RunE:  runDemo,
+	RunE:  commands.RequireInit(runDemo),
 }
 
 const (

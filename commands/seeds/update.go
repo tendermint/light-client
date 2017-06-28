@@ -11,7 +11,7 @@ import (
 var updateCmd = &cobra.Command{
 	Use:          "update",
 	Short:        "Update seed to current chain state if possible",
-	RunE:         updateSeed,
+	RunE:         commands.RequireInit(updateSeed),
 	SilenceUsage: true,
 }
 
