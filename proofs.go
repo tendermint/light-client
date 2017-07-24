@@ -17,7 +17,8 @@ type Prover interface {
 // that was proven (like k-v pair, tx bytes, etc....)
 type Proof interface {
 	BlockHeight() uint64
-	Validate(Checkpoint) error // Make sure the checkpoint is validated and proper height
+	// Validates this Proof matches the checkpoint
+	Validate(Checkpoint) error
 	// Marshal prepares for storage
 	Marshal() ([]byte, error)
 	// Data extracts the query result we want to see

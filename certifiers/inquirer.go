@@ -1,6 +1,8 @@
 package certifiers
 
 import (
+	"fmt"
+
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
@@ -11,9 +13,12 @@ type InquiringCertifier struct {
 	SeedSource   Provider // This is a source of new info, like a node rpc, or other import method
 }
 
-func NewInquiring(chainID string, vals *types.ValidatorSet, trusted Provider, source Provider) *InquiringCertifier {
+func NewInquiring(chainID string, seed Seed, trusted Provider, source Provider) *InquiringCertifier {
+	// store the data in trusted
+	trusted.StoreSeed(seed)
+
 	return &InquiringCertifier{
-		Cert:         NewDynamic(chainID, vals),
+		Cert:         NewDynamic(chainID, seed.Validators, seed.Height()),
 		TrustedSeeds: trusted,
 		SeedSource:   source,
 	}
@@ -30,7 +35,12 @@ func (c *InquiringCertifier) ChainID() string {
 //
 // On success, it will store the checkpoint in the store for later viewing
 func (c *InquiringCertifier) Certify(check lc.Checkpoint) error {
-	err := c.Cert.Certify(check)
+	err := c.useClosestTrust(check.Height())
+	if err != nil {
+		return err
+	}
+
+	err = c.Cert.Certify(check)
 	if !IsValidatorsChangedErr(err) {
 		return err
 	}
@@ -53,11 +63,34 @@ func (c *InquiringCertifier) Certify(check lc.Checkpoint) error {
 }
 
 func (c *InquiringCertifier) Update(check lc.Checkpoint, vals *types.ValidatorSet) error {
-	err := c.Cert.Update(check, vals)
+	err := c.useClosestTrust(check.Height())
+	if err != nil {
+		return err
+	}
+
+	err = c.Cert.Update(check, vals)
 	if err == nil {
 		c.TrustedSeeds.StoreSeed(Seed{Checkpoint: check, Validators: vals})
 	}
 	return err
+}
+
+func (c *InquiringCertifier) useClosestTrust(h int) error {
+	closest, err := c.TrustedSeeds.GetByHeight(h)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Current: %d, Want: %d, Got: %d\n",
+		c.Cert.LastHeight, h, closest.Height())
+
+	// if the best seed is not the one we currently use,
+	// let's just reset the dynamic validator
+	if closest.Height() != c.Cert.LastHeight {
+		fmt.Println("...jumping!")
+		c.Cert = NewDynamic(c.ChainID(), closest.Validators, closest.Height())
+	}
+	return nil
 }
 
 // updateToHash gets the validator hash we want to update to
