@@ -19,10 +19,10 @@ type DynamicCertifier struct {
 	LastHeight int
 }
 
-func NewDynamic(chainID string, vals *types.ValidatorSet) *DynamicCertifier {
+func NewDynamic(chainID string, vals *types.ValidatorSet, height int) *DynamicCertifier {
 	return &DynamicCertifier{
 		Cert:       NewStatic(chainID, vals),
-		LastHeight: 0,
+		LastHeight: height,
 	}
 }
 
