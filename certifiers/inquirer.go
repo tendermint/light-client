@@ -1,8 +1,6 @@
 package certifiers
 
 import (
-	"fmt"
-
 	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
@@ -81,13 +79,9 @@ func (c *InquiringCertifier) useClosestTrust(h int) error {
 		return err
 	}
 
-	fmt.Printf("Current: %d, Want: %d, Got: %d\n",
-		c.Cert.LastHeight, h, closest.Height())
-
 	// if the best seed is not the one we currently use,
 	// let's just reset the dynamic validator
 	if closest.Height() != c.Cert.LastHeight {
-		fmt.Println("...jumping!")
 		c.Cert = NewDynamic(c.ChainID(), closest.Validators, closest.Height())
 	}
 	return nil

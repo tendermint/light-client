@@ -34,10 +34,11 @@ func TestProvider(t *testing.T) {
 	assert.Nil(seed.ValidateBasic(chainID))
 	cert := certifiers.NewStatic(chainID, seed.Validators)
 
-	// can't get a lower one
-	seed, err = p.GetByHeight(sh - 1)
-	assert.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	// historical queries now work :)
+	lower := sh - 5
+	seed, err = p.GetByHeight(lower)
+	assert.Nil(err, "%+v", err)
+	assert.Equal(lower, seed.Height())
 
 	// also get by hash (given the match)
 	seed, err = p.GetByHash(vhash)

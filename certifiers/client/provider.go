@@ -3,21 +3,27 @@ package client
 import (
 	"bytes"
 
-	"github.com/pkg/errors"
-	"github.com/tendermint/light-client/certifiers"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
+
+	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/certifiers"
 )
 
 var _ certifiers.Provider = &Provider{}
 
+type SignStatusClient interface {
+	rpcclient.SignClient
+	rpcclient.StatusClient
+}
+
 type Provider struct {
-	node       rpcclient.SignClient
+	node       SignStatusClient
 	lastHeight int
 }
 
-func New(node rpcclient.SignClient) *Provider {
+func New(node SignStatusClient) *Provider {
 	return &Provider{node: node}
 }
 
@@ -39,47 +45,78 @@ func (p *Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 	vals, err := p.node.Validators()
 	// if we get no validators, or a different height, return an error
 	if err != nil {
-		return seed, errors.WithStack(err)
+		return seed, err
 	}
 	p.updateHeight(vals.BlockHeight)
 	vhash := types.NewValidatorSet(vals.Validators).Hash()
 	if !bytes.Equal(hash, vhash) {
 		return seed, certifiers.ErrSeedNotFound()
 	}
-	return p.buildSeed(vals)
+	return p.seedFromVals(vals)
 }
 
 // GetByHeight gets the most recent validator (only one available)
-// and sees if it matches
+// and sees if it matches.
 //
-// TODO: keep track of most recent height, it will never go down
+// Note: we can always get historical headers and commits...
+// Currently we cannot get historical validators :(
 //
 // TODO: improve when the rpc interface supports more functionality
-func (p *Provider) GetByHeight(h int) (certifiers.Seed, error) {
-	var seed certifiers.Seed
-	vals, err := p.node.Validators()
-	// if we get no validators, or a different height, return an error
+func (p *Provider) GetByHeight(h int) (seed certifiers.Seed, err error) {
+	commit, err := p.node.Commit(h)
 	if err != nil {
-		return seed, errors.WithStack(err)
+		commit, err = p.GetLatestCommit()
+		if err != nil {
+			return seed, err
+		}
 	}
-	p.updateHeight(vals.BlockHeight)
-	if vals.BlockHeight > h {
-		return seed, certifiers.ErrSeedNotFound()
-	}
-	return p.buildSeed(vals)
+	return p.seedFromCommit(commit)
 }
 
-func (p *Provider) buildSeed(vals *ctypes.ResultValidators) (certifiers.Seed, error) {
+// GetLatestCommit should return the most recent commit there is,
+// which handles queries for future heights as per the semantics
+// of GetByHeight.
+func (p *Provider) GetLatestCommit() (*ctypes.ResultCommit, error) {
+	status, err := p.node.Status()
+	if err != nil {
+		return nil, err
+	}
+	return p.node.Commit(status.LatestBlockHeight)
+}
+
+func (p *Provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed, error) {
 	seed := certifiers.Seed{
 		Validators: types.NewValidatorSet(vals.Validators),
 	}
-	// looks good, now get the commits and build a seed
+	// now get the commits and build a seed
 	commit, err := p.node.Commit(vals.BlockHeight)
-	if err == nil {
-		seed.Header = commit.Header
-		seed.Commit = commit.Commit
+	if err != nil {
+		return seed, err
 	}
-	return seed, errors.WithStack(err)
+	seed.Checkpoint = lc.CheckpointFromResult(commit)
+	return seed, nil
+}
+
+func (p *Provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.Seed, error) {
+	seed := certifiers.Seed{
+		Checkpoint: lc.CheckpointFromResult(commit),
+	}
+
+	// now get the proper validators (TODO: use height in query)
+	vals, err := p.node.Validators()
+	if err != nil {
+		return seed, err
+	}
+
+	// make sure they match the commit (as we cannot enforce height)
+	vset := types.NewValidatorSet(vals.Validators)
+	if !bytes.Equal(vset.Hash(), commit.Header.ValidatorsHash) {
+		return seed, certifiers.ErrValidatorsChanged()
+	}
+
+	p.updateHeight(commit.Header.Height)
+	seed.Validators = vset
+	return seed, nil
 }
 
 func (p *Provider) updateHeight(h int) {

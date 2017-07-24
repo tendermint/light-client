@@ -10,10 +10,10 @@ import (
 var _ lc.Certifier = &DynamicCertifier{}
 
 // DynamicCertifier uses a StaticCertifier to evaluate the checkpoint
-// but allows for a change, if we present enough proof
+// but allows for a change, if we present enough proof.
 //
-// TODO: do we keep a long history so we can use our memory to validate
-// checkpoints from previously valid validator sets????
+// It just moves forward in time by one step.
+// InquiringCertifier keeps history to jump forward and backwards in time.
 type DynamicCertifier struct {
 	Cert       *StaticCertifier
 	LastHeight int

@@ -75,7 +75,7 @@ func (s Seeds) Less(i, j int) bool {
 
 // Provider is used to get more validators by other means
 //
-// TODO: Also FileStoreProvider, NodeProvider, ...
+// Examples: MemProvider, files.Provider, client.Provider....
 type Provider interface {
 	StoreSeed(seed Seed) error
 	// GetByHeight returns the closest seed at with height <= h
