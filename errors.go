@@ -25,30 +25,22 @@ func IsHeightMismatchErr(err error) bool {
 	return ok
 }
 
+// ErrHeightMismatch returns an mismatch error with stack-trace
 func ErrHeightMismatch(h1, h2 int) error {
-	err := errHeightMismatch{h1, h2}
-	return errors.WithStack(err)
+	return errors.WithStack(errHeightMismatch{h1, h2})
 }
 
 //--------------------------------------------
 
-type errNoData struct{}
-
-func (e errNoData) Error() string {
-	return fmt.Sprintf("No data returned for query")
-}
+var errNoData = fmt.Errorf("No data returned for query")
 
 // IsNoDataErr checks whether an error is due to a query returning empty data
 func IsNoDataErr(err error) bool {
-	if err == nil {
-		return false
-	}
-	_, ok := errors.Cause(err).(errNoData)
-	return ok
+	return errors.Cause(err) == errNoData
 }
 
 func ErrNoData() error {
-	return errors.WithStack(errNoData{})
+	return errors.WithStack(errNoData)
 }
 
 //--------------------------------------------
