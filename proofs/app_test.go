@@ -21,7 +21,7 @@ func getCurrentCheck(t *testing.T, cl client.Client) lc.Checkpoint {
 
 func getCheckForHeight(t *testing.T, cl client.Client, h int) lc.Checkpoint {
 	client.WaitForHeight(cl, h, nil)
-	commit, err := cl.Commit(h)
+	commit, err := cl.Commit(&h)
 	require.Nil(t, err, "%+v", err)
 	return lc.CheckpointFromResult(commit)
 }

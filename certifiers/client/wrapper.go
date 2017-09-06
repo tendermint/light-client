@@ -36,7 +36,8 @@ func (w Wrapper) ABCIQuery(path string, data data.Bytes, prove bool) (*ctypes.Re
 		return r, err
 	}
 	// get a verified commit to validate from
-	c, err := w.Commit(int(r.Height))
+	h := int(r.Height)
+	c, err := w.Commit(&h)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (w Wrapper) Tx(hash []byte, prove bool) (*ctypes.ResultTx, error) {
 		return r, err
 	}
 	// get a verified commit to validate from
-	c, err := w.Commit(r.Height)
+	c, err := w.Commit(&r.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func (w Wrapper) BlockchainInfo(minHeight, maxHeight int) (*ctypes.ResultBlockch
 	// go and verify every blockmeta in the result....
 	for _, meta := range r.BlockMetas {
 		// get a checkpoint to verify from
-		c, err := w.Commit(meta.Header.Height)
+		c, err := w.Commit(&meta.Header.Height)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +98,7 @@ func (w Wrapper) BlockchainInfo(minHeight, maxHeight int) (*ctypes.ResultBlockch
 	return r, nil
 }
 
-func (w Wrapper) Block(height int) (*ctypes.ResultBlock, error) {
+func (w Wrapper) Block(height *int) (*ctypes.ResultBlock, error) {
 	r, err := w.Client.Block(height)
 	if err != nil {
 		return nil, err
@@ -124,8 +125,8 @@ func (w Wrapper) Block(height int) (*ctypes.ResultBlock, error) {
 // Commit downloads the Commit and certifies it with the certifiers.
 //
 // This is the foundation for all other verification in this module
-func (w Wrapper) Commit(height int) (*ctypes.ResultCommit, error) {
-	rpcclient.WaitForHeight(w.Client, height, nil)
+func (w Wrapper) Commit(height *int) (*ctypes.ResultCommit, error) {
+	rpcclient.WaitForHeight(w.Client, *height, nil)
 	r, err := w.Client.Commit(height)
 	// if we got it, then certify it
 	if err == nil {
@@ -169,7 +170,7 @@ func (s WrappedSwitch) FireEvent(event string, data events.EventData) {
 
 func verifyHeader(c rpcclient.Client, head *types.Header) error {
 	// get a checkpoint to verify from
-	commit, err := c.Commit(head.Height)
+	commit, err := c.Commit(&head.Height)
 	if err != nil {
 		return err
 	}
@@ -179,7 +180,7 @@ func verifyHeader(c rpcclient.Client, head *types.Header) error {
 
 func verifyBlock(c rpcclient.Client, block *types.Block) error {
 	// get a checkpoint to verify from
-	commit, err := c.Commit(block.Height)
+	commit, err := c.Commit(&block.Height)
 	if err != nil {
 		return err
 	}

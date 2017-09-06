@@ -36,13 +36,12 @@ func NewHTTP(remote string) *Provider {
 // StoreSeed is a noop, as clients can only read from the chain...
 func (p *Provider) StoreSeed(_ certifiers.Seed) error { return nil }
 
-// GetHash gets the most recent validator (only one available)
-// and sees if it matches
+// GetHash gets the most recent validator and sees if it matches
 //
 // TODO: improve when the rpc interface supports more functionality
 func (p *Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 	var seed certifiers.Seed
-	vals, err := p.node.Validators()
+	vals, err := p.node.Validators(nil)
 	// if we get no validators, or a different height, return an error
 	if err != nil {
 		return seed, err
@@ -55,15 +54,9 @@ func (p *Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 	return p.seedFromVals(vals)
 }
 
-// GetByHeight gets the most recent validator (only one available)
-// and sees if it matches.
-//
-// Note: we can always get historical headers and commits...
-// Currently we cannot get historical validators :(
-//
-// TODO: improve when the rpc interface supports more functionality
+// GetByHeight gets the validator set by height
 func (p *Provider) GetByHeight(h int) (seed certifiers.Seed, err error) {
-	commit, err := p.node.Commit(h)
+	commit, err := p.node.Commit(&h)
 	if err != nil {
 		commit, err = p.GetLatestCommit()
 		if err != nil {
@@ -81,7 +74,7 @@ func (p *Provider) GetLatestCommit() (*ctypes.ResultCommit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return p.node.Commit(status.LatestBlockHeight)
+	return p.node.Commit(&status.LatestBlockHeight)
 }
 
 func (p *Provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed, error) {
@@ -89,7 +82,7 @@ func (p *Provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed,
 		Validators: types.NewValidatorSet(vals.Validators),
 	}
 	// now get the commits and build a seed
-	commit, err := p.node.Commit(vals.BlockHeight)
+	commit, err := p.node.Commit(&vals.BlockHeight)
 	if err != nil {
 		return seed, err
 	}
@@ -102,8 +95,8 @@ func (p *Provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.Seed,
 		Checkpoint: lc.CheckpointFromResult(commit),
 	}
 
-	// now get the proper validators (TODO: use height in query)
-	vals, err := p.node.Validators()
+	// now get the proper validators
+	vals, err := p.node.Validators(&commit.Header.Height)
 	if err != nil {
 		return seed, err
 	}
