@@ -1,5 +1,5 @@
-hash: 2dfec4a3906cda08d17bd45dfc16cccf0357b5b1d5c13d8edc75c802058f7528
-updated: 2017-09-06T13:35:30.311359243+02:00
+hash: 87b66db020855a372d1506308b7a1ee6ec8f4770afa4033f91570e62ae85963f
+updated: 2017-10-18T13:20:08.416580323+02:00
 imports:
 - name: github.com/bgentry/speakeasy
   version: 4aabc24848ce5fd31929f7d1e4ea74d3709c14cd
@@ -10,7 +10,7 @@ imports:
 - name: github.com/btcsuite/fastsha256
   version: 637e656429416087660c84436a2a035d69d54e2e
 - name: github.com/BurntSushi/toml
-  version: b26d9c308763d68093482582cea63d69be07a0f0
+  version: a368813c5e648fee92e5f6c30e3944ff9d5e8895
 - name: github.com/ebuchman/fail-test
   version: 95f809107225be108efcf10a3509e4ea6ceef3c4
 - name: github.com/go-kit/kit
@@ -39,7 +39,7 @@ imports:
 - name: github.com/gorilla/handlers
   version: a4043c62cc2329bacda331d33fc908ab11ef0ec3
 - name: github.com/gorilla/mux
-  version: bcd8bc72b08df0f70df986b97f95590779502d31
+  version: 24fca303ac6da784b9e8269f724ddeb0b2eea5e7
 - name: github.com/gorilla/websocket
   version: a91eba7f97777409bc2c443f5534d41dd20c5720
 - name: github.com/jmhodges/levigo
@@ -74,11 +74,11 @@ imports:
   - leveldb/table
   - leveldb/util
 - name: github.com/tendermint/abci
-  version: 864d1f80b36b440bde030a5c18d8ac3aa8c2949d
+  version: cfe4526ff536db2f20d83d0c5caa58350b372d14
   subpackages:
   - client
   - example/dummy
-  - server
+  - examples/dummy
   - types
 - name: github.com/tendermint/ed25519
   version: 1f52c6f8b8a5c7908aff4497c186af344b428925
@@ -86,27 +86,23 @@ imports:
   - edwards25519
   - extra25519
 - name: github.com/tendermint/go-crypto
-  version: 1bc8de4caa844f8b64c120e65b047898f22b7f3e
+  version: 8e7f0e7701f92206679ad093d013b9b162427631
   subpackages:
   - cmd
   - keys
 - name: github.com/tendermint/go-wire
-  version: 5f88da3dbc1a72844e6dfaf274ce87f851d488eb
+  version: 26ee079df7fca1958da8995c727b59759b197534
   subpackages:
   - data
-- name: github.com/tendermint/merkleeyes
-  version: 2f6e5d31e7a35045d8d0a5895cb1fec33dd4d32b
-  subpackages:
-  - app
-  - client
-  - iavl
-  - testutil
+- name: github.com/tendermint/iavl
+  version: ff4ffa531df48509d51f0c16c2432f986eed9fcc
 - name: github.com/tendermint/tendermint
-  version: aa78fc14b5824725f8a14dd2c2ad727a9ab89cc3
+  version: b234f7aba2e6c39f0023be8712be23f7a78e1b11
   subpackages:
   - blockchain
   - config
   - consensus
+  - consensus/types
   - mempool
   - node
   - p2p
@@ -128,11 +124,10 @@ imports:
   - types
   - version
 - name: github.com/tendermint/tmlibs
-  version: bfec1ff1cd7fda9f5b2d8b570e3bec163e5f9149
+  version: 8e5266a9ef2527e68a1571f932db8228a331b556
   subpackages:
   - autofile
   - cli
-  - cli/flags
   - clist
   - common
   - db
@@ -190,7 +185,7 @@ imports:
   - tap
   - transport
 - name: gopkg.in/go-playground/validator.v9
-  version: 6d8c18553ea1ac493d049edd6f102f52e618f085
+  version: d529ee1b0f30352444f507cc6cdac96bfd12decc
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9

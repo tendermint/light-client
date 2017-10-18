@@ -2,11 +2,14 @@ package proofs
 
 import (
 	"github.com/pkg/errors"
+
 	wire "github.com/tendermint/go-wire"
 	data "github.com/tendermint/go-wire/data"
-	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/merkleeyes/iavl"
+	"github.com/tendermint/iavl"
+
 	"github.com/tendermint/tendermint/rpc/client"
+
+	lc "github.com/tendermint/light-client"
 )
 
 var _ lc.Prover = AppProver{}
@@ -29,7 +32,7 @@ func NewAppProver(node client.Client) AppProver {
 // Get tries to download a merkle hash for app state on this key from
 // the tendermint node.
 func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
-	resp, err := a.node.ABCIQuery("/key", key, true)
+	resp, err := a.node.ABCIQuery("/key", key)
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +43,9 @@ func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
 	}
 	if len(resp.Key) == 0 || len(resp.Value) == 0 || len(resp.Proof) == 0 {
 		return nil, lc.ErrNoData()
+	}
+	if resp.Height == 0 {
+		resp.Height = h
 	}
 	if h != 0 && h != resp.Height {
 		return nil, lc.ErrHeightMismatch(int(h), int(resp.Height))
@@ -82,13 +88,14 @@ func (p AppProof) Validate(check lc.Checkpoint) error {
 		return lc.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 
-	proof, err := iavl.ReadProof(p.Proof)
+	proof, err := iavl.ReadKeyExistsProof(p.Proof)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	if !proof.Verify(p.Key, p.Value, check.Header.AppHash) {
-		return errors.Errorf("Didn't validate against hash %X", check.Header.AppHash)
+	err = proof.Verify(p.Key, p.Value, check.Header.AppHash)
+	if err != nil {
+		return err
 	}
 
 	// LGTM!
