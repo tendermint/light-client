@@ -8,34 +8,34 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-var _ Certifier = &StaticCertifier{}
+var _ Certifier = &Static{}
 
-// StaticCertifier assumes a static set of validators, set on
+// Static assumes a static set of validators, set on
 // initilization and checks against them.
 //
 // Good for testing or really simple chains.  You will want a
 // better implementation when the validator set can actually change.
-type StaticCertifier struct {
+type Static struct {
 	ChainID string
 	VSet    *types.ValidatorSet
 	vhash   []byte
 }
 
-func NewStatic(chainID string, vals *types.ValidatorSet) *StaticCertifier {
-	return &StaticCertifier{
+func NewStatic(chainID string, vals *types.ValidatorSet) *Static {
+	return &Static{
 		ChainID: chainID,
 		VSet:    vals,
 	}
 }
 
-func (c *StaticCertifier) Hash() []byte {
+func (c *Static) Hash() []byte {
 	if len(c.vhash) == 0 {
 		c.vhash = c.VSet.Hash()
 	}
 	return c.vhash
 }
 
-func (c *StaticCertifier) Certify(check Checkpoint) error {
+func (c *Static) Certify(check Checkpoint) error {
 	// do basic sanity checks
 	err := check.ValidateBasic(c.ChainID)
 	if err != nil {

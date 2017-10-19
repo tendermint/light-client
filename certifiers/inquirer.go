@@ -4,24 +4,24 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-type InquiringCertifier struct {
-	Cert         *DynamicCertifier
+type Inquiring struct {
+	Cert         *Dynamic
 	TrustedSeeds Provider // These are only properly validated data, from local system
 	SeedSource   Provider // This is a source of new info, like a node rpc, or other import method
 }
 
-func NewInquiring(chainID string, seed Seed, trusted Provider, source Provider) *InquiringCertifier {
+func NewInquiring(chainID string, seed Seed, trusted Provider, source Provider) *Inquiring {
 	// store the data in trusted
 	trusted.StoreSeed(seed)
 
-	return &InquiringCertifier{
+	return &Inquiring{
 		Cert:         NewDynamic(chainID, seed.Validators, seed.Height()),
 		TrustedSeeds: trusted,
 		SeedSource:   source,
 	}
 }
 
-func (c *InquiringCertifier) ChainID() string {
+func (c *Inquiring) ChainID() string {
 	return c.Cert.Cert.ChainID
 }
 
@@ -31,7 +31,7 @@ func (c *InquiringCertifier) ChainID() string {
 // for a path to prove the new validators.
 //
 // On success, it will store the checkpoint in the store for later viewing
-func (c *InquiringCertifier) Certify(check Checkpoint) error {
+func (c *Inquiring) Certify(check Checkpoint) error {
 	err := c.useClosestTrust(check.Height())
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (c *InquiringCertifier) Certify(check Checkpoint) error {
 	return nil
 }
 
-func (c *InquiringCertifier) Update(check Checkpoint, vals *types.ValidatorSet) error {
+func (c *Inquiring) Update(check Checkpoint, vals *types.ValidatorSet) error {
 	err := c.useClosestTrust(check.Height())
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func (c *InquiringCertifier) Update(check Checkpoint, vals *types.ValidatorSet) 
 	return err
 }
 
-func (c *InquiringCertifier) useClosestTrust(h int) error {
+func (c *Inquiring) useClosestTrust(h int) error {
 	closest, err := c.TrustedSeeds.GetByHeight(h)
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func (c *InquiringCertifier) useClosestTrust(h int) error {
 
 // updateToHash gets the validator hash we want to update to
 // if IsTooMuchChangeErr, we try to find a path by binary search over height
-func (c *InquiringCertifier) updateToHash(vhash []byte) error {
+func (c *Inquiring) updateToHash(vhash []byte) error {
 	// try to get the match, and update
 	seed, err := c.SeedSource.GetByHash(vhash)
 	if err != nil {
@@ -103,7 +103,7 @@ func (c *InquiringCertifier) updateToHash(vhash []byte) error {
 }
 
 // updateToHeight will use divide-and-conquer to find a path to h
-func (c *InquiringCertifier) updateToHeight(h int) error {
+func (c *Inquiring) updateToHeight(h int) error {
 	// try to update to this height (with checks)
 	seed, err := c.SeedSource.GetByHeight(h)
 	if err != nil {

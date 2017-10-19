@@ -6,27 +6,27 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-var _ Certifier = &DynamicCertifier{}
+var _ Certifier = &Dynamic{}
 
-// DynamicCertifier uses a StaticCertifier to evaluate the checkpoint
+// Dynamic uses a Static to evaluate the checkpoint
 // but allows for a change, if we present enough proof.
 //
 // It just moves forward in time by one step.
-// InquiringCertifier keeps history to jump forward and backwards in time.
-type DynamicCertifier struct {
-	Cert       *StaticCertifier
+// Inquiring keeps history to jump forward and backwards in time.
+type Dynamic struct {
+	Cert       *Static
 	LastHeight int
 }
 
-func NewDynamic(chainID string, vals *types.ValidatorSet, height int) *DynamicCertifier {
-	return &DynamicCertifier{
+func NewDynamic(chainID string, vals *types.ValidatorSet, height int) *Dynamic {
+	return &Dynamic{
 		Cert:       NewStatic(chainID, vals),
 		LastHeight: height,
 	}
 }
 
 // Certify handles this with
-func (c *DynamicCertifier) Certify(check Checkpoint) error {
+func (c *Dynamic) Certify(check Checkpoint) error {
 	err := c.Cert.Certify(check)
 	if err == nil {
 		// update last seen height if input is valid
@@ -39,7 +39,7 @@ func (c *DynamicCertifier) Certify(check Checkpoint) error {
 // the certifying validator set if safe to do so.
 //
 // Returns an error if update is impossible (invalid proof or IsTooMuchChangeErr)
-func (c *DynamicCertifier) Update(check Checkpoint, vset *types.ValidatorSet) error {
+func (c *Dynamic) Update(check Checkpoint, vset *types.ValidatorSet) error {
 	// ignore all checkpoints in the past -> only to the future
 	if check.Height() <= c.LastHeight {
 		return ErrPastTime()
