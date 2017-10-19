@@ -5,25 +5,25 @@ import (
 	"sort"
 )
 
-type MemStoreProvider struct {
+type memStoreProvider struct {
 	// byHeight is always sorted by Height... need to support range search (nil, h]
 	// btree would be more efficient for larger sets
 	byHeight Seeds
 	byHash   map[string]Seed
 }
 
-func NewMemStoreProvider() *MemStoreProvider {
-	return &MemStoreProvider{
+func NewMemStoreProvider() Provider {
+	return &memStoreProvider{
 		byHeight: Seeds{},
 		byHash:   map[string]Seed{},
 	}
 }
 
-func (m *MemStoreProvider) encodeHash(hash []byte) string {
+func (m *memStoreProvider) encodeHash(hash []byte) string {
 	return hex.EncodeToString(hash)
 }
 
-func (m *MemStoreProvider) StoreSeed(seed Seed) error {
+func (m *memStoreProvider) StoreSeed(seed Seed) error {
 	// make sure the seed is self-consistent before saving
 	err := seed.ValidateBasic(seed.Checkpoint.Header.ChainID)
 	if err != nil {
@@ -38,7 +38,7 @@ func (m *MemStoreProvider) StoreSeed(seed Seed) error {
 	return nil
 }
 
-func (m *MemStoreProvider) GetByHeight(h int) (Seed, error) {
+func (m *memStoreProvider) GetByHeight(h int) (Seed, error) {
 	// search from highest to lowest
 	for i := len(m.byHeight) - 1; i >= 0; i-- {
 		s := m.byHeight[i]
@@ -49,7 +49,7 @@ func (m *MemStoreProvider) GetByHeight(h int) (Seed, error) {
 	return Seed{}, ErrSeedNotFound()
 }
 
-func (m *MemStoreProvider) GetByHash(hash []byte) (Seed, error) {
+func (m *memStoreProvider) GetByHash(hash []byte) (Seed, error) {
 	var err error
 	s, ok := m.byHash[m.encodeHash(hash)]
 	if !ok {
