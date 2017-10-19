@@ -8,7 +8,15 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-// Test Helper: ValKeys lets us simulate signing with many keys
+// ValKeys is a helper for testing.
+//
+// It lets us simulate signing with many keys, either ed25519 or secp256k1.
+// The main use case is to create a set, and call GenCheckpoint
+// to get propely signed header for testing.
+//
+// You can set different weights of validators each time you call
+// ToValidators, and can optionally extend the validator set later
+// with Extend or ExtendSecp
 type ValKeys []crypto.PrivKey
 
 // GenValKeys produces an array of private keys to generate commits
@@ -34,8 +42,8 @@ func (v ValKeys) Extend(n int) ValKeys {
 	return append(v, extra...)
 }
 
-// GenSecValKeys produces an array of secp256k1 private keys to generate commits
-func GenSecValKeys(n int) ValKeys {
+// GenSecpValKeys produces an array of secp256k1 private keys to generate commits
+func GenSecpValKeys(n int) ValKeys {
 	res := make(ValKeys, n)
 	for i := range res {
 		res[i] = crypto.GenPrivKeySecp256k1().Wrap()
@@ -43,9 +51,9 @@ func GenSecValKeys(n int) ValKeys {
 	return res
 }
 
-// Extend adds n more secp256k1 keys (to remove, just take a slice)
-func (v ValKeys) ExtendSec(n int) ValKeys {
-	extra := GenSecValKeys(n)
+// ExtendSecp adds n more secp256k1 keys (to remove, just take a slice)
+func (v ValKeys) ExtendSecp(n int) ValKeys {
+	extra := GenSecpValKeys(n)
 	return append(v, extra...)
 }
 
@@ -98,7 +106,7 @@ func makeVote(header *types.Header, vals *types.ValidatorSet, key crypto.PrivKey
 	return vote
 }
 
-func GenHeader(chainID string, height int, txs types.Txs,
+func genHeader(chainID string, height int, txs types.Txs,
 	vals *types.ValidatorSet, appHash []byte) *types.Header {
 
 	return &types.Header{
@@ -114,11 +122,11 @@ func GenHeader(chainID string, height int, txs types.Txs,
 	}
 }
 
-// GenCheckpoint calls GenHeader and SignHeader and combines them into a Checkpoint
+// GenCheckpoint calls genHeader and SignHeader and combines them into a Checkpoint
 func (v ValKeys) GenCheckpoint(chainID string, height int, txs types.Txs,
 	vals *types.ValidatorSet, appHash []byte, first, last int) Checkpoint {
 
-	header := GenHeader(chainID, height, txs, vals, appHash)
+	header := genHeader(chainID, height, txs, vals, appHash)
 	check := Checkpoint{
 		Header: header,
 		Commit: v.SignHeader(header, first, last),

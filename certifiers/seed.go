@@ -100,10 +100,11 @@ func LoadSeedJSON(path string) (Seed, error) {
 	return seed, errors.WithStack(err)
 }
 
-type Seeds []Seed
+// seeds just exists to allow easy sorting
+type seeds []Seed
 
-func (s Seeds) Len() int      { return len(s) }
-func (s Seeds) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s Seeds) Less(i, j int) bool {
+func (s seeds) Len() int      { return len(s) }
+func (s seeds) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s seeds) Less(i, j int) bool {
 	return s[i].Height() < s[j].Height()
 }

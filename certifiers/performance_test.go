@@ -18,12 +18,12 @@ func BenchmarkGenCheckpoint100(b *testing.B) {
 }
 
 func BenchmarkGenCheckpointSec20(b *testing.B) {
-	keys := certifiers.GenSecValKeys(20)
+	keys := certifiers.GenSecpValKeys(20)
 	benchmarkGenCheckpoint(b, keys)
 }
 
 func BenchmarkGenCheckpointSec100(b *testing.B) {
-	keys := certifiers.GenSecValKeys(100)
+	keys := certifiers.GenSecpValKeys(100)
 	benchmarkGenCheckpoint(b, keys)
 }
 
@@ -46,8 +46,8 @@ func BenchmarkGenValKeys(b *testing.B) {
 }
 
 // this benchmarks generating one key
-func BenchmarkGenSecValKeys(b *testing.B) {
-	keys := certifiers.GenSecValKeys(20)
+func BenchmarkGenSecpValKeys(b *testing.B) {
+	keys := certifiers.GenSecpValKeys(20)
 	for i := 0; i < b.N; i++ {
 		keys = keys.Extend(1)
 	}
@@ -75,7 +75,7 @@ func BenchmarkToValidatorsSec100(b *testing.B) {
 
 // this benchmarks constructing the validator set (.PubKey() * nodes)
 func benchmarkToValidatorsSec(b *testing.B, nodes int) {
-	keys := certifiers.GenSecValKeys(nodes)
+	keys := certifiers.GenSecpValKeys(nodes)
 	for i := 1; i <= b.N; i++ {
 		keys.ToValidators(int64(2*i), int64(i))
 	}
@@ -92,12 +92,12 @@ func BenchmarkCertifyCheckpoint100(b *testing.B) {
 }
 
 func BenchmarkCertifyCheckpointSec20(b *testing.B) {
-	keys := certifiers.GenSecValKeys(20)
+	keys := certifiers.GenSecpValKeys(20)
 	benchmarkCertifyCheckpoint(b, keys)
 }
 
 func BenchmarkCertifyCheckpointSec100(b *testing.B) {
-	keys := certifiers.GenSecValKeys(100)
+	keys := certifiers.GenSecpValKeys(100)
 	benchmarkCertifyCheckpoint(b, keys)
 }
 

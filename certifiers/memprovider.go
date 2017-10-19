@@ -10,13 +10,13 @@ import (
 type memStoreProvider struct {
 	// byHeight is always sorted by Height... need to support range search (nil, h]
 	// btree would be more efficient for larger sets
-	byHeight Seeds
+	byHeight seeds
 	byHash   map[string]Seed
 }
 
 func NewMemStoreProvider() Provider {
 	return &memStoreProvider{
-		byHeight: Seeds{},
+		byHeight: seeds{},
 		byHash:   map[string]Seed{},
 	}
 }
