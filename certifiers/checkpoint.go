@@ -7,6 +7,8 @@ import (
 
 	rtypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
+
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 // Certifier checks the votes to make sure the block really is signed properly.
@@ -61,7 +63,7 @@ func (c Checkpoint) ValidateBasic(chainID string) error {
 
 	// make sure the header and commit match (height and hash)
 	if c.Commit.Height() != c.Header.Height {
-		return ErrHeightMismatch(c.Commit.Height(), c.Header.Height)
+		return certerr.ErrHeightMismatch(c.Commit.Height(), c.Header.Height)
 	}
 	hhash := c.Header.Hash()
 	chash := c.Commit.BlockID.Hash

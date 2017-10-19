@@ -17,10 +17,10 @@ var _ rpcclient.Client = Wrapper{}
 
 type Wrapper struct {
 	rpcclient.Client
-	cert *certifiers.InquiringCertifier
+	cert *certifiers.Inquiring
 }
 
-func Wrap(c rpcclient.Client, cert *certifiers.InquiringCertifier) Wrapper {
+func Wrap(c rpcclient.Client, cert *certifiers.Inquiring) Wrapper {
 	wrap := Wrapper{c, cert}
 	// if we wrap http client, then we can swap out the event switch to filter
 	if hc, ok := c.(*rpcclient.HTTP); ok {

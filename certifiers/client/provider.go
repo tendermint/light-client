@@ -8,6 +8,7 @@ import (
 	"github.com/tendermint/tendermint/types"
 
 	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 var _ certifiers.Provider = &Provider{}
@@ -48,7 +49,7 @@ func (p *Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 	p.updateHeight(vals.BlockHeight)
 	vhash := types.NewValidatorSet(vals.Validators).Hash()
 	if !bytes.Equal(hash, vhash) {
-		return seed, certifiers.ErrSeedNotFound()
+		return seed, certerr.ErrSeedNotFound()
 	}
 	return p.seedFromVals(vals)
 }
@@ -103,7 +104,7 @@ func (p *Provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.Seed,
 	// make sure they match the commit (as we cannot enforce height)
 	vset := types.NewValidatorSet(vals.Validators)
 	if !bytes.Equal(vset.Hash(), commit.Header.ValidatorsHash) {
-		return seed, certifiers.ErrValidatorsChanged()
+		return seed, certerr.ErrValidatorsChanged()
 	}
 
 	p.updateHeight(commit.Header.Height)

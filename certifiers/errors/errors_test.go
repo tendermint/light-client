@@ -1,4 +1,4 @@
-package certifiers
+package errors
 
 import (
 	"errors"

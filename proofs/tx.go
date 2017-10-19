@@ -9,6 +9,7 @@ import (
 	"github.com/tendermint/tendermint/types"
 
 	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 var _ Prover = TxProver{}
@@ -69,7 +70,7 @@ func (p TxProof) BlockHeight() uint64 {
 
 func (p TxProof) Validate(check certifiers.Checkpoint) error {
 	if uint64(check.Height()) != p.Height {
-		return certifiers.ErrHeightMismatch(int(p.Height), check.Height())
+		return certerr.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 	return p.Proof.Validate(check.Header.DataHash)
 }

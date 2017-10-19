@@ -11,6 +11,7 @@ import (
 
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/certifiers/client"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 func TestProvider(t *testing.T) {
@@ -52,7 +53,7 @@ func TestProvider(t *testing.T) {
 	// get by hash fails without match
 	seed, err = p.GetByHash([]byte("foobar"))
 	assert.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(certerr.IsSeedNotFoundErr(err))
 
 	// storing the seed silently ignored
 	err = p.StoreSeed(seed)

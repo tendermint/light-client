@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 	"github.com/tendermint/light-client/certifiers/files"
 )
 
@@ -52,11 +53,11 @@ func TestFileProvider(t *testing.T) {
 	// check provider is empty
 	seed, err := p.GetByHeight(20)
 	require.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(certerr.IsSeedNotFoundErr(err))
 
 	seed, err = p.GetByHash(seeds[3].Hash())
 	require.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(certerr.IsSeedNotFoundErr(err))
 
 	// now add them all to the provider
 	for _, s := range seeds {
@@ -91,5 +92,5 @@ func TestFileProvider(t *testing.T) {
 	// and proper error for too low
 	_, err = p.GetByHeight(5)
 	assert.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(certerr.IsSeedNotFoundErr(err))
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/tendermint/tendermint/types"
+
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 var _ Certifier = &Static{}
@@ -44,7 +46,7 @@ func (c *Static) Certify(check Checkpoint) error {
 
 	// make sure it has the same validator set we have (static means static)
 	if !bytes.Equal(c.Hash(), check.Header.ValidatorsHash) {
-		return ErrValidatorsChanged()
+		return certerr.ErrValidatorsChanged()
 	}
 
 	// then make sure we have the proper signatures for this

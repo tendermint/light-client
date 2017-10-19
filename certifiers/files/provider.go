@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 const (
@@ -84,7 +85,7 @@ func (m Provider) GetByHeight(h int) (certifiers.Seed, error) {
 	// first we look for exact match, then search...
 	path := filepath.Join(m.checkDir, m.encodeHeight(h))
 	seed, err := certifiers.LoadSeed(path)
-	if certifiers.IsSeedNotFoundErr(err) {
+	if certerr.IsSeedNotFoundErr(err) {
 		path, err = m.searchForHeight(h)
 		if err == nil {
 			seed, err = certifiers.LoadSeed(path)
@@ -111,7 +112,7 @@ func (m Provider) searchForHeight(h int) (string, error) {
 	sort.Strings(files)
 	i := sort.SearchStrings(files, desired)
 	if i == 0 {
-		return "", certifiers.ErrSeedNotFound()
+		return "", certerr.ErrSeedNotFound()
 	}
 	found := files[i-1]
 	path := filepath.Join(m.checkDir, found)

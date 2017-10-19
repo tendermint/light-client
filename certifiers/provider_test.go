@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/light-client/certifiers"
+	"github.com/tendermint/light-client/certifiers/errors"
 )
 
 func TestMemProvider(t *testing.T) {
@@ -43,11 +44,11 @@ func checkProvider(t *testing.T, p certifiers.Provider, chainID, app string) {
 	// check provider is empty
 	seed, err := p.GetByHeight(20)
 	require.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(errors.IsSeedNotFoundErr(err))
 
 	seed, err = p.GetByHash(seeds[3].Hash())
 	require.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(errors.IsSeedNotFoundErr(err))
 
 	// now add them all to the provider
 	for _, s := range seeds {

@@ -6,9 +6,11 @@ import (
 	wire "github.com/tendermint/go-wire"
 	data "github.com/tendermint/go-wire/data"
 	"github.com/tendermint/iavl"
-	"github.com/tendermint/light-client/certifiers"
 
 	"github.com/tendermint/tendermint/rpc/client"
+
+	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 var _ Prover = AppProver{}
@@ -47,7 +49,7 @@ func (a AppProver) Get(key []byte, h uint64) (Proof, error) {
 		resp.Height = h
 	}
 	if h != 0 && h != resp.Height {
-		return nil, certifiers.ErrHeightMismatch(int(h), int(resp.Height))
+		return nil, certerr.ErrHeightMismatch(int(h), int(resp.Height))
 	}
 	proof := AppProof{
 		Height: resp.Height,
@@ -84,7 +86,7 @@ func (p AppProof) BlockHeight() uint64 {
 
 func (p AppProof) Validate(check certifiers.Checkpoint) error {
 	if uint64(check.Height()) != p.Height {
-		return certifiers.ErrHeightMismatch(int(p.Height), check.Height())
+		return certerr.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 
 	proof, err := iavl.ReadKeyExistsProof(p.Proof)

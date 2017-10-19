@@ -9,6 +9,8 @@ import (
 	wire "github.com/tendermint/go-wire"
 
 	"github.com/tendermint/tendermint/types"
+
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 const (
@@ -71,7 +73,7 @@ func LoadSeed(path string) (Seed, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return seed, ErrSeedNotFound()
+			return seed, certerr.ErrSeedNotFound()
 		}
 		return seed, errors.WithStack(err)
 	}
@@ -87,7 +89,7 @@ func LoadSeedJSON(path string) (Seed, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return seed, ErrSeedNotFound()
+			return seed, certerr.ErrSeedNotFound()
 		}
 		return seed, errors.WithStack(err)
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/tendermint/tendermint/types"
 
 	"github.com/tendermint/light-client/certifiers"
+	"github.com/tendermint/light-client/certifiers/errors"
 )
 
 // TestDynamicCert just makes sure it still works like StaticCert
@@ -53,7 +54,7 @@ func TestDynamicCert(t *testing.T) {
 		} else {
 			assert.NotNil(err)
 			if tc.changed {
-				assert.True(certifiers.IsValidatorsChangedErr(err), "%+v", err)
+				assert.True(errors.IsValidatorsChangedErr(err), "%+v", err)
 			}
 		}
 	}
@@ -121,7 +122,7 @@ func TestDynamicUpdate(t *testing.T) {
 			// we don't update the height
 			assert.NotEqual(cert.LastHeight, tc.height)
 			if tc.changed {
-				assert.True(certifiers.IsTooMuchChangeErr(err),
+				assert.True(errors.IsTooMuchChangeErr(err),
 					"%d: %+v", tc.height, err)
 			}
 		}

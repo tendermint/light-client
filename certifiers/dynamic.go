@@ -4,6 +4,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/tendermint/tendermint/types"
+
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 var _ Certifier = &Dynamic{}
@@ -42,7 +44,7 @@ func (c *Dynamic) Certify(check Checkpoint) error {
 func (c *Dynamic) Update(check Checkpoint, vset *types.ValidatorSet) error {
 	// ignore all checkpoints in the past -> only to the future
 	if check.Height() <= c.LastHeight {
-		return ErrPastTime()
+		return certerr.ErrPastTime()
 	}
 
 	// first, verify if the input is self-consistent....
@@ -57,7 +59,7 @@ func (c *Dynamic) Update(check Checkpoint, vset *types.ValidatorSet) error {
 	err = VerifyCommitAny(c.Cert.VSet, vset, c.Cert.ChainID,
 		check.Commit.BlockID, check.Header.Height, check.Commit)
 	if err != nil {
-		return ErrTooMuchChange()
+		return certerr.ErrTooMuchChange()
 	}
 
 	// looks good, we can update
@@ -103,7 +105,7 @@ func VerifyCommitAny(old, cur *types.ValidatorSet, chainID string,
 			continue
 		}
 		if precommit.Height != height {
-			return ErrHeightMismatch(height, precommit.Height)
+			return certerr.ErrHeightMismatch(height, precommit.Height)
 		}
 		if precommit.Round != round {
 			return errors.Errorf("Invalid commit -- wrong round: %v vs %v", round, precommit.Round)

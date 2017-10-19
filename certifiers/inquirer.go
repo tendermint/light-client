@@ -2,6 +2,8 @@ package certifiers
 
 import (
 	"github.com/tendermint/tendermint/types"
+
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 type Inquiring struct {
@@ -38,7 +40,7 @@ func (c *Inquiring) Certify(check Checkpoint) error {
 	}
 
 	err = c.Cert.Certify(check)
-	if !IsValidatorsChangedErr(err) {
+	if !certerr.IsValidatorsChangedErr(err) {
 		return err
 	}
 	err = c.updateToHash(check.Header.ValidatorsHash)
@@ -96,7 +98,7 @@ func (c *Inquiring) updateToHash(vhash []byte) error {
 	}
 	err = c.Cert.Update(seed.Checkpoint, seed.Validators)
 	// handle IsTooMuchChangeErr by using divide and conquer
-	if IsTooMuchChangeErr(err) {
+	if certerr.IsTooMuchChangeErr(err) {
 		err = c.updateToHeight(seed.Height())
 	}
 	return err
@@ -111,12 +113,12 @@ func (c *Inquiring) updateToHeight(h int) error {
 	}
 	start, end := c.Cert.LastHeight, seed.Height()
 	if end <= start {
-		return ErrNoPathFound()
+		return certerr.ErrNoPathFound()
 	}
 	err = c.Update(seed.Checkpoint, seed.Validators)
 
 	// we can handle IsTooMuchChangeErr specially
-	if !IsTooMuchChangeErr(err) {
+	if !certerr.IsTooMuchChangeErr(err) {
 		return err
 	}
 

@@ -3,6 +3,8 @@ package certifiers
 import (
 	"encoding/hex"
 	"sort"
+
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 type memStoreProvider struct {
@@ -46,14 +48,14 @@ func (m *memStoreProvider) GetByHeight(h int) (Seed, error) {
 			return s, nil
 		}
 	}
-	return Seed{}, ErrSeedNotFound()
+	return Seed{}, certerr.ErrSeedNotFound()
 }
 
 func (m *memStoreProvider) GetByHash(hash []byte) (Seed, error) {
 	var err error
 	s, ok := m.byHash[m.encodeHash(hash)]
 	if !ok {
-		err = ErrSeedNotFound()
+		err = certerr.ErrSeedNotFound()
 	}
 	return s, err
 }

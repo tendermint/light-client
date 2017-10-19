@@ -1,6 +1,10 @@
 package certifiers
 
-import "math"
+import (
+	"math"
+
+	certerr "github.com/tendermint/light-client/certifiers/errors"
+)
 
 const (
 	FutureHeight = (math.MaxInt32 - 5)
@@ -101,8 +105,8 @@ func NewMissingProvider() Provider {
 
 func (_ missingProvider) StoreSeed(_ Seed) error { return nil }
 func (_ missingProvider) GetByHeight(_ int) (Seed, error) {
-	return Seed{}, ErrSeedNotFound()
+	return Seed{}, certerr.ErrSeedNotFound()
 }
 func (_ missingProvider) GetByHash(_ []byte) (Seed, error) {
-	return Seed{}, ErrSeedNotFound()
+	return Seed{}, certerr.ErrSeedNotFound()
 }

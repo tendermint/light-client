@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/tendermint/types"
+
+	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 func ValidateBlockMeta(meta *types.BlockMeta, check certifiers.Checkpoint) error {
@@ -27,7 +29,7 @@ func ValidateBlock(meta *types.Block, check certifiers.Checkpoint) error {
 func ValidateHeader(head *types.Header, check certifiers.Checkpoint) error {
 	// make sure they are for the same height (obvious fail)
 	if head.Height != check.Height() {
-		return certifiers.ErrHeightMismatch(head.Height, check.Height())
+		return certerr.ErrHeightMismatch(head.Height, check.Height())
 	}
 	// check if they are equal by using hashes
 	chead := check.Header
