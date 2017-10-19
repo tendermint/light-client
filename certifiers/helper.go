@@ -4,6 +4,7 @@ import (
 	"time"
 
 	crypto "github.com/tendermint/go-crypto"
+
 	"github.com/tendermint/tendermint/types"
 )
 

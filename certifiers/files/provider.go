@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+
 	"github.com/tendermint/light-client/certifiers"
 )
 

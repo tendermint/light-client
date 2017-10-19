@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/tendermint/abci/example/dummy"
+
 	nm "github.com/tendermint/tendermint/node"
 	rpctest "github.com/tendermint/tendermint/rpc/test"
 )
