@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 
 	wire "github.com/tendermint/go-wire"
-	lc "github.com/tendermint/light-client"
 
 	"github.com/tendermint/tendermint/types"
 )
@@ -20,8 +19,8 @@ const (
 // need to update to a given point, assuming knowledge of some previous
 // validator set
 type Seed struct {
-	lc.Checkpoint `json:"checkpoint"`
-	Validators    *types.ValidatorSet `json:"validator_set"`
+	Checkpoint `json:"checkpoint"`
+	Validators *types.ValidatorSet `json:"validator_set"`
 }
 
 func (s Seed) Height() int {

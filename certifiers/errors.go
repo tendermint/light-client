@@ -1,17 +1,17 @@
 package certifiers
 
 import (
-	rawerr "errors"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
 
 var (
-	errValidatorsChanged = rawerr.New("Validators differ between header and certifier")
-	errSeedNotFound      = rawerr.New("Seed not found by provider")
-	errTooMuchChange     = rawerr.New("Validators change too much to safely update")
-	errPastTime          = rawerr.New("Update older than certifier height")
-	errNoPathFound       = rawerr.New("Cannot find a path of validators")
+	errValidatorsChanged = fmt.Errorf("Validators differ between header and certifier")
+	errSeedNotFound      = fmt.Errorf("Seed not found by provider")
+	errTooMuchChange     = fmt.Errorf("Validators change too much to safely update")
+	errPastTime          = fmt.Errorf("Update older than certifier height")
+	errNoPathFound       = fmt.Errorf("Cannot find a path of validators")
 )
 
 // IsSeedNotFoundErr checks whether an error is due to missing data
@@ -59,4 +59,28 @@ func IsNoPathFoundErr(err error) bool {
 
 func ErrNoPathFound() error {
 	return errors.WithStack(errNoPathFound)
+}
+
+//--------------------------------------------
+
+type errHeightMismatch struct {
+	h1, h2 int
+}
+
+func (e errHeightMismatch) Error() string {
+	return fmt.Sprintf("Blocks don't match - %d vs %d", e.h1, e.h2)
+}
+
+// IsHeightMismatchErr checks whether an error is due to data from different blocks
+func IsHeightMismatchErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	_, ok := errors.Cause(err).(errHeightMismatch)
+	return ok
+}
+
+// ErrHeightMismatch returns an mismatch error with stack-trace
+func ErrHeightMismatch(h1, h2 int) error {
+	return errors.WithStack(errHeightMismatch{h1, h2})
 }

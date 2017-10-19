@@ -1,13 +1,12 @@
 package certifiers
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 
-	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
 
-var _ lc.Certifier = &DynamicCertifier{}
+var _ Certifier = &DynamicCertifier{}
 
 // DynamicCertifier uses a StaticCertifier to evaluate the checkpoint
 // but allows for a change, if we present enough proof.
@@ -27,7 +26,7 @@ func NewDynamic(chainID string, vals *types.ValidatorSet, height int) *DynamicCe
 }
 
 // Certify handles this with
-func (c *DynamicCertifier) Certify(check lc.Checkpoint) error {
+func (c *DynamicCertifier) Certify(check Checkpoint) error {
 	err := c.Cert.Certify(check)
 	if err == nil {
 		// update last seen height if input is valid
@@ -40,7 +39,7 @@ func (c *DynamicCertifier) Certify(check lc.Checkpoint) error {
 // the certifying validator set if safe to do so.
 //
 // Returns an error if update is impossible (invalid proof or IsTooMuchChangeErr)
-func (c *DynamicCertifier) Update(check lc.Checkpoint, vset *types.ValidatorSet) error {
+func (c *DynamicCertifier) Update(check Checkpoint, vset *types.ValidatorSet) error {
 	// ignore all checkpoints in the past -> only to the future
 	if check.Height() <= c.LastHeight {
 		return ErrPastTime()
@@ -87,10 +86,10 @@ func VerifyCommitAny(old, cur *types.ValidatorSet, chainID string,
 	blockID types.BlockID, height int, commit *types.Commit) error {
 
 	if cur.Size() != len(commit.Precommits) {
-		return fmt.Errorf("Invalid commit -- wrong set size: %v vs %v", cur.Size(), len(commit.Precommits))
+		return errors.Errorf("Invalid commit -- wrong set size: %v vs %v", cur.Size(), len(commit.Precommits))
 	}
 	if height != commit.Height() {
-		return fmt.Errorf("Invalid commit -- wrong height: %v vs %v", height, commit.Height())
+		return errors.Errorf("Invalid commit -- wrong height: %v vs %v", height, commit.Height())
 	}
 
 	oldVotingPower := int64(0)
@@ -104,13 +103,13 @@ func VerifyCommitAny(old, cur *types.ValidatorSet, chainID string,
 			continue
 		}
 		if precommit.Height != height {
-			return lc.ErrHeightMismatch(height, precommit.Height)
+			return ErrHeightMismatch(height, precommit.Height)
 		}
 		if precommit.Round != round {
-			return fmt.Errorf("Invalid commit -- wrong round: %v vs %v", round, precommit.Round)
+			return errors.Errorf("Invalid commit -- wrong round: %v vs %v", round, precommit.Round)
 		}
 		if precommit.Type != types.VoteTypePrecommit {
-			return fmt.Errorf("Invalid commit -- not precommit @ index %v", idx)
+			return errors.Errorf("Invalid commit -- not precommit @ index %v", idx)
 		}
 		if !blockID.Equals(precommit.BlockID) {
 			continue // Not an error, but doesn't count
@@ -126,7 +125,7 @@ func VerifyCommitAny(old, cur *types.ValidatorSet, chainID string,
 		// Validate signature old school
 		precommitSignBytes := types.SignBytes(chainID, precommit)
 		if !ov.PubKey.VerifyBytes(precommitSignBytes, precommit.Signature) {
-			return fmt.Errorf("Invalid commit -- invalid signature: %v", precommit)
+			return errors.Errorf("Invalid commit -- invalid signature: %v", precommit)
 		}
 		// Good precommit!
 		oldVotingPower += ov.VotingPower
@@ -140,10 +139,10 @@ func VerifyCommitAny(old, cur *types.ValidatorSet, chainID string,
 	}
 
 	if oldVotingPower <= old.TotalVotingPower()*2/3 {
-		return fmt.Errorf("Invalid commit -- insufficient old voting power: got %v, needed %v",
+		return errors.Errorf("Invalid commit -- insufficient old voting power: got %v, needed %v",
 			oldVotingPower, (old.TotalVotingPower()*2/3 + 1))
 	} else if curVotingPower <= cur.TotalVotingPower()*2/3 {
-		return fmt.Errorf("Invalid commit -- insufficient cur voting power: got %v, needed %v",
+		return errors.Errorf("Invalid commit -- insufficient cur voting power: got %v, needed %v",
 			curVotingPower, (cur.TotalVotingPower()*2/3 + 1))
 	}
 	return nil

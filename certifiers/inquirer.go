@@ -1,7 +1,6 @@
 package certifiers
 
 import (
-	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -32,7 +31,7 @@ func (c *InquiringCertifier) ChainID() string {
 // for a path to prove the new validators.
 //
 // On success, it will store the checkpoint in the store for later viewing
-func (c *InquiringCertifier) Certify(check lc.Checkpoint) error {
+func (c *InquiringCertifier) Certify(check Checkpoint) error {
 	err := c.useClosestTrust(check.Height())
 	if err != nil {
 		return err
@@ -60,7 +59,7 @@ func (c *InquiringCertifier) Certify(check lc.Checkpoint) error {
 	return nil
 }
 
-func (c *InquiringCertifier) Update(check lc.Checkpoint, vals *types.ValidatorSet) error {
+func (c *InquiringCertifier) Update(check Checkpoint, vals *types.ValidatorSet) error {
 	err := c.useClosestTrust(check.Height())
 	if err != nil {
 		return err

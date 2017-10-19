@@ -4,11 +4,10 @@ import (
 	"bytes"
 
 	"github.com/pkg/errors"
-	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
 )
 
-var _ lc.Certifier = &StaticCertifier{}
+var _ Certifier = &StaticCertifier{}
 
 // StaticCertifier assumes a static set of validators, set on
 // initilization and checks against them.
@@ -35,7 +34,7 @@ func (c *StaticCertifier) Hash() []byte {
 	return c.vhash
 }
 
-func (c *StaticCertifier) Certify(check lc.Checkpoint) error {
+func (c *StaticCertifier) Certify(check Checkpoint) error {
 	// do basic sanity checks
 	err := check.ValidateBasic(c.ChainID)
 	if err != nil {

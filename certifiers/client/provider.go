@@ -7,7 +7,6 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 
-	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/light-client/certifiers"
 )
 
@@ -86,13 +85,13 @@ func (p *Provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed,
 	if err != nil {
 		return seed, err
 	}
-	seed.Checkpoint = lc.CheckpointFromResult(commit)
+	seed.Checkpoint = certifiers.CheckpointFromResult(commit)
 	return seed, nil
 }
 
 func (p *Provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.Seed, error) {
 	seed := certifiers.Seed{
-		Checkpoint: lc.CheckpointFromResult(commit),
+		Checkpoint: certifiers.CheckpointFromResult(commit),
 	}
 
 	// now get the proper validators
