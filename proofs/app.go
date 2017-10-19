@@ -12,8 +12,8 @@ import (
 	lc "github.com/tendermint/light-client"
 )
 
-var _ lc.Prover = AppProver{}
-var _ lc.Proof = AppProof{}
+var _ Prover = AppProver{}
+var _ Proof = AppProof{}
 
 // we limit proofs to 1MB to stop overflow attacks
 const appLimit = 1000 * 1000
@@ -31,7 +31,7 @@ func NewAppProver(node client.Client) AppProver {
 
 // Get tries to download a merkle hash for app state on this key from
 // the tendermint node.
-func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
+func (a AppProver) Get(key []byte, h uint64) (Proof, error) {
 	resp, err := a.node.ABCIQuery("/key", key)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
 	return proof, nil
 }
 
-func (a AppProver) Unmarshal(data []byte) (lc.Proof, error) {
+func (a AppProver) Unmarshal(data []byte) (Proof, error) {
 	var proof AppProof
 	err := errors.WithStack(wire.ReadBinaryBytes(data, &proof))
 	return proof, err

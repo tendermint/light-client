@@ -73,7 +73,7 @@ func TestAppProofs(t *testing.T) {
 // testSerialization makes sure the proof will un/marshal properly
 // and validate with the checkpoint.  It also does lots of modifications
 // to the binary data and makes sure no mods validates properly
-func testSerialization(t *testing.T, prover lc.Prover, pr lc.Proof,
+func testSerialization(t *testing.T, prover proofs.Prover, pr proofs.Proof,
 	check lc.Checkpoint, mods int) {
 
 	require := require.New(t)

@@ -8,8 +8,8 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-var _ lc.Prover = TxProver{}
-var _ lc.Proof = TxProof{}
+var _ Prover = TxProver{}
+var _ Proof = TxProof{}
 
 // we store up to 10MB as a proof, as we need an entire block! right now
 const txLimit = 10 * 1000 * 1000
@@ -30,7 +30,7 @@ func NewTxProver(node client.Client) TxProver {
 //
 // Important: key must be Tx.Hash()
 // Height is completely ignored for now :(
-func (t TxProver) Get(key []byte, h uint64) (lc.Proof, error) {
+func (t TxProver) Get(key []byte, h uint64) (Proof, error) {
 	res, err := t.node.Tx(key, true)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (t TxProver) Get(key []byte, h uint64) (lc.Proof, error) {
 	return proof, err
 }
 
-func (t TxProver) Unmarshal(data []byte) (pr lc.Proof, err error) {
+func (t TxProver) Unmarshal(data []byte) (pr Proof, err error) {
 	var proof TxProof
 	err = errors.WithStack(wire.ReadBinaryBytes(data, &proof))
 	return proof, err
