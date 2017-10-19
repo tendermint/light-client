@@ -2,10 +2,13 @@ package proofs
 
 import (
 	"github.com/pkg/errors"
+
 	wire "github.com/tendermint/go-wire"
-	lc "github.com/tendermint/light-client"
+
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/types"
+
+	"github.com/tendermint/light-client/certifiers"
 )
 
 var _ Prover = TxProver{}
@@ -64,9 +67,9 @@ func (p TxProof) BlockHeight() uint64 {
 	return p.Height
 }
 
-func (p TxProof) Validate(check lc.Checkpoint) error {
+func (p TxProof) Validate(check certifiers.Checkpoint) error {
 	if uint64(check.Height()) != p.Height {
-		return lc.ErrHeightMismatch(int(p.Height), check.Height())
+		return certifiers.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 	return p.Proof.Validate(check.Header.DataHash)
 }

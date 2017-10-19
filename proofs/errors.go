@@ -1,4 +1,4 @@
-package lightclient
+package proofs
 
 import (
 	"fmt"

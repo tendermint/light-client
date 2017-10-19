@@ -6,10 +6,9 @@ import (
 	wire "github.com/tendermint/go-wire"
 	data "github.com/tendermint/go-wire/data"
 	"github.com/tendermint/iavl"
+	"github.com/tendermint/light-client/certifiers"
 
 	"github.com/tendermint/tendermint/rpc/client"
-
-	lc "github.com/tendermint/light-client"
 )
 
 var _ Prover = AppProver{}
@@ -42,13 +41,13 @@ func (a AppProver) Get(key []byte, h uint64) (Proof, error) {
 		return nil, errors.Errorf("Query error %d: %s", resp.Code, resp.Code.String())
 	}
 	if len(resp.Key) == 0 || len(resp.Value) == 0 || len(resp.Proof) == 0 {
-		return nil, lc.ErrNoData()
+		return nil, ErrNoData()
 	}
 	if resp.Height == 0 {
 		resp.Height = h
 	}
 	if h != 0 && h != resp.Height {
-		return nil, lc.ErrHeightMismatch(int(h), int(resp.Height))
+		return nil, certifiers.ErrHeightMismatch(int(h), int(resp.Height))
 	}
 	proof := AppProof{
 		Height: resp.Height,
@@ -83,9 +82,9 @@ func (p AppProof) BlockHeight() uint64 {
 	return p.Height
 }
 
-func (p AppProof) Validate(check lc.Checkpoint) error {
+func (p AppProof) Validate(check certifiers.Checkpoint) error {
 	if uint64(check.Height()) != p.Height {
-		return lc.ErrHeightMismatch(int(p.Height), check.Height())
+		return certifiers.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 
 	proof, err := iavl.ReadKeyExistsProof(p.Proof)

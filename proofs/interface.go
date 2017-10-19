@@ -1,8 +1,6 @@
 package proofs
 
-import (
-	lc "github.com/tendermint/light-client"
-)
+import "github.com/tendermint/light-client/certifiers"
 
 // Prover is anything that can provide proofs.
 // Such as a AppProver (for merkle proofs of app state)
@@ -22,7 +20,7 @@ type Prover interface {
 type Proof interface {
 	BlockHeight() uint64
 	// Validates this Proof matches the checkpoint
-	Validate(lc.Checkpoint) error
+	Validate(certifiers.Checkpoint) error
 	// Marshal prepares for storage
 	Marshal() ([]byte, error)
 	// Data extracts the query result we want to see
