@@ -31,7 +31,7 @@ func TestInquirerValidPath(t *testing.T) {
 		h := 20 + 10*i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
 		cp := keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
-		seeds[i] = certifiers.FullCommit{cp, vals}
+		seeds[i] = certifiers.NewFullCommit(cp, vals)
 	}
 
 	// initialize a certifier with the initial state
@@ -80,7 +80,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 		h := 5 + 10*i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
 		cp := keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
-		seeds[i] = certifiers.FullCommit{cp, vals}
+		seeds[i] = certifiers.NewFullCommit(cp, vals)
 	}
 
 	// initialize a certifier with the initial state
@@ -129,7 +129,7 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 		h := 20 + 10*i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
 		cp := keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
-		seeds[i] = certifiers.FullCommit{cp, vals}
+		seeds[i] = certifiers.NewFullCommit(cp, vals)
 	}
 
 	// initialize a certifier with the initial state

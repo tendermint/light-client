@@ -30,7 +30,7 @@ func TestSerializeFullCommits(t *testing.T) {
 	keys := certifiers.GenValKeys(5)
 	vals := keys.ToValidators(10, 0)
 	check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
-	seed := certifiers.FullCommit{check, vals}
+	seed := certifiers.NewFullCommit(check, vals)
 
 	require.Equal(h, seed.Height())
 	require.Equal(vals.Hash(), seed.ValidatorsHash())

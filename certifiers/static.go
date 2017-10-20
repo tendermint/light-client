@@ -41,20 +41,20 @@ func (c *Static) Hash() []byte {
 	return c.vhash
 }
 
-func (c *Static) Certify(check *Commit) error {
+func (c *Static) Certify(commit *Commit) error {
 	// do basic sanity checks
-	err := check.ValidateBasic(c.chainID)
+	err := commit.ValidateBasic(c.chainID)
 	if err != nil {
 		return err
 	}
 
 	// make sure it has the same validator set we have (static means static)
-	if !bytes.Equal(c.Hash(), check.Header.ValidatorsHash) {
+	if !bytes.Equal(c.Hash(), commit.Header.ValidatorsHash) {
 		return certerr.ErrValidatorsChanged()
 	}
 
 	// then make sure we have the proper signatures for this
-	err = c.VSet.VerifyCommit(c.chainID, check.Commit.BlockID,
-		check.Header.Height, check.Commit)
+	err = c.VSet.VerifyCommit(c.chainID, commit.Commit.BlockID,
+		commit.Header.Height, commit.Commit)
 	return errors.WithStack(err)
 }

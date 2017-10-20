@@ -38,7 +38,7 @@ func checkProvider(t *testing.T, p certifiers.Provider, chainID, app string) {
 		vals := keys.ToValidators(10, int64(count/2))
 		h := 20 + 10*i
 		check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
-		seeds[i] = certifiers.FullCommit{check, vals}
+		seeds[i] = certifiers.NewFullCommit(check, vals)
 	}
 
 	// check provider is empty
@@ -110,7 +110,7 @@ func TestCacheGetsBestHeight(t *testing.T) {
 		vals := keys.ToValidators(10, int64(count/2))
 		h := 10 * (i + 1)
 		check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
-		seed := certifiers.FullCommit{check, vals}
+		seed := certifiers.NewFullCommit(check, vals)
 		err := p2.StoreFullCommit(seed)
 		require.Nil(err)
 	}

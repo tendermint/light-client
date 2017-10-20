@@ -47,7 +47,7 @@ func TestFileProvider(t *testing.T) {
 		vals := keys.ToValidators(10, int64(count/2))
 		h := 20 + 10*i
 		check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
-		seeds[i] = certifiers.FullCommit{check, vals}
+		seeds[i] = certifiers.NewFullCommit(check, vals)
 	}
 
 	// check provider is empty

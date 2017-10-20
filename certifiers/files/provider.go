@@ -64,19 +64,19 @@ func (p *provider) encodeHeight(h int) string {
 	return fmt.Sprintf("%012d%s", h, Ext)
 }
 
-func (p *provider) StoreFullCommit(seed certifiers.FullCommit) error {
-	// make sure the seed is self-consistent before saving
-	err := seed.ValidateBasic(seed.Commit.Header.ChainID)
+func (p *provider) StoreFullCommit(fc certifiers.FullCommit) error {
+	// make sure the fc is self-consistent before saving
+	err := fc.ValidateBasic(fc.Commit.Header.ChainID)
 	if err != nil {
 		return err
 	}
 
 	paths := []string{
-		filepath.Join(p.checkDir, p.encodeHeight(seed.Height())),
-		filepath.Join(p.valDir, p.encodeHash(seed.Header.ValidatorsHash)),
+		filepath.Join(p.checkDir, p.encodeHeight(fc.Height())),
+		filepath.Join(p.valDir, p.encodeHash(fc.Header.ValidatorsHash)),
 	}
 	for _, path := range paths {
-		err := SaveFullCommit(seed, path)
+		err := SaveFullCommit(fc, path)
 		// unknown error in creating or writing immediately breaks
 		if err != nil {
 			return err
@@ -88,17 +88,17 @@ func (p *provider) StoreFullCommit(seed certifiers.FullCommit) error {
 func (p *provider) GetByHeight(h int) (certifiers.FullCommit, error) {
 	// first we look for exact match, then search...
 	path := filepath.Join(p.checkDir, p.encodeHeight(h))
-	seed, err := LoadFullCommit(path)
+	fc, err := LoadFullCommit(path)
 	if certerr.IsFullCommitNotFoundErr(err) {
 		path, err = p.searchForHeight(h)
 		if err == nil {
-			seed, err = LoadFullCommit(path)
+			fc, err = LoadFullCommit(path)
 		}
 	}
-	return seed, err
+	return fc, err
 }
 
-func (p *provider) LatestFullCommit() (seed certifiers.FullCommit, err error) {
+func (p *provider) LatestFullCommit() (fc certifiers.FullCommit, err error) {
 	return p.GetByHeight(math.MaxInt32 - 1)
 }
 

@@ -47,33 +47,33 @@ func (p *provider) StoreFullCommit(_ certifiers.FullCommit) error { return nil }
 //
 // TODO: improve when the rpc interface supports more functionality
 func (p *provider) GetByHash(hash []byte) (certifiers.FullCommit, error) {
-	var seed certifiers.FullCommit
+	var fc certifiers.FullCommit
 	vals, err := p.node.Validators(nil)
 	// if we get no validators, or a different height, return an error
 	if err != nil {
-		return seed, err
+		return fc, err
 	}
 	p.updateHeight(vals.BlockHeight)
 	vhash := types.NewValidatorSet(vals.Validators).Hash()
 	if !bytes.Equal(hash, vhash) {
-		return seed, certerr.ErrFullCommitNotFound()
+		return fc, certerr.ErrFullCommitNotFound()
 	}
 	return p.seedFromVals(vals)
 }
 
 // GetByHeight gets the validator set by height
-func (p *provider) GetByHeight(h int) (seed certifiers.FullCommit, err error) {
+func (p *provider) GetByHeight(h int) (fc certifiers.FullCommit, err error) {
 	commit, err := p.node.Commit(&h)
 	if err != nil {
-		return seed, err
+		return fc, err
 	}
 	return p.seedFromCommit(commit)
 }
 
-func (p *provider) LatestFullCommit() (seed certifiers.FullCommit, err error) {
+func (p *provider) LatestFullCommit() (fc certifiers.FullCommit, err error) {
 	commit, err := p.GetLatestCommit()
 	if err != nil {
-		return seed, err
+		return fc, err
 	}
 	return p.seedFromCommit(commit)
 }
@@ -90,38 +90,36 @@ func (p *provider) GetLatestCommit() (*ctypes.ResultCommit, error) {
 }
 
 func (p *provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.FullCommit, error) {
-	seed := certifiers.FullCommit{
-		Validators: types.NewValidatorSet(vals.Validators),
-	}
-	// now get the commits and build a seed
+	// now get the commits and build a full commit
 	commit, err := p.node.Commit(&vals.BlockHeight)
 	if err != nil {
-		return seed, err
+		return certifiers.FullCommit{}, err
 	}
-	seed.Commit = certifiers.CommitFromResult(commit)
-	return seed, nil
+	fc := certifiers.NewFullCommit(
+		certifiers.CommitFromResult(commit),
+		types.NewValidatorSet(vals.Validators),
+	)
+	return fc, nil
 }
 
-func (p *provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.FullCommit, error) {
-	seed := certifiers.FullCommit{
-		Commit: certifiers.CommitFromResult(commit),
-	}
+func (p *provider) seedFromCommit(commit *ctypes.ResultCommit) (fc certifiers.FullCommit, err error) {
+	fc.Commit = certifiers.CommitFromResult(commit)
 
 	// now get the proper validators
 	vals, err := p.node.Validators(&commit.Header.Height)
 	if err != nil {
-		return seed, err
+		return fc, err
 	}
 
 	// make sure they match the commit (as we cannot enforce height)
 	vset := types.NewValidatorSet(vals.Validators)
 	if !bytes.Equal(vset.Hash(), commit.Header.ValidatorsHash) {
-		return seed, certerr.ErrValidatorsChanged()
+		return fc, certerr.ErrValidatorsChanged()
 	}
 
 	p.updateHeight(commit.Header.Height)
-	seed.Validators = vset
-	return seed, nil
+	fc.Validators = vset
+	return fc, nil
 }
 
 func (p *provider) updateHeight(h int) {
