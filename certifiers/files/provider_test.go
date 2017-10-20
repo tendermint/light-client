@@ -20,7 +20,7 @@ func checkEqual(stored, loaded certifiers.Seed, chainID string) error {
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(stored.Hash(), loaded.Hash()) {
+	if !bytes.Equal(stored.ValidatorsHash(), loaded.ValidatorsHash()) {
 		return errors.New("Different block hashes")
 	}
 	return nil
@@ -55,7 +55,7 @@ func TestFileProvider(t *testing.T) {
 	require.NotNil(err)
 	assert.True(certerr.IsSeedNotFoundErr(err))
 
-	seed, err = p.GetByHash(seeds[3].Hash())
+	seed, err = p.GetByHash(seeds[3].ValidatorsHash())
 	require.NotNil(err)
 	assert.True(certerr.IsSeedNotFoundErr(err))
 
@@ -64,7 +64,7 @@ func TestFileProvider(t *testing.T) {
 		err = p.StoreSeed(s)
 		require.Nil(err)
 		// and make sure we can get it back
-		s2, err := p.GetByHash(s.Hash())
+		s2, err := p.GetByHash(s.ValidatorsHash())
 		assert.Nil(err)
 		err = checkEqual(s, s2, chainID)
 		assert.Nil(err)

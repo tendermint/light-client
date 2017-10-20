@@ -16,6 +16,7 @@ type Seed struct {
 	Validators *types.ValidatorSet `json:"validator_set"`
 }
 
+// Height returns the block height
 func (s Seed) Height() int {
 	if s.Commit == nil {
 		return 0
@@ -23,12 +24,12 @@ func (s Seed) Height() int {
 	return s.Commit.Height()
 }
 
-func (s Seed) Hash() []byte {
-	h := s.Commit.Header
-	if h == nil {
+// ValidatorsHash returns the validators hash
+func (s Seed) ValidatorsHash() []byte {
+	if s.Commit == nil {
 		return nil
 	}
-	return h.ValidatorsHash
+	return s.Commit.ValidatorsHash()
 }
 
 // seeds just exists to allow easy sorting

@@ -33,7 +33,7 @@ func (m *memStoreProvider) StoreSeed(seed Seed) error {
 	}
 
 	// store the valid seed
-	key := m.encodeHash(seed.Hash())
+	key := m.encodeHash(seed.ValidatorsHash())
 	m.byHash[key] = seed
 	m.byHeight = append(m.byHeight, seed)
 	sort.Sort(m.byHeight)

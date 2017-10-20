@@ -36,6 +36,13 @@ func (c *Commit) Height() int {
 	return c.Header.Height
 }
 
+func (c *Commit) ValidatorsHash() []byte {
+	if c.Header == nil {
+		return nil
+	}
+	return c.Header.ValidatorsHash
+}
+
 // ValidateBasic does basic consistency checks and makes sure the headers
 // and commits are all consistent and refer to our chain.
 //

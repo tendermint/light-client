@@ -46,7 +46,7 @@ func checkProvider(t *testing.T, p certifiers.Provider, chainID, app string) {
 	require.NotNil(err)
 	assert.True(errors.IsSeedNotFoundErr(err))
 
-	seed, err = p.GetByHash(seeds[3].Hash())
+	seed, err = p.GetByHash(seeds[3].ValidatorsHash())
 	require.NotNil(err)
 	assert.True(errors.IsSeedNotFoundErr(err))
 
@@ -55,7 +55,7 @@ func checkProvider(t *testing.T, p certifiers.Provider, chainID, app string) {
 		err = p.StoreSeed(s)
 		require.Nil(err)
 		// and make sure we can get it back
-		s2, err := p.GetByHash(s.Hash())
+		s2, err := p.GetByHash(s.ValidatorsHash())
 		assert.Nil(err)
 		assert.Equal(s, s2)
 		// by height as well

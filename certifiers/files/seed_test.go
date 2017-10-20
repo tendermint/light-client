@@ -33,7 +33,7 @@ func TestSerializeSeeds(t *testing.T) {
 	seed := certifiers.Seed{check, vals}
 
 	require.Equal(h, seed.Height())
-	require.Equal(vals.Hash(), seed.Hash())
+	require.Equal(vals.Hash(), seed.ValidatorsHash())
 
 	// try read/write with json
 	jfile := tmpFile()
@@ -45,7 +45,7 @@ func TestSerializeSeeds(t *testing.T) {
 	jseed, err = LoadSeedJSON(jfile)
 	assert.Nil(err, "%+v", err)
 	assert.Equal(h, jseed.Height())
-	assert.Equal(vals.Hash(), jseed.Hash())
+	assert.Equal(vals.Hash(), jseed.ValidatorsHash())
 
 	// try read/write with binary
 	bfile := tmpFile()
@@ -57,7 +57,7 @@ func TestSerializeSeeds(t *testing.T) {
 	bseed, err = LoadSeed(bfile)
 	assert.Nil(err, "%+v", err)
 	assert.Equal(h, bseed.Height())
-	assert.Equal(vals.Hash(), bseed.Hash())
+	assert.Equal(vals.Hash(), bseed.ValidatorsHash())
 
 	// make sure they don't read the other format (different)
 	_, err = LoadSeed(jfile)
