@@ -20,31 +20,39 @@ var _ Certifier = &Dynamic{}
 // For security, it will only follow validator set changes
 // going forward.
 type Dynamic struct {
-	Cert       *Static
-	LastHeight int
+	cert       *Static
+	lastHeight int
 }
 
 func NewDynamic(chainID string, vals *types.ValidatorSet, height int) *Dynamic {
 	return &Dynamic{
-		Cert:       NewStatic(chainID, vals),
-		LastHeight: height,
+		cert:       NewStatic(chainID, vals),
+		lastHeight: height,
 	}
 }
 
 func (c *Dynamic) ChainID() string {
-	return c.Cert.ChainID()
+	return c.cert.ChainID()
 }
 
 func (c *Dynamic) Validators() *types.ValidatorSet {
-	return c.Cert.vSet
+	return c.cert.vSet
+}
+
+func (c *Dynamic) Hash() []byte {
+	return c.cert.Hash()
+}
+
+func (c *Dynamic) LastHeight() int {
+	return c.lastHeight
 }
 
 // Certify handles this with
 func (c *Dynamic) Certify(check *Commit) error {
-	err := c.Cert.Certify(check)
+	err := c.cert.Certify(check)
 	if err == nil {
 		// update last seen height if input is valid
-		c.LastHeight = check.Height()
+		c.lastHeight = check.Height()
 	}
 	return err
 }
@@ -55,7 +63,7 @@ func (c *Dynamic) Certify(check *Commit) error {
 // Returns an error if update is impossible (invalid proof or IsTooMuchChangeErr)
 func (c *Dynamic) Update(check *Commit, vset *types.ValidatorSet) error {
 	// ignore all checkpoints in the past -> only to the future
-	if check.Height() <= c.LastHeight {
+	if check.Height() <= c.lastHeight {
 		return certerr.ErrPastTime()
 	}
 
@@ -75,8 +83,8 @@ func (c *Dynamic) Update(check *Commit, vset *types.ValidatorSet) error {
 	}
 
 	// looks good, we can update
-	c.Cert = NewStatic(c.ChainID(), vset)
-	c.LastHeight = check.Height()
+	c.cert = NewStatic(c.ChainID(), vset)
+	c.lastHeight = check.Height()
 	return nil
 }
 

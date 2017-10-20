@@ -7,7 +7,7 @@ import (
 )
 
 type Inquiring struct {
-	Cert *Dynamic
+	cert *Dynamic
 	// These are only properly validated data, from local system
 	trusted Provider
 	// This is a source of new info, like a node rpc, or other import method
@@ -19,18 +19,22 @@ func NewInquiring(chainID string, fc FullCommit, trusted Provider, source Provid
 	trusted.StoreCommit(fc)
 
 	return &Inquiring{
-		Cert:    NewDynamic(chainID, fc.Validators, fc.Height()),
+		cert:    NewDynamic(chainID, fc.Validators, fc.Height()),
 		trusted: trusted,
 		source:  source,
 	}
 }
 
 func (c *Inquiring) ChainID() string {
-	return c.Cert.ChainID()
+	return c.cert.ChainID()
 }
 
 func (c *Inquiring) Validators() *types.ValidatorSet {
-	return c.Cert.Cert.vSet
+	return c.cert.cert.vSet
+}
+
+func (c *Inquiring) LastHeight() int {
+	return c.cert.lastHeight
 }
 
 // Certify makes sure this is checkpoint is valid.
@@ -45,7 +49,7 @@ func (c *Inquiring) Certify(commit *Commit) error {
 		return err
 	}
 
-	err = c.Cert.Certify(commit)
+	err = c.cert.Certify(commit)
 	if !certerr.IsValidatorsChangedErr(err) {
 		return err
 	}
@@ -54,7 +58,7 @@ func (c *Inquiring) Certify(commit *Commit) error {
 		return err
 	}
 
-	err = c.Cert.Certify(commit)
+	err = c.cert.Certify(commit)
 	if err != nil {
 		return err
 	}
@@ -71,7 +75,7 @@ func (c *Inquiring) Update(commit *Commit, vals *types.ValidatorSet) error {
 		return err
 	}
 
-	err = c.Cert.Update(commit, vals)
+	err = c.cert.Update(commit, vals)
 	if err == nil {
 		c.trusted.StoreCommit(
 			NewFullCommit(commit, vals))
@@ -87,8 +91,8 @@ func (c *Inquiring) useClosestTrust(h int) error {
 
 	// if the best seed is not the one we currently use,
 	// let's just reset the dynamic validator
-	if closest.Height() != c.Cert.LastHeight {
-		c.Cert = NewDynamic(c.ChainID(), closest.Validators, closest.Height())
+	if closest.Height() != c.LastHeight() {
+		c.cert = NewDynamic(c.ChainID(), closest.Validators, closest.Height())
 	}
 	return nil
 }
@@ -101,7 +105,7 @@ func (c *Inquiring) updateToHash(vhash []byte) error {
 	if err != nil {
 		return err
 	}
-	err = c.Cert.Update(fc.Commit, fc.Validators)
+	err = c.cert.Update(fc.Commit, fc.Validators)
 	// handle IsTooMuchChangeErr by using divide and conquer
 	if certerr.IsTooMuchChangeErr(err) {
 		err = c.updateToHeight(fc.Height())
@@ -116,7 +120,7 @@ func (c *Inquiring) updateToHeight(h int) error {
 	if err != nil {
 		return err
 	}
-	start, end := c.Cert.LastHeight, fc.Height()
+	start, end := c.LastHeight(), fc.Height()
 	if end <= start {
 		return certerr.ErrNoPathFound()
 	}

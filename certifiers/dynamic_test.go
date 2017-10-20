@@ -50,7 +50,7 @@ func TestDynamicCert(t *testing.T) {
 		err := cert.Certify(check)
 		if tc.proper {
 			assert.Nil(err, "%+v", err)
-			assert.Equal(cert.LastHeight, tc.height)
+			assert.Equal(cert.LastHeight(), tc.height)
 		} else {
 			assert.NotNil(err)
 			if tc.changed {
@@ -114,13 +114,13 @@ func TestDynamicUpdate(t *testing.T) {
 		if tc.proper {
 			assert.Nil(err, "%d: %+v", tc.height, err)
 			// we update last seen height
-			assert.Equal(cert.LastHeight, tc.height)
+			assert.Equal(cert.LastHeight(), tc.height)
 			// and we update the proper validators
-			assert.EqualValues(check.Header.ValidatorsHash, cert.Cert.Hash())
+			assert.EqualValues(check.Header.ValidatorsHash, cert.Hash())
 		} else {
 			assert.NotNil(err, "%d", tc.height)
 			// we don't update the height
-			assert.NotEqual(cert.LastHeight, tc.height)
+			assert.NotEqual(cert.LastHeight(), tc.height)
 			if tc.changed {
 				assert.True(errors.IsTooMuchChangeErr(err),
 					"%d: %+v", tc.height, err)

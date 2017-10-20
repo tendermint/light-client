@@ -146,7 +146,7 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 	check := seeds[7].Commit
 	err = cert.Certify(check)
 	require.Nil(err, "%+v", err)
-	assert.Equal(check.Height(), cert.Cert.LastHeight)
+	assert.Equal(check.Height(), cert.LastHeight())
 
 	// add access to all seeds via untrusted source
 	for i := 0; i < count; i++ {
@@ -158,11 +158,11 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 	mid := seeds[3].Commit
 	err = cert.Certify(mid)
 	require.Nil(err, "%+v", err)
-	assert.Equal(mid.Height(), cert.Cert.LastHeight)
+	assert.Equal(mid.Height(), cert.LastHeight())
 
 	// and jump all the way forward again
 	end := seeds[count-1].Commit
 	err = cert.Certify(end)
 	require.Nil(err, "%+v", err)
-	assert.Equal(end.Height(), cert.Cert.LastHeight)
+	assert.Equal(end.Height(), cert.LastHeight())
 }
