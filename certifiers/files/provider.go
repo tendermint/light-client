@@ -75,7 +75,7 @@ func (m Provider) StoreSeed(seed certifiers.Seed) error {
 		filepath.Join(m.valDir, m.encodeHash(seed.Header.ValidatorsHash)),
 	}
 	for _, p := range paths {
-		err := seed.Write(p)
+		err := WriteSeed(seed, p)
 		// unknown error in creating or writing immediately breaks
 		if err != nil {
 			return err
@@ -87,11 +87,11 @@ func (m Provider) StoreSeed(seed certifiers.Seed) error {
 func (m Provider) GetByHeight(h int) (certifiers.Seed, error) {
 	// first we look for exact match, then search...
 	path := filepath.Join(m.checkDir, m.encodeHeight(h))
-	seed, err := certifiers.LoadSeed(path)
+	seed, err := LoadSeed(path)
 	if certerr.IsSeedNotFoundErr(err) {
 		path, err = m.searchForHeight(h)
 		if err == nil {
-			seed, err = certifiers.LoadSeed(path)
+			seed, err = LoadSeed(path)
 		}
 	}
 	return seed, err
@@ -128,5 +128,5 @@ func (m Provider) searchForHeight(h int) (string, error) {
 
 func (m Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 	path := filepath.Join(m.valDir, m.encodeHash(hash))
-	return certifiers.LoadSeed(path)
+	return LoadSeed(path)
 }

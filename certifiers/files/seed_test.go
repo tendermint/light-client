@@ -1,4 +1,4 @@
-package certifiers
+package files
 
 import (
 	"os"
@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	cmn "github.com/tendermint/tmlibs/common"
+
+	"github.com/tendermint/light-client/certifiers"
 )
 
 func tmpFile() string {
@@ -25,10 +27,10 @@ func TestSerializeSeeds(t *testing.T) {
 	h := 25
 
 	// build a seed
-	keys := GenValKeys(5)
+	keys := certifiers.GenValKeys(5)
 	vals := keys.ToValidators(10, 0)
 	check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
-	seed := Seed{check, vals}
+	seed := certifiers.Seed{check, vals}
 
 	require.Equal(h, seed.Height())
 	require.Equal(vals.Hash(), seed.Hash())
@@ -38,7 +40,7 @@ func TestSerializeSeeds(t *testing.T) {
 	defer os.Remove(jfile)
 	jseed, err := LoadSeedJSON(jfile)
 	assert.NotNil(err)
-	err = seed.WriteJSON(jfile)
+	err = WriteSeedJSON(seed, jfile)
 	require.Nil(err)
 	jseed, err = LoadSeedJSON(jfile)
 	assert.Nil(err, "%+v", err)
@@ -50,7 +52,7 @@ func TestSerializeSeeds(t *testing.T) {
 	defer os.Remove(bfile)
 	bseed, err := LoadSeed(bfile)
 	assert.NotNil(err)
-	err = seed.Write(bfile)
+	err = WriteSeed(seed, bfile)
 	require.Nil(err)
 	bseed, err = LoadSeed(bfile)
 	assert.Nil(err, "%+v", err)
