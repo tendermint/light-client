@@ -19,14 +19,14 @@ var _ Certifier = &Static{}
 // better implementation when the validator set can actually change.
 type Static struct {
 	chainID string
-	VSet    *types.ValidatorSet
+	vSet    *types.ValidatorSet
 	vhash   []byte
 }
 
 func NewStatic(chainID string, vals *types.ValidatorSet) *Static {
 	return &Static{
 		chainID: chainID,
-		VSet:    vals,
+		vSet:    vals,
 	}
 }
 
@@ -34,9 +34,13 @@ func (c *Static) ChainID() string {
 	return c.chainID
 }
 
+func (c *Static) Validators() *types.ValidatorSet {
+	return c.vSet
+}
+
 func (c *Static) Hash() []byte {
 	if len(c.vhash) == 0 {
-		c.vhash = c.VSet.Hash()
+		c.vhash = c.vSet.Hash()
 	}
 	return c.vhash
 }
@@ -54,7 +58,7 @@ func (c *Static) Certify(commit *Commit) error {
 	}
 
 	// then make sure we have the proper signatures for this
-	err = c.VSet.VerifyCommit(c.chainID, commit.Commit.BlockID,
+	err = c.vSet.VerifyCommit(c.chainID, commit.Commit.BlockID,
 		commit.Header.Height, commit.Commit)
 	return errors.WithStack(err)
 }

@@ -31,6 +31,10 @@ func (c *Dynamic) ChainID() string {
 	return c.Cert.ChainID()
 }
 
+func (c *Dynamic) Validators() *types.ValidatorSet {
+	return c.Cert.vSet
+}
+
 // Certify handles this with
 func (c *Dynamic) Certify(check *Commit) error {
 	err := c.Cert.Certify(check)
@@ -60,7 +64,7 @@ func (c *Dynamic) Update(check *Commit, vset *types.ValidatorSet) error {
 	// TODO: now, make sure not too much change... meaning this commit
 	// would be approved by the currently known validator set
 	// as well as the new set
-	err = VerifyCommitAny(c.Cert.VSet, vset, c.ChainID(),
+	err = VerifyCommitAny(c.Validators(), vset, c.ChainID(),
 		check.Commit.BlockID, check.Header.Height, check.Commit)
 	if err != nil {
 		return certerr.ErrTooMuchChange()

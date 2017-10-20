@@ -60,7 +60,7 @@ func (c *Inquiring) Certify(commit *Commit) error {
 }
 
 func (c *Inquiring) Validators() *types.ValidatorSet {
-	return c.Cert.Cert.VSet
+	return c.Cert.Cert.vSet
 }
 
 func (c *Inquiring) Update(commit *Commit, vals *types.ValidatorSet) error {
