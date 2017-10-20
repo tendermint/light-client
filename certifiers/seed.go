@@ -17,20 +17,23 @@ const (
 	MaxSeedSize = 1024 * 1024
 )
 
-// Seed is a checkpoint and the actual validator set, the base info you
+// Seed is a commit and the actual validator set, the base info you
 // need to update to a given point, assuming knowledge of some previous
 // validator set
 type Seed struct {
-	Checkpoint `json:"checkpoint"`
+	*Commit    `json:"commit"`
 	Validators *types.ValidatorSet `json:"validator_set"`
 }
 
 func (s Seed) Height() int {
-	return s.Checkpoint.Height()
+	if s.Commit == nil {
+		return 0
+	}
+	return s.Commit.Height()
 }
 
 func (s Seed) Hash() []byte {
-	h := s.Checkpoint.Header
+	h := s.Commit.Header
 	if h == nil {
 		return nil
 	}

@@ -43,7 +43,7 @@ func TestStaticCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		check := tc.keys.GenCheckpoint(chainID, tc.height, nil, tc.vals,
+		check := tc.keys.GenCommit(chainID, tc.height, nil, tc.vals,
 			[]byte("foo"), tc.first, tc.last)
 		err := cert.Certify(check)
 		if tc.proper {

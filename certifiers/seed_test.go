@@ -27,7 +27,7 @@ func TestSerializeSeeds(t *testing.T) {
 	// build a seed
 	keys := GenValKeys(5)
 	vals := keys.ToValidators(10, 0)
-	check := keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, 5)
+	check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
 	seed := Seed{check, vals}
 
 	require.Equal(h, seed.Height())

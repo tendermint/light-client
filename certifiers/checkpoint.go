@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 
 	rtypes "github.com/tendermint/tendermint/rpc/core/types"
-	"github.com/tendermint/tendermint/types"
 
 	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
@@ -14,29 +13,23 @@ import (
 // Certifier checks the votes to make sure the block really is signed properly.
 // Certifier must know the current set of validitors by some other means.
 type Certifier interface {
-	Certify(check Checkpoint) error
+	Certify(check *Commit) error
 	ChainID() string
 }
 
-// Checkpoint is basically the rpc /commit response, but extended
+// *Commit is basically the rpc /commit response, but extended
 //
 // This is the basepoint for proving anything on the blockchain. It contains
 // a signed header.  If the signatures are valid and > 2/3 of the known set,
 // we can store this checkpoint and use it to prove any number of aspects of
 // the system: such as txs, abci state, validator sets, etc...
-type Checkpoint struct {
-	Header *types.Header `json:"header"`
-	Commit *types.Commit `json:"commit"`
+type Commit rtypes.ResultCommit
+
+func CommitFromResult(commit *rtypes.ResultCommit) *Commit {
+	return (*Commit)(commit)
 }
 
-func CheckpointFromResult(commit *rtypes.ResultCommit) Checkpoint {
-	return Checkpoint{
-		Header: commit.Header,
-		Commit: commit.Commit,
-	}
-}
-
-func (c Checkpoint) Height() int {
+func (c *Commit) Height() int {
 	if c.Header == nil {
 		return 0
 	}
@@ -48,10 +41,10 @@ func (c Checkpoint) Height() int {
 //
 // Make sure to use a Verifier to validate the signatures actually provide
 // a significantly strong proof for this header's validity.
-func (c Checkpoint) ValidateBasic(chainID string) error {
+func (c *Commit) ValidateBasic(chainID string) error {
 	// make sure the header is reasonable
 	if c.Header == nil {
-		return errors.New("Checkpoint missing header")
+		return errors.New("*Commit missing header")
 	}
 	if c.Header.ChainID != chainID {
 		return errors.Errorf("Header belongs to another chain '%s' not '%s'",
@@ -59,7 +52,7 @@ func (c Checkpoint) ValidateBasic(chainID string) error {
 	}
 
 	if c.Commit == nil {
-		return errors.New("Checkpoint missing commits")
+		return errors.New("*Commit missing commits")
 	}
 
 	// make sure the header and commit match (height and hash)

@@ -27,7 +27,7 @@ func (m *memStoreProvider) encodeHash(hash []byte) string {
 
 func (m *memStoreProvider) StoreSeed(seed Seed) error {
 	// make sure the seed is self-consistent before saving
-	err := seed.ValidateBasic(seed.Checkpoint.Header.ChainID)
+	err := seed.ValidateBasic(seed.Commit.Header.ChainID)
 	if err != nil {
 		return err
 	}

@@ -45,7 +45,7 @@ func TestDynamicCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		check := tc.keys.GenCheckpoint(chainID, tc.height, nil, tc.vals,
+		check := tc.keys.GenCommit(chainID, tc.height, nil, tc.vals,
 			[]byte("bar"), tc.first, tc.last)
 		err := cert.Certify(check)
 		if tc.proper {
@@ -71,7 +71,7 @@ func TestDynamicUpdate(t *testing.T) {
 
 	// one valid block to give us a sense of time
 	h := 100
-	good := keys.GenCheckpoint(chainID, h, nil, vals, []byte("foo"), 0, len(keys))
+	good := keys.GenCommit(chainID, h, nil, vals, []byte("foo"), 0, len(keys))
 	err := cert.Certify(good)
 	require.Nil(err, "%+v", err)
 
@@ -108,7 +108,7 @@ func TestDynamicUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		check := tc.keys.GenCheckpoint(chainID, tc.height, nil, tc.vals,
+		check := tc.keys.GenCommit(chainID, tc.height, nil, tc.vals,
 			[]byte("bar"), tc.first, tc.last)
 		err := cert.Update(check, tc.vals)
 		if tc.proper {

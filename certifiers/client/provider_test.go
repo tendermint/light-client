@@ -48,7 +48,7 @@ func TestProvider(t *testing.T) {
 	seed, err = p.GetByHash(vhash)
 	require.Nil(err, "%+v", err)
 	require.Equal(vhash, seed.Header.ValidatorsHash)
-	err = cert.Certify(seed.Checkpoint)
+	err = cert.Certify(seed.Commit)
 	assert.Nil(err, "%+v", err)
 
 	// get by hash fails without match

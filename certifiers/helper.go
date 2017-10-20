@@ -11,7 +11,7 @@ import (
 // ValKeys is a helper for testing.
 //
 // It lets us simulate signing with many keys, either ed25519 or secp256k1.
-// The main use case is to create a set, and call GenCheckpoint
+// The main use case is to create a set, and call GenCommit
 // to get propely signed header for testing.
 //
 // You can set different weights of validators each time you call
@@ -122,14 +122,15 @@ func genHeader(chainID string, height int, txs types.Txs,
 	}
 }
 
-// GenCheckpoint calls genHeader and SignHeader and combines them into a Checkpoint
-func (v ValKeys) GenCheckpoint(chainID string, height int, txs types.Txs,
-	vals *types.ValidatorSet, appHash []byte, first, last int) Checkpoint {
+// GenCommit calls genHeader and SignHeader and combines them into a *Commit
+func (v ValKeys) GenCommit(chainID string, height int, txs types.Txs,
+	vals *types.ValidatorSet, appHash []byte, first, last int) *Commit {
 
 	header := genHeader(chainID, height, txs, vals, appHash)
-	check := Checkpoint{
-		Header: header,
-		Commit: v.SignHeader(header, first, last),
+	check := &Commit{
+		Header:          header,
+		Commit:          v.SignHeader(header, first, last),
+		CanonicalCommit: true,
 	}
 	return check
 }

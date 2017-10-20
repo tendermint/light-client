@@ -91,13 +91,13 @@ func (p *Provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed,
 	if err != nil {
 		return seed, err
 	}
-	seed.Checkpoint = certifiers.CheckpointFromResult(commit)
+	seed.Commit = certifiers.CommitFromResult(commit)
 	return seed, nil
 }
 
 func (p *Provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.Seed, error) {
 	seed := certifiers.Seed{
-		Checkpoint: certifiers.CheckpointFromResult(commit),
+		Commit: certifiers.CommitFromResult(commit),
 	}
 
 	// now get the proper validators

@@ -33,7 +33,7 @@ func (c *Inquiring) ChainID() string {
 // for a path to prove the new validators.
 //
 // On success, it will store the checkpoint in the store for later viewing
-func (c *Inquiring) Certify(check Checkpoint) error {
+func (c *Inquiring) Certify(check *Commit) error {
 	err := c.useClosestTrust(check.Height())
 	if err != nil {
 		return err
@@ -55,13 +55,13 @@ func (c *Inquiring) Certify(check Checkpoint) error {
 
 	// store the new checkpoint
 	c.TrustedSeeds.StoreSeed(Seed{
-		Checkpoint: check,
+		Commit:     check,
 		Validators: c.Cert.Cert.VSet,
 	})
 	return nil
 }
 
-func (c *Inquiring) Update(check Checkpoint, vals *types.ValidatorSet) error {
+func (c *Inquiring) Update(check *Commit, vals *types.ValidatorSet) error {
 	err := c.useClosestTrust(check.Height())
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (c *Inquiring) Update(check Checkpoint, vals *types.ValidatorSet) error {
 
 	err = c.Cert.Update(check, vals)
 	if err == nil {
-		c.TrustedSeeds.StoreSeed(Seed{Checkpoint: check, Validators: vals})
+		c.TrustedSeeds.StoreSeed(Seed{Commit: check, Validators: vals})
 	}
 	return err
 }
@@ -96,7 +96,7 @@ func (c *Inquiring) updateToHash(vhash []byte) error {
 	if err != nil {
 		return err
 	}
-	err = c.Cert.Update(seed.Checkpoint, seed.Validators)
+	err = c.Cert.Update(seed.Commit, seed.Validators)
 	// handle IsTooMuchChangeErr by using divide and conquer
 	if certerr.IsTooMuchChangeErr(err) {
 		err = c.updateToHeight(seed.Height())
@@ -115,7 +115,7 @@ func (c *Inquiring) updateToHeight(h int) error {
 	if end <= start {
 		return certerr.ErrNoPathFound()
 	}
-	err = c.Update(seed.Checkpoint, seed.Validators)
+	err = c.Update(seed.Commit, seed.Validators)
 
 	// we can handle IsTooMuchChangeErr specially
 	if !certerr.IsTooMuchChangeErr(err) {

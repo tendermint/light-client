@@ -32,7 +32,7 @@ func (c *Dynamic) ChainID() string {
 }
 
 // Certify handles this with
-func (c *Dynamic) Certify(check Checkpoint) error {
+func (c *Dynamic) Certify(check *Commit) error {
 	err := c.Cert.Certify(check)
 	if err == nil {
 		// update last seen height if input is valid
@@ -45,7 +45,7 @@ func (c *Dynamic) Certify(check Checkpoint) error {
 // the certifying validator set if safe to do so.
 //
 // Returns an error if update is impossible (invalid proof or IsTooMuchChangeErr)
-func (c *Dynamic) Update(check Checkpoint, vset *types.ValidatorSet) error {
+func (c *Dynamic) Update(check *Commit, vset *types.ValidatorSet) error {
 	// ignore all checkpoints in the past -> only to the future
 	if check.Height() <= c.LastHeight {
 		return certerr.ErrPastTime()

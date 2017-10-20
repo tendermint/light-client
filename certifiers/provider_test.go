@@ -37,7 +37,7 @@ func checkProvider(t *testing.T, p certifiers.Provider, chainID, app string) {
 		// (10, 0), (10, 1), (10, 1), (10, 2), (10, 2), ...
 		vals := keys.ToValidators(10, int64(count/2))
 		h := 20 + 10*i
-		check := keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, 5)
+		check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
 		seeds[i] = certifiers.Seed{check, vals}
 	}
 
@@ -109,7 +109,7 @@ func TestCacheGetsBestHeight(t *testing.T) {
 	for i := 0; i < count; i++ {
 		vals := keys.ToValidators(10, int64(count/2))
 		h := 10 * (i + 1)
-		check := keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, 5)
+		check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
 		seed := certifiers.Seed{check, vals}
 		err := p2.StoreSeed(seed)
 		require.Nil(err)

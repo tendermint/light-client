@@ -30,7 +30,7 @@ func TestInquirerValidPath(t *testing.T) {
 		vals = keys.ToValidators(vote, 0)
 		h := 20 + 10*i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
-		cp := keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, len(keys))
+		cp := keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
 		seeds[i] = certifiers.Seed{cp, vals}
 	}
 
@@ -38,7 +38,7 @@ func TestInquirerValidPath(t *testing.T) {
 	cert := certifiers.NewInquiring(chainID, seeds[0], trust, source)
 
 	// this should fail validation....
-	check := seeds[count-1].Checkpoint
+	check := seeds[count-1].Commit
 	err := cert.Certify(check)
 	require.NotNil(err)
 
@@ -79,7 +79,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 		vals = keys.ToValidators(vote, 0)
 		h := 5 + 10*i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
-		cp := keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, len(keys))
+		cp := keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
 		seeds[i] = certifiers.Seed{cp, vals}
 	}
 
@@ -87,7 +87,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 	cert := certifiers.NewInquiring(chainID, seeds[0], trust, source)
 
 	// this should fail validation....
-	check := seeds[count-1].Checkpoint
+	check := seeds[count-1].Commit
 	err := cert.Certify(check)
 	require.NotNil(err)
 
@@ -128,7 +128,7 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 		vals = keys.ToValidators(vote, 0)
 		h := 20 + 10*i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
-		cp := keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, len(keys))
+		cp := keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
 		seeds[i] = certifiers.Seed{cp, vals}
 	}
 
@@ -143,7 +143,7 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 	// let's see if we can jump forward using trusted seeds
 	err := source.StoreSeed(seeds[7])
 	require.Nil(err, "%+v", err)
-	check := seeds[7].Checkpoint
+	check := seeds[7].Commit
 	err = cert.Certify(check)
 	require.Nil(err, "%+v", err)
 	assert.Equal(check.Height(), cert.Cert.LastHeight)
@@ -155,13 +155,13 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 	}
 
 	// try to check an unknown seed in the past
-	mid := seeds[3].Checkpoint
+	mid := seeds[3].Commit
 	err = cert.Certify(mid)
 	require.Nil(err, "%+v", err)
 	assert.Equal(mid.Height(), cert.Cert.LastHeight)
 
 	// and jump all the way forward again
-	end := seeds[count-1].Checkpoint
+	end := seeds[count-1].Commit
 	err = cert.Certify(end)
 	require.Nil(err, "%+v", err)
 	assert.Equal(end.Height(), cert.Cert.LastHeight)

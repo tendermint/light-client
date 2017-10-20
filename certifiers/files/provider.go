@@ -24,11 +24,11 @@ const (
 
 // Provider stores all data in the filesystem
 // We assume the same validator hash may be reused by many different
-// headers/Checkpoints, and thus store it separately. This leaves us
+// headers/*Commits, and thus store it separately. This leaves us
 // with three issues:
 //
 // 1. Given a validator hash, retrieve the validator set if previously stored
-// 2. Given a block height, find the Checkpoint with the highest height <= h
+// 2. Given a block height, find the *Commit with the highest height <= h
 // 3. Given a Seed, store it quickly to satisfy 1 and 2
 //
 // Note that we do not worry about caching, as that can be achieved by
@@ -65,7 +65,7 @@ func (m Provider) encodeHeight(h int) string {
 
 func (m Provider) StoreSeed(seed certifiers.Seed) error {
 	// make sure the seed is self-consistent before saving
-	err := seed.ValidateBasic(seed.Checkpoint.Header.ChainID)
+	err := seed.ValidateBasic(seed.Commit.Header.ChainID)
 	if err != nil {
 		return err
 	}

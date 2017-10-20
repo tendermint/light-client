@@ -41,7 +41,7 @@ func (c *Static) Hash() []byte {
 	return c.vhash
 }
 
-func (c *Static) Certify(check Checkpoint) error {
+func (c *Static) Certify(check *Commit) error {
 	// do basic sanity checks
 	err := check.ValidateBasic(c.chainID)
 	if err != nil {
