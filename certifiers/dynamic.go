@@ -10,11 +10,15 @@ import (
 
 var _ Certifier = &Dynamic{}
 
-// Dynamic uses a Static to evaluate the checkpoint
-// but allows for a change, if we present enough proof.
+// Dynamic uses a Static for Certify, but adds an
+// Update method to allow for a change of validators.
 //
-// It just moves forward in time by one step.
-// Inquiring keeps history to jump forward and backwards in time.
+// You can pass in a FullCommit with another validator set,
+// and if this is a provably secure transition (< 1/3 change,
+// sufficient signatures), then it will update the
+// validator set for the next Certify call.
+// For security, it will only follow validator set changes
+// going forward.
 type Dynamic struct {
 	Cert       *Static
 	LastHeight int

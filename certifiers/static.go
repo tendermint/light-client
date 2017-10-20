@@ -14,9 +14,11 @@ var _ Certifier = &Static{}
 
 // Static assumes a static set of validators, set on
 // initilization and checks against them.
+// The signatures on every header is checked for > 2/3 votes
+// against the known validator set upon Certify
 //
-// Good for testing or really simple chains.  You will want a
-// better implementation when the validator set can actually change.
+// Good for testing or really simple chains.  Building block
+// to support real-world functionality.
 type Static struct {
 	chainID string
 	vSet    *types.ValidatorSet
