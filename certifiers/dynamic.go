@@ -61,14 +61,15 @@ func (c *Dynamic) Certify(check *Commit) error {
 // the certifying validator set if safe to do so.
 //
 // Returns an error if update is impossible (invalid proof or IsTooMuchChangeErr)
-func (c *Dynamic) Update(check *Commit, vset *types.ValidatorSet) error {
+func (c *Dynamic) Update(fc FullCommit) error {
 	// ignore all checkpoints in the past -> only to the future
-	if check.Height() <= c.lastHeight {
+	h := fc.Height()
+	if h <= c.lastHeight {
 		return certerr.ErrPastTime()
 	}
 
 	// first, verify if the input is self-consistent....
-	err := check.ValidateBasic(c.ChainID())
+	err := fc.ValidateBasic(c.ChainID())
 	if err != nil {
 		return err
 	}
@@ -76,15 +77,16 @@ func (c *Dynamic) Update(check *Commit, vset *types.ValidatorSet) error {
 	// TODO: now, make sure not too much change... meaning this commit
 	// would be approved by the currently known validator set
 	// as well as the new set
-	err = VerifyCommitAny(c.Validators(), vset, c.ChainID(),
-		check.Commit.BlockID, check.Header.Height, check.Commit)
+	commit := fc.Commit.Commit
+	err = VerifyCommitAny(c.Validators(), fc.Validators, c.ChainID(),
+		commit.BlockID, h, commit)
 	if err != nil {
 		return certerr.ErrTooMuchChange()
 	}
 
 	// looks good, we can update
-	c.cert = NewStatic(c.ChainID(), vset)
-	c.lastHeight = check.Height()
+	c.cert = NewStatic(c.ChainID(), fc.Validators)
+	c.lastHeight = h
 	return nil
 }
 

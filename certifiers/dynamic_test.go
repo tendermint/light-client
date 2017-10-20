@@ -108,15 +108,15 @@ func TestDynamicUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		check := tc.keys.GenCommit(chainID, tc.height, nil, tc.vals,
+		fc := tc.keys.GenFullCommit(chainID, tc.height, nil, tc.vals,
 			[]byte("bar"), tc.first, tc.last)
-		err := cert.Update(check, tc.vals)
+		err := cert.Update(fc)
 		if tc.proper {
 			assert.Nil(err, "%d: %+v", tc.height, err)
 			// we update last seen height
 			assert.Equal(cert.LastHeight(), tc.height)
 			// and we update the proper validators
-			assert.EqualValues(check.Header.ValidatorsHash, cert.Hash())
+			assert.EqualValues(fc.Header.ValidatorsHash, cert.Hash())
 		} else {
 			assert.NotNil(err, "%d", tc.height)
 			// we don't update the height

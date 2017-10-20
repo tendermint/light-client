@@ -69,16 +69,15 @@ func (c *Inquiring) Certify(commit *Commit) error {
 	return nil
 }
 
-func (c *Inquiring) Update(commit *Commit, vals *types.ValidatorSet) error {
-	err := c.useClosestTrust(commit.Height())
+func (c *Inquiring) Update(fc FullCommit) error {
+	err := c.useClosestTrust(fc.Height())
 	if err != nil {
 		return err
 	}
 
-	err = c.cert.Update(commit, vals)
+	err = c.cert.Update(fc)
 	if err == nil {
-		c.trusted.StoreCommit(
-			NewFullCommit(commit, vals))
+		c.trusted.StoreCommit(fc)
 	}
 	return err
 }
@@ -105,7 +104,7 @@ func (c *Inquiring) updateToHash(vhash []byte) error {
 	if err != nil {
 		return err
 	}
-	err = c.cert.Update(fc.Commit, fc.Validators)
+	err = c.cert.Update(fc)
 	// handle IsTooMuchChangeErr by using divide and conquer
 	if certerr.IsTooMuchChangeErr(err) {
 		err = c.updateToHeight(fc.Height())
@@ -124,7 +123,7 @@ func (c *Inquiring) updateToHeight(h int) error {
 	if end <= start {
 		return certerr.ErrNoPathFound()
 	}
-	err = c.Update(fc.Commit, fc.Validators)
+	err = c.Update(fc)
 
 	// we can handle IsTooMuchChangeErr specially
 	if !certerr.IsTooMuchChangeErr(err) {
