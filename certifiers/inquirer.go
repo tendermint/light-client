@@ -7,9 +7,11 @@ import (
 )
 
 type Inquiring struct {
-	Cert               *Dynamic
-	TrustedFullCommits Provider // These are only properly validated data, from local system
-	FullCommitSource   Provider // This is a source of new info, like a node rpc, or other import method
+	Cert *Dynamic
+	// These are only properly validated data, from local system
+	trusted Provider
+	// This is a source of new info, like a node rpc, or other import method
+	source Provider
 }
 
 func NewInquiring(chainID string, fc FullCommit, trusted Provider, source Provider) *Inquiring {
@@ -17,14 +19,18 @@ func NewInquiring(chainID string, fc FullCommit, trusted Provider, source Provid
 	trusted.StoreCommit(fc)
 
 	return &Inquiring{
-		Cert:               NewDynamic(chainID, fc.Validators, fc.Height()),
-		TrustedFullCommits: trusted,
-		FullCommitSource:   source,
+		Cert:    NewDynamic(chainID, fc.Validators, fc.Height()),
+		trusted: trusted,
+		source:  source,
 	}
 }
 
 func (c *Inquiring) ChainID() string {
 	return c.Cert.ChainID()
+}
+
+func (c *Inquiring) Validators() *types.ValidatorSet {
+	return c.Cert.Cert.vSet
 }
 
 // Certify makes sure this is checkpoint is valid.
@@ -54,13 +60,9 @@ func (c *Inquiring) Certify(commit *Commit) error {
 	}
 
 	// store the new checkpoint
-	c.TrustedFullCommits.StoreCommit(
+	c.trusted.StoreCommit(
 		NewFullCommit(commit, c.Validators()))
 	return nil
-}
-
-func (c *Inquiring) Validators() *types.ValidatorSet {
-	return c.Cert.Cert.vSet
 }
 
 func (c *Inquiring) Update(commit *Commit, vals *types.ValidatorSet) error {
@@ -71,14 +73,14 @@ func (c *Inquiring) Update(commit *Commit, vals *types.ValidatorSet) error {
 
 	err = c.Cert.Update(commit, vals)
 	if err == nil {
-		c.TrustedFullCommits.StoreCommit(
+		c.trusted.StoreCommit(
 			NewFullCommit(commit, vals))
 	}
 	return err
 }
 
 func (c *Inquiring) useClosestTrust(h int) error {
-	closest, err := c.TrustedFullCommits.GetByHeight(h)
+	closest, err := c.trusted.GetByHeight(h)
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func (c *Inquiring) useClosestTrust(h int) error {
 // if IsTooMuchChangeErr, we try to find a path by binary search over height
 func (c *Inquiring) updateToHash(vhash []byte) error {
 	// try to get the match, and update
-	fc, err := c.FullCommitSource.GetByHash(vhash)
+	fc, err := c.source.GetByHash(vhash)
 	if err != nil {
 		return err
 	}
@@ -110,7 +112,7 @@ func (c *Inquiring) updateToHash(vhash []byte) error {
 // updateToHeight will use divide-and-conquer to find a path to h
 func (c *Inquiring) updateToHeight(h int) error {
 	// try to update to this height (with checks)
-	fc, err := c.FullCommitSource.GetByHeight(h)
+	fc, err := c.source.GetByHeight(h)
 	if err != nil {
 		return err
 	}

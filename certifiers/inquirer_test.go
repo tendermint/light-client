@@ -44,7 +44,7 @@ func TestInquirerValidPath(t *testing.T) {
 
 	// add a few seed in the middle should be insufficient
 	for i := 10; i < 13; i++ {
-		err := cert.FullCommitSource.StoreCommit(seeds[i])
+		err := source.StoreCommit(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -52,7 +52,7 @@ func TestInquirerValidPath(t *testing.T) {
 
 	// with more info, we succeed
 	for i := 0; i < count; i++ {
-		err := cert.FullCommitSource.StoreCommit(seeds[i])
+		err := source.StoreCommit(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -93,7 +93,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 
 	// add a few seed in the middle should be insufficient
 	for i := 5; i < 8; i++ {
-		err := cert.FullCommitSource.StoreCommit(seeds[i])
+		err := source.StoreCommit(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -101,7 +101,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 
 	// with more info, we succeed
 	for i := 0; i < count; i++ {
-		err := cert.FullCommitSource.StoreCommit(seeds[i])
+		err := source.StoreCommit(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -150,7 +150,7 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 
 	// add access to all seeds via untrusted source
 	for i := 0; i < count; i++ {
-		err := cert.FullCommitSource.StoreCommit(seeds[i])
+		err := source.StoreCommit(seeds[i])
 		require.Nil(err)
 	}
 
