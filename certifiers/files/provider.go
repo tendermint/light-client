@@ -64,7 +64,7 @@ func (p *provider) encodeHeight(h int) string {
 	return fmt.Sprintf("%012d%s", h, Ext)
 }
 
-func (p *provider) StoreFullCommit(fc certifiers.FullCommit) error {
+func (p *provider) StoreCommit(fc certifiers.FullCommit) error {
 	// make sure the fc is self-consistent before saving
 	err := fc.ValidateBasic(fc.Commit.Header.ChainID)
 	if err != nil {
@@ -89,7 +89,7 @@ func (p *provider) GetByHeight(h int) (certifiers.FullCommit, error) {
 	// first we look for exact match, then search...
 	path := filepath.Join(p.checkDir, p.encodeHeight(h))
 	fc, err := LoadFullCommit(path)
-	if certerr.IsFullCommitNotFoundErr(err) {
+	if certerr.IsCommitNotFoundErr(err) {
 		path, err = p.searchForHeight(h)
 		if err == nil {
 			fc, err = LoadFullCommit(path)
@@ -98,12 +98,12 @@ func (p *provider) GetByHeight(h int) (certifiers.FullCommit, error) {
 	return fc, err
 }
 
-func (p *provider) LatestFullCommit() (fc certifiers.FullCommit, err error) {
+func (p *provider) LatestCommit() (fc certifiers.FullCommit, err error) {
 	return p.GetByHeight(math.MaxInt32 - 1)
 }
 
 // search for height, looks for a file with highest height < h
-// return certifiers.ErrFullCommitNotFound() if not there...
+// return certifiers.ErrCommitNotFound() if not there...
 func (p *provider) searchForHeight(h int) (string, error) {
 	d, err := os.Open(p.checkDir)
 	if err != nil {
@@ -120,7 +120,7 @@ func (p *provider) searchForHeight(h int) (string, error) {
 	sort.Strings(files)
 	i := sort.SearchStrings(files, desired)
 	if i == 0 {
-		return "", certerr.ErrFullCommitNotFound()
+		return "", certerr.ErrCommitNotFound()
 	}
 	found := files[i-1]
 	path := filepath.Join(p.checkDir, found)

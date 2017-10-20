@@ -52,7 +52,7 @@ func LoadFullCommit(path string) (certifiers.FullCommit, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fc, certerr.ErrFullCommitNotFound()
+			return fc, certerr.ErrCommitNotFound()
 		}
 		return fc, errors.WithStack(err)
 	}
@@ -68,7 +68,7 @@ func LoadFullCommitJSON(path string) (certifiers.FullCommit, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fc, certerr.ErrFullCommitNotFound()
+			return fc, certerr.ErrCommitNotFound()
 		}
 		return fc, errors.WithStack(err)
 	}

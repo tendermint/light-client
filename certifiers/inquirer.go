@@ -14,7 +14,7 @@ type Inquiring struct {
 
 func NewInquiring(chainID string, fc FullCommit, trusted Provider, source Provider) *Inquiring {
 	// store the data in trusted
-	trusted.StoreFullCommit(fc)
+	trusted.StoreCommit(fc)
 
 	return &Inquiring{
 		Cert:               NewDynamic(chainID, fc.Validators, fc.Height()),
@@ -54,7 +54,7 @@ func (c *Inquiring) Certify(commit *Commit) error {
 	}
 
 	// store the new checkpoint
-	c.TrustedFullCommits.StoreFullCommit(
+	c.TrustedFullCommits.StoreCommit(
 		NewFullCommit(commit, c.Validators()))
 	return nil
 }
@@ -71,7 +71,7 @@ func (c *Inquiring) Update(commit *Commit, vals *types.ValidatorSet) error {
 
 	err = c.Cert.Update(commit, vals)
 	if err == nil {
-		c.TrustedFullCommits.StoreFullCommit(
+		c.TrustedFullCommits.StoreCommit(
 			NewFullCommit(commit, vals))
 	}
 	return err

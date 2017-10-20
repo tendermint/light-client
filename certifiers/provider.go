@@ -8,13 +8,13 @@ import (
 //
 // Examples: MemProvider, files.Provider, client.Provider....
 type Provider interface {
-	StoreFullCommit(seed FullCommit) error
-	// GetByHeight returns the closest seed at with height <= h
+	StoreCommit(fc FullCommit) error
+	// GetByHeight returns the closest commit with height <= h
 	GetByHeight(h int) (FullCommit, error)
-	// GetByHash returns a seed exactly matching this validator hash
+	// GetByHash returns a commit exactly matching this validator hash
 	GetByHash(hash []byte) (FullCommit, error)
-	// LatestFullCommit returns the newest FullCommit stored
-	LatestFullCommit() (FullCommit, error)
+	// LatestCommit returns the newest commit stored
+	LatestCommit() (FullCommit, error)
 }
 
 // cacheProvider allows you to place one or more caches in front of a source
@@ -31,12 +31,12 @@ func NewCacheProvider(providers ...Provider) Provider {
 	}
 }
 
-// StoreFullCommit tries to add the seed to all providers.
+// StoreCommit tries to add the seed to all providers.
 //
 // Aborts on first error it encounters (closest provider)
-func (c cacheProvider) StoreFullCommit(seed FullCommit) (err error) {
+func (c cacheProvider) StoreCommit(fc FullCommit) (err error) {
 	for _, p := range c.Providers {
-		err = p.StoreFullCommit(seed)
+		err = p.StoreCommit(fc)
 		if err != nil {
 			break
 		}
@@ -57,49 +57,49 @@ Thus, we query each provider in order until we find an exact match
 or we finished querying them all.  If at least one returned a non-error,
 then this returns the best match (minimum h-h').
 */
-func (c cacheProvider) GetByHeight(h int) (s FullCommit, err error) {
+func (c cacheProvider) GetByHeight(h int) (fc FullCommit, err error) {
 	for _, p := range c.Providers {
-		var ts FullCommit
-		ts, err = p.GetByHeight(h)
+		var tfc FullCommit
+		tfc, err = p.GetByHeight(h)
 		if err == nil {
-			if ts.Height() > s.Height() {
-				s = ts
+			if tfc.Height() > fc.Height() {
+				fc = tfc
 			}
-			if ts.Height() == h {
+			if tfc.Height() == h {
 				break
 			}
 		}
 	}
 	// even if the last one had an error, if any was a match, this is good
-	if s.Height() > 0 {
+	if fc.Height() > 0 {
 		err = nil
 	}
-	return s, err
+	return fc, err
 }
 
-func (c cacheProvider) GetByHash(hash []byte) (s FullCommit, err error) {
+func (c cacheProvider) GetByHash(hash []byte) (fc FullCommit, err error) {
 	for _, p := range c.Providers {
-		s, err = p.GetByHash(hash)
+		fc, err = p.GetByHash(hash)
 		if err == nil {
 			break
 		}
 	}
-	return s, err
+	return fc, err
 }
 
-func (c cacheProvider) LatestFullCommit() (s FullCommit, err error) {
+func (c cacheProvider) LatestCommit() (fc FullCommit, err error) {
 	for _, p := range c.Providers {
-		var ts FullCommit
-		ts, err = p.LatestFullCommit()
-		if err == nil && ts.Height() > s.Height() {
-			s = ts
+		var tfc FullCommit
+		tfc, err = p.LatestCommit()
+		if err == nil && tfc.Height() > fc.Height() {
+			fc = tfc
 		}
 	}
 	// even if the last one had an error, if any was a match, this is good
-	if s.Height() > 0 {
+	if fc.Height() > 0 {
 		err = nil
 	}
-	return s, err
+	return fc, err
 }
 
 // missingProvider doens't store anything, always a miss
@@ -110,13 +110,13 @@ func NewMissingProvider() Provider {
 	return missingProvider{}
 }
 
-func (missingProvider) StoreFullCommit(_ FullCommit) error { return nil }
+func (missingProvider) StoreCommit(_ FullCommit) error { return nil }
 func (missingProvider) GetByHeight(_ int) (FullCommit, error) {
-	return FullCommit{}, certerr.ErrFullCommitNotFound()
+	return FullCommit{}, certerr.ErrCommitNotFound()
 }
 func (missingProvider) GetByHash(_ []byte) (FullCommit, error) {
-	return FullCommit{}, certerr.ErrFullCommitNotFound()
+	return FullCommit{}, certerr.ErrCommitNotFound()
 }
-func (missingProvider) LatestFullCommit() (FullCommit, error) {
-	return FullCommit{}, certerr.ErrFullCommitNotFound()
+func (missingProvider) LatestCommit() (FullCommit, error) {
+	return FullCommit{}, certerr.ErrCommitNotFound()
 }

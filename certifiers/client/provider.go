@@ -40,8 +40,8 @@ func NewHTTPProvider(remote string) certifiers.Provider {
 	}
 }
 
-// StoreFullCommit is a noop, as clients can only read from the chain...
-func (p *provider) StoreFullCommit(_ certifiers.FullCommit) error { return nil }
+// StoreCommit is a noop, as clients can only read from the chain...
+func (p *provider) StoreCommit(_ certifiers.FullCommit) error { return nil }
 
 // GetHash gets the most recent validator and sees if it matches
 //
@@ -56,7 +56,7 @@ func (p *provider) GetByHash(hash []byte) (certifiers.FullCommit, error) {
 	p.updateHeight(vals.BlockHeight)
 	vhash := types.NewValidatorSet(vals.Validators).Hash()
 	if !bytes.Equal(hash, vhash) {
-		return fc, certerr.ErrFullCommitNotFound()
+		return fc, certerr.ErrCommitNotFound()
 	}
 	return p.seedFromVals(vals)
 }
@@ -70,7 +70,7 @@ func (p *provider) GetByHeight(h int) (fc certifiers.FullCommit, err error) {
 	return p.seedFromCommit(commit)
 }
 
-func (p *provider) LatestFullCommit() (fc certifiers.FullCommit, err error) {
+func (p *provider) LatestCommit() (fc certifiers.FullCommit, err error) {
 	commit, err := p.GetLatestCommit()
 	if err != nil {
 		return fc, err

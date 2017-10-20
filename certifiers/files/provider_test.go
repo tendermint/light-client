@@ -53,15 +53,15 @@ func TestFileProvider(t *testing.T) {
 	// check provider is empty
 	seed, err := p.GetByHeight(20)
 	require.NotNil(err)
-	assert.True(certerr.IsFullCommitNotFoundErr(err))
+	assert.True(certerr.IsCommitNotFoundErr(err))
 
 	seed, err = p.GetByHash(seeds[3].ValidatorsHash())
 	require.NotNil(err)
-	assert.True(certerr.IsFullCommitNotFoundErr(err))
+	assert.True(certerr.IsCommitNotFoundErr(err))
 
 	// now add them all to the provider
 	for _, s := range seeds {
-		err = p.StoreFullCommit(s)
+		err = p.StoreCommit(s)
 		require.Nil(err)
 		// and make sure we can get it back
 		s2, err := p.GetByHash(s.ValidatorsHash())
@@ -92,5 +92,5 @@ func TestFileProvider(t *testing.T) {
 	// and proper error for too low
 	_, err = p.GetByHeight(5)
 	assert.NotNil(err)
-	assert.True(certerr.IsFullCommitNotFoundErr(err))
+	assert.True(certerr.IsCommitNotFoundErr(err))
 }

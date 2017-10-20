@@ -44,15 +44,15 @@ func checkProvider(t *testing.T, p certifiers.Provider, chainID, app string) {
 	// check provider is empty
 	seed, err := p.GetByHeight(20)
 	require.NotNil(err)
-	assert.True(errors.IsFullCommitNotFoundErr(err))
+	assert.True(errors.IsCommitNotFoundErr(err))
 
 	seed, err = p.GetByHash(seeds[3].ValidatorsHash())
 	require.NotNil(err)
-	assert.True(errors.IsFullCommitNotFoundErr(err))
+	assert.True(errors.IsCommitNotFoundErr(err))
 
 	// now add them all to the provider
 	for _, s := range seeds {
-		err = p.StoreFullCommit(s)
+		err = p.StoreCommit(s)
 		require.Nil(err)
 		// and make sure we can get it back
 		s2, err := p.GetByHash(s.ValidatorsHash())
@@ -85,7 +85,7 @@ func checkGetHeight(t *testing.T, p certifiers.Provider, ask, expect int) {
 	seed, err := p.GetByHeight(ask)
 	require.Nil(t, err, "%+v", err)
 	if assert.Equal(t, expect, seed.Height()) {
-		err = p.StoreFullCommit(seed)
+		err = p.StoreCommit(seed)
 		require.Nil(t, err, "%+v", err)
 	}
 }
@@ -111,7 +111,7 @@ func TestCacheGetsBestHeight(t *testing.T) {
 		h := 10 * (i + 1)
 		check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
 		seed := certifiers.NewFullCommit(check, vals)
-		err := p2.StoreFullCommit(seed)
+		err := p2.StoreCommit(seed)
 		require.Nil(err)
 	}
 

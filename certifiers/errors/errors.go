@@ -8,19 +8,19 @@ import (
 
 var (
 	errValidatorsChanged = fmt.Errorf("Validators differ between header and certifier")
-	errFullCommitNotFound      = fmt.Errorf("FullCommit not found by provider")
+	errCommitNotFound    = fmt.Errorf("Commit not found by provider")
 	errTooMuchChange     = fmt.Errorf("Validators change too much to safely update")
 	errPastTime          = fmt.Errorf("Update older than certifier height")
 	errNoPathFound       = fmt.Errorf("Cannot find a path of validators")
 )
 
-// IsFullCommitNotFoundErr checks whether an error is due to missing data
-func IsFullCommitNotFoundErr(err error) bool {
-	return err != nil && (errors.Cause(err) == errFullCommitNotFound)
+// IsCommitNotFoundErr checks whether an error is due to missing data
+func IsCommitNotFoundErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errCommitNotFound)
 }
 
-func ErrFullCommitNotFound() error {
-	return errors.WithStack(errFullCommitNotFound)
+func ErrCommitNotFound() error {
+	return errors.WithStack(errCommitNotFound)
 }
 
 // IsValidatorsChangedErr checks whether and error is due

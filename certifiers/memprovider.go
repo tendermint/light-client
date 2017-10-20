@@ -34,7 +34,7 @@ func (m *memStoreProvider) encodeHash(hash []byte) string {
 	return hex.EncodeToString(hash)
 }
 
-func (m *memStoreProvider) StoreFullCommit(fc FullCommit) error {
+func (m *memStoreProvider) StoreCommit(fc FullCommit) error {
 	// make sure the fc is self-consistent before saving
 	err := fc.ValidateBasic(fc.Commit.Header.ChainID)
 	if err != nil {
@@ -57,22 +57,22 @@ func (m *memStoreProvider) GetByHeight(h int) (FullCommit, error) {
 			return fc, nil
 		}
 	}
-	return FullCommit{}, certerr.ErrFullCommitNotFound()
+	return FullCommit{}, certerr.ErrCommitNotFound()
 }
 
 func (m *memStoreProvider) GetByHash(hash []byte) (FullCommit, error) {
 	var err error
 	fc, ok := m.byHash[m.encodeHash(hash)]
 	if !ok {
-		err = certerr.ErrFullCommitNotFound()
+		err = certerr.ErrCommitNotFound()
 	}
 	return fc, err
 }
 
-func (m *memStoreProvider) LatestFullCommit() (FullCommit, error) {
+func (m *memStoreProvider) LatestCommit() (FullCommit, error) {
 	l := len(m.byHeight)
 	if l == 0 {
-		return FullCommit{}, certerr.ErrFullCommitNotFound()
+		return FullCommit{}, certerr.ErrCommitNotFound()
 	}
 	return m.byHeight[l-1], nil
 }
