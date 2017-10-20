@@ -16,8 +16,8 @@ const (
 	MaxSeedSize = 1024 * 1024
 )
 
-// Write exports the seed in binary / go-wire style
-func WriteSeed(s certifiers.Seed, path string) error {
+// SaveSeed exports the seed in binary / go-wire style
+func SaveSeed(s certifiers.Seed, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		// if os.IsExist(err) {
@@ -32,8 +32,8 @@ func WriteSeed(s certifiers.Seed, path string) error {
 	return errors.WithStack(err)
 }
 
-// Write exports the seed in a json format
-func WriteSeedJSON(s certifiers.Seed, path string) error {
+// SaveSeedJSON exports the seed in a json format
+func SaveSeedJSON(s certifiers.Seed, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		// if os.IsExist(err) {

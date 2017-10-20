@@ -75,7 +75,7 @@ func (m Provider) StoreSeed(seed certifiers.Seed) error {
 		filepath.Join(m.valDir, m.encodeHash(seed.Header.ValidatorsHash)),
 	}
 	for _, p := range paths {
-		err := WriteSeed(seed, p)
+		err := SaveSeed(seed, p)
 		// unknown error in creating or writing immediately breaks
 		if err != nil {
 			return err
