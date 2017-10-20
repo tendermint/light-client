@@ -11,7 +11,7 @@ type Inquiring struct {
 	// These are only properly validated data, from local system
 	trusted Provider
 	// This is a source of new info, like a node rpc, or other import method
-	source Provider
+	Source Provider
 }
 
 func NewInquiring(chainID string, fc FullCommit, trusted Provider, source Provider) *Inquiring {
@@ -21,7 +21,7 @@ func NewInquiring(chainID string, fc FullCommit, trusted Provider, source Provid
 	return &Inquiring{
 		cert:    NewDynamic(chainID, fc.Validators, fc.Height()),
 		trusted: trusted,
-		source:  source,
+		Source:  source,
 	}
 }
 
@@ -100,7 +100,7 @@ func (c *Inquiring) useClosestTrust(h int) error {
 // if IsTooMuchChangeErr, we try to find a path by binary search over height
 func (c *Inquiring) updateToHash(vhash []byte) error {
 	// try to get the match, and update
-	fc, err := c.source.GetByHash(vhash)
+	fc, err := c.Source.GetByHash(vhash)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (c *Inquiring) updateToHash(vhash []byte) error {
 // updateToHeight will use divide-and-conquer to find a path to h
 func (c *Inquiring) updateToHeight(h int) error {
 	// try to update to this height (with checks)
-	fc, err := c.source.GetByHeight(h)
+	fc, err := c.Source.GetByHeight(h)
 	if err != nil {
 		return err
 	}
