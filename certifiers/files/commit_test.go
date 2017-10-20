@@ -15,7 +15,7 @@ import (
 
 func tmpFile() string {
 	suffix := cmn.RandStr(16)
-	return filepath.Join(os.TempDir(), "seed-test-"+suffix)
+	return filepath.Join(os.TempDir(), "fc-test-"+suffix)
 }
 
 func TestSerializeFullCommits(t *testing.T) {
@@ -26,21 +26,20 @@ func TestSerializeFullCommits(t *testing.T) {
 	chainID := "ser-ial"
 	h := 25
 
-	// build a seed
+	// build a fc
 	keys := certifiers.GenValKeys(5)
 	vals := keys.ToValidators(10, 0)
-	check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
-	seed := certifiers.NewFullCommit(check, vals)
+	fc := keys.GenFullCommit(chainID, h, nil, vals, appHash, 0, 5)
 
-	require.Equal(h, seed.Height())
-	require.Equal(vals.Hash(), seed.ValidatorsHash())
+	require.Equal(h, fc.Height())
+	require.Equal(vals.Hash(), fc.ValidatorsHash())
 
 	// try read/write with json
 	jfile := tmpFile()
 	defer os.Remove(jfile)
 	jseed, err := LoadFullCommitJSON(jfile)
 	assert.NotNil(err)
-	err = SaveFullCommitJSON(seed, jfile)
+	err = SaveFullCommitJSON(fc, jfile)
 	require.Nil(err)
 	jseed, err = LoadFullCommitJSON(jfile)
 	assert.Nil(err, "%+v", err)
@@ -52,7 +51,7 @@ func TestSerializeFullCommits(t *testing.T) {
 	defer os.Remove(bfile)
 	bseed, err := LoadFullCommit(bfile)
 	assert.NotNil(err)
-	err = SaveFullCommit(seed, bfile)
+	err = SaveFullCommit(fc, bfile)
 	require.Nil(err)
 	bseed, err = LoadFullCommit(bfile)
 	assert.Nil(err, "%+v", err)
