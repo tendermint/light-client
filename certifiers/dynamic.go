@@ -27,6 +27,10 @@ func NewDynamic(chainID string, vals *types.ValidatorSet, height int) *Dynamic {
 	}
 }
 
+func (c *Dynamic) ChainID() string {
+	return c.Cert.ChainID()
+}
+
 // Certify handles this with
 func (c *Dynamic) Certify(check Checkpoint) error {
 	err := c.Cert.Certify(check)
@@ -48,7 +52,7 @@ func (c *Dynamic) Update(check Checkpoint, vset *types.ValidatorSet) error {
 	}
 
 	// first, verify if the input is self-consistent....
-	err := check.ValidateBasic(c.Cert.ChainID)
+	err := check.ValidateBasic(c.ChainID())
 	if err != nil {
 		return err
 	}
@@ -56,14 +60,14 @@ func (c *Dynamic) Update(check Checkpoint, vset *types.ValidatorSet) error {
 	// TODO: now, make sure not too much change... meaning this commit
 	// would be approved by the currently known validator set
 	// as well as the new set
-	err = VerifyCommitAny(c.Cert.VSet, vset, c.Cert.ChainID,
+	err = VerifyCommitAny(c.Cert.VSet, vset, c.ChainID(),
 		check.Commit.BlockID, check.Header.Height, check.Commit)
 	if err != nil {
 		return certerr.ErrTooMuchChange()
 	}
 
 	// looks good, we can update
-	c.Cert = NewStatic(c.Cert.ChainID, vset)
+	c.Cert = NewStatic(c.ChainID(), vset)
 	c.LastHeight = check.Height()
 	return nil
 }

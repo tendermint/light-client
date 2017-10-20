@@ -18,16 +18,20 @@ var _ Certifier = &Static{}
 // Good for testing or really simple chains.  You will want a
 // better implementation when the validator set can actually change.
 type Static struct {
-	ChainID string
+	chainID string
 	VSet    *types.ValidatorSet
 	vhash   []byte
 }
 
 func NewStatic(chainID string, vals *types.ValidatorSet) *Static {
 	return &Static{
-		ChainID: chainID,
+		chainID: chainID,
 		VSet:    vals,
 	}
+}
+
+func (c *Static) ChainID() string {
+	return c.chainID
 }
 
 func (c *Static) Hash() []byte {
@@ -39,7 +43,7 @@ func (c *Static) Hash() []byte {
 
 func (c *Static) Certify(check Checkpoint) error {
 	// do basic sanity checks
-	err := check.ValidateBasic(c.ChainID)
+	err := check.ValidateBasic(c.chainID)
 	if err != nil {
 		return err
 	}
@@ -50,7 +54,7 @@ func (c *Static) Certify(check Checkpoint) error {
 	}
 
 	// then make sure we have the proper signatures for this
-	err = c.VSet.VerifyCommit(c.ChainID, check.Commit.BlockID,
+	err = c.VSet.VerifyCommit(c.chainID, check.Commit.BlockID,
 		check.Header.Height, check.Commit)
 	return errors.WithStack(err)
 }

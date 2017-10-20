@@ -24,7 +24,7 @@ func NewInquiring(chainID string, seed Seed, trusted Provider, source Provider) 
 }
 
 func (c *Inquiring) ChainID() string {
-	return c.Cert.Cert.ChainID
+	return c.Cert.ChainID()
 }
 
 // Certify makes sure this is checkpoint is valid.

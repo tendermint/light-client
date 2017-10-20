@@ -15,6 +15,7 @@ import (
 // Certifier must know the current set of validitors by some other means.
 type Certifier interface {
 	Certify(check Checkpoint) error
+	ChainID() string
 }
 
 // Checkpoint is basically the rpc /commit response, but extended
