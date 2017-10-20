@@ -40,14 +40,14 @@ func NewHTTPProvider(remote string) certifiers.Provider {
 	}
 }
 
-// StoreSeed is a noop, as clients can only read from the chain...
-func (p *provider) StoreSeed(_ certifiers.Seed) error { return nil }
+// StoreFullCommit is a noop, as clients can only read from the chain...
+func (p *provider) StoreFullCommit(_ certifiers.FullCommit) error { return nil }
 
 // GetHash gets the most recent validator and sees if it matches
 //
 // TODO: improve when the rpc interface supports more functionality
-func (p *provider) GetByHash(hash []byte) (certifiers.Seed, error) {
-	var seed certifiers.Seed
+func (p *provider) GetByHash(hash []byte) (certifiers.FullCommit, error) {
+	var seed certifiers.FullCommit
 	vals, err := p.node.Validators(nil)
 	// if we get no validators, or a different height, return an error
 	if err != nil {
@@ -56,13 +56,13 @@ func (p *provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 	p.updateHeight(vals.BlockHeight)
 	vhash := types.NewValidatorSet(vals.Validators).Hash()
 	if !bytes.Equal(hash, vhash) {
-		return seed, certerr.ErrSeedNotFound()
+		return seed, certerr.ErrFullCommitNotFound()
 	}
 	return p.seedFromVals(vals)
 }
 
 // GetByHeight gets the validator set by height
-func (p *provider) GetByHeight(h int) (seed certifiers.Seed, err error) {
+func (p *provider) GetByHeight(h int) (seed certifiers.FullCommit, err error) {
 	commit, err := p.node.Commit(&h)
 	if err != nil {
 		return seed, err
@@ -70,7 +70,7 @@ func (p *provider) GetByHeight(h int) (seed certifiers.Seed, err error) {
 	return p.seedFromCommit(commit)
 }
 
-func (p *provider) LatestSeed() (seed certifiers.Seed, err error) {
+func (p *provider) LatestFullCommit() (seed certifiers.FullCommit, err error) {
 	commit, err := p.GetLatestCommit()
 	if err != nil {
 		return seed, err
@@ -89,8 +89,8 @@ func (p *provider) GetLatestCommit() (*ctypes.ResultCommit, error) {
 	return p.node.Commit(&status.LatestBlockHeight)
 }
 
-func (p *provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed, error) {
-	seed := certifiers.Seed{
+func (p *provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.FullCommit, error) {
+	seed := certifiers.FullCommit{
 		Validators: types.NewValidatorSet(vals.Validators),
 	}
 	// now get the commits and build a seed
@@ -102,8 +102,8 @@ func (p *provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed,
 	return seed, nil
 }
 
-func (p *provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.Seed, error) {
-	seed := certifiers.Seed{
+func (p *provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.FullCommit, error) {
+	seed := certifiers.FullCommit{
 		Commit: certifiers.CommitFromResult(commit),
 	}
 

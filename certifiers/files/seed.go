@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	MaxSeedSize = 1024 * 1024
+	MaxFullCommitSize = 1024 * 1024
 )
 
-// SaveSeed exports the seed in binary / go-wire style
-func SaveSeed(s certifiers.Seed, path string) error {
+// SaveFullCommit exports the seed in binary / go-wire style
+func SaveFullCommit(s certifiers.FullCommit, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		// if os.IsExist(err) {
@@ -32,8 +32,8 @@ func SaveSeed(s certifiers.Seed, path string) error {
 	return errors.WithStack(err)
 }
 
-// SaveSeedJSON exports the seed in a json format
-func SaveSeedJSON(s certifiers.Seed, path string) error {
+// SaveFullCommitJSON exports the seed in a json format
+func SaveFullCommitJSON(s certifiers.FullCommit, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		// if os.IsExist(err) {
@@ -47,28 +47,28 @@ func SaveSeedJSON(s certifiers.Seed, path string) error {
 	return errors.WithStack(err)
 }
 
-func LoadSeed(path string) (certifiers.Seed, error) {
-	var seed certifiers.Seed
+func LoadFullCommit(path string) (certifiers.FullCommit, error) {
+	var seed certifiers.FullCommit
 	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return seed, certerr.ErrSeedNotFound()
+			return seed, certerr.ErrFullCommitNotFound()
 		}
 		return seed, errors.WithStack(err)
 	}
 	defer f.Close()
 
 	var n int
-	wire.ReadBinaryPtr(&seed, f, MaxSeedSize, &n, &err)
+	wire.ReadBinaryPtr(&seed, f, MaxFullCommitSize, &n, &err)
 	return seed, errors.WithStack(err)
 }
 
-func LoadSeedJSON(path string) (certifiers.Seed, error) {
-	var seed certifiers.Seed
+func LoadFullCommitJSON(path string) (certifiers.FullCommit, error) {
+	var seed certifiers.FullCommit
 	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return seed, certerr.ErrSeedNotFound()
+			return seed, certerr.ErrFullCommitNotFound()
 		}
 		return seed, errors.WithStack(err)
 	}

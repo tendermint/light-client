@@ -23,7 +23,7 @@ func TestInquirerValidPath(t *testing.T) {
 	// construct a bunch of seeds, each with one more height than the last
 	chainID := "inquiry-test"
 	count := 50
-	seeds := make([]certifiers.Seed, count)
+	seeds := make([]certifiers.FullCommit, count)
 	for i := 0; i < count; i++ {
 		// extend the keys by 1 each time
 		keys = keys.Extend(1)
@@ -31,7 +31,7 @@ func TestInquirerValidPath(t *testing.T) {
 		h := 20 + 10*i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
 		cp := keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
-		seeds[i] = certifiers.Seed{cp, vals}
+		seeds[i] = certifiers.FullCommit{cp, vals}
 	}
 
 	// initialize a certifier with the initial state
@@ -44,7 +44,7 @@ func TestInquirerValidPath(t *testing.T) {
 
 	// add a few seed in the middle should be insufficient
 	for i := 10; i < 13; i++ {
-		err := cert.SeedSource.StoreSeed(seeds[i])
+		err := cert.FullCommitSource.StoreFullCommit(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -52,7 +52,7 @@ func TestInquirerValidPath(t *testing.T) {
 
 	// with more info, we succeed
 	for i := 0; i < count; i++ {
-		err := cert.SeedSource.StoreSeed(seeds[i])
+		err := cert.FullCommitSource.StoreFullCommit(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -72,7 +72,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 	// construct a bunch of seeds, each with one more height than the last
 	chainID := "minimal-path"
 	count := 12
-	seeds := make([]certifiers.Seed, count)
+	seeds := make([]certifiers.FullCommit, count)
 	for i := 0; i < count; i++ {
 		// extend the validators, so we are just below 2/3
 		keys = keys.Extend(len(keys)/2 - 1)
@@ -80,7 +80,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 		h := 5 + 10*i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
 		cp := keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
-		seeds[i] = certifiers.Seed{cp, vals}
+		seeds[i] = certifiers.FullCommit{cp, vals}
 	}
 
 	// initialize a certifier with the initial state
@@ -93,7 +93,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 
 	// add a few seed in the middle should be insufficient
 	for i := 5; i < 8; i++ {
-		err := cert.SeedSource.StoreSeed(seeds[i])
+		err := cert.FullCommitSource.StoreFullCommit(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -101,7 +101,7 @@ func TestInquirerMinimalPath(t *testing.T) {
 
 	// with more info, we succeed
 	for i := 0; i < count; i++ {
-		err := cert.SeedSource.StoreSeed(seeds[i])
+		err := cert.FullCommitSource.StoreFullCommit(seeds[i])
 		require.Nil(err)
 	}
 	err = cert.Certify(check)
@@ -121,7 +121,7 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 	// construct a bunch of seeds, each with one more height than the last
 	chainID := "inquiry-test"
 	count := 10
-	seeds := make([]certifiers.Seed, count)
+	seeds := make([]certifiers.FullCommit, count)
 	for i := 0; i < count; i++ {
 		// extend the keys by 1 each time
 		keys = keys.Extend(1)
@@ -129,7 +129,7 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 		h := 20 + 10*i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
 		cp := keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
-		seeds[i] = certifiers.Seed{cp, vals}
+		seeds[i] = certifiers.FullCommit{cp, vals}
 	}
 
 	// initialize a certifier with the initial state
@@ -137,11 +137,11 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 
 	// store a few seeds as trust
 	for _, i := range []int{2, 5} {
-		trust.StoreSeed(seeds[i])
+		trust.StoreFullCommit(seeds[i])
 	}
 
 	// let's see if we can jump forward using trusted seeds
-	err := source.StoreSeed(seeds[7])
+	err := source.StoreFullCommit(seeds[7])
 	require.Nil(err, "%+v", err)
 	check := seeds[7].Commit
 	err = cert.Certify(check)
@@ -150,7 +150,7 @@ func TestInquirerVerifyHistorical(t *testing.T) {
 
 	// add access to all seeds via untrusted source
 	for i := 0; i < count; i++ {
-		err := cert.SeedSource.StoreSeed(seeds[i])
+		err := cert.FullCommitSource.StoreFullCommit(seeds[i])
 		require.Nil(err)
 	}
 

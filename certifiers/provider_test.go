@@ -31,28 +31,28 @@ func checkProvider(t *testing.T, p certifiers.Provider, chainID, app string) {
 	count := 10
 
 	// make a bunch of seeds...
-	seeds := make([]certifiers.Seed, count)
+	seeds := make([]certifiers.FullCommit, count)
 	for i := 0; i < count; i++ {
 		// two seeds for each validator, to check how we handle dups
 		// (10, 0), (10, 1), (10, 1), (10, 2), (10, 2), ...
 		vals := keys.ToValidators(10, int64(count/2))
 		h := 20 + 10*i
 		check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
-		seeds[i] = certifiers.Seed{check, vals}
+		seeds[i] = certifiers.FullCommit{check, vals}
 	}
 
 	// check provider is empty
 	seed, err := p.GetByHeight(20)
 	require.NotNil(err)
-	assert.True(errors.IsSeedNotFoundErr(err))
+	assert.True(errors.IsFullCommitNotFoundErr(err))
 
 	seed, err = p.GetByHash(seeds[3].ValidatorsHash())
 	require.NotNil(err)
-	assert.True(errors.IsSeedNotFoundErr(err))
+	assert.True(errors.IsFullCommitNotFoundErr(err))
 
 	// now add them all to the provider
 	for _, s := range seeds {
-		err = p.StoreSeed(s)
+		err = p.StoreFullCommit(s)
 		require.Nil(err)
 		// and make sure we can get it back
 		s2, err := p.GetByHash(s.ValidatorsHash())
@@ -85,7 +85,7 @@ func checkGetHeight(t *testing.T, p certifiers.Provider, ask, expect int) {
 	seed, err := p.GetByHeight(ask)
 	require.Nil(t, err, "%+v", err)
 	if assert.Equal(t, expect, seed.Height()) {
-		err = p.StoreSeed(seed)
+		err = p.StoreFullCommit(seed)
 		require.Nil(t, err, "%+v", err)
 	}
 }
@@ -110,8 +110,8 @@ func TestCacheGetsBestHeight(t *testing.T) {
 		vals := keys.ToValidators(10, int64(count/2))
 		h := 10 * (i + 1)
 		check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
-		seed := certifiers.Seed{check, vals}
-		err := p2.StoreSeed(seed)
+		seed := certifiers.FullCommit{check, vals}
+		err := p2.StoreFullCommit(seed)
 		require.Nil(err)
 	}
 

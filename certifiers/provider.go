@@ -8,13 +8,13 @@ import (
 //
 // Examples: MemProvider, files.Provider, client.Provider....
 type Provider interface {
-	StoreSeed(seed Seed) error
+	StoreFullCommit(seed FullCommit) error
 	// GetByHeight returns the closest seed at with height <= h
-	GetByHeight(h int) (Seed, error)
+	GetByHeight(h int) (FullCommit, error)
 	// GetByHash returns a seed exactly matching this validator hash
-	GetByHash(hash []byte) (Seed, error)
-	// LatestSeed returns the newest Seed stored
-	LatestSeed() (Seed, error)
+	GetByHash(hash []byte) (FullCommit, error)
+	// LatestFullCommit returns the newest FullCommit stored
+	LatestFullCommit() (FullCommit, error)
 }
 
 // cacheProvider allows you to place one or more caches in front of a source
@@ -31,12 +31,12 @@ func NewCacheProvider(providers ...Provider) Provider {
 	}
 }
 
-// StoreSeed tries to add the seed to all providers.
+// StoreFullCommit tries to add the seed to all providers.
 //
 // Aborts on first error it encounters (closest provider)
-func (c cacheProvider) StoreSeed(seed Seed) (err error) {
+func (c cacheProvider) StoreFullCommit(seed FullCommit) (err error) {
 	for _, p := range c.Providers {
-		err = p.StoreSeed(seed)
+		err = p.StoreFullCommit(seed)
 		if err != nil {
 			break
 		}
@@ -49,7 +49,7 @@ GetByHeight should return the closest possible match from all providers.
 
 The Cache is usually organized in order from cheapest call (memory)
 to most expensive calls (disk/network). However, since GetByHeight returns
-a Seed a h' <= h, if the memory has a seed at h-10, but the network would
+a FullCommit a h' <= h, if the memory has a seed at h-10, but the network would
 give us the exact match, a naive "stop at first non-error" would hide
 the actual desired results.
 
@@ -57,9 +57,9 @@ Thus, we query each provider in order until we find an exact match
 or we finished querying them all.  If at least one returned a non-error,
 then this returns the best match (minimum h-h').
 */
-func (c cacheProvider) GetByHeight(h int) (s Seed, err error) {
+func (c cacheProvider) GetByHeight(h int) (s FullCommit, err error) {
 	for _, p := range c.Providers {
-		var ts Seed
+		var ts FullCommit
 		ts, err = p.GetByHeight(h)
 		if err == nil {
 			if ts.Height() > s.Height() {
@@ -77,7 +77,7 @@ func (c cacheProvider) GetByHeight(h int) (s Seed, err error) {
 	return s, err
 }
 
-func (c cacheProvider) GetByHash(hash []byte) (s Seed, err error) {
+func (c cacheProvider) GetByHash(hash []byte) (s FullCommit, err error) {
 	for _, p := range c.Providers {
 		s, err = p.GetByHash(hash)
 		if err == nil {
@@ -87,10 +87,10 @@ func (c cacheProvider) GetByHash(hash []byte) (s Seed, err error) {
 	return s, err
 }
 
-func (c cacheProvider) LatestSeed() (s Seed, err error) {
+func (c cacheProvider) LatestFullCommit() (s FullCommit, err error) {
 	for _, p := range c.Providers {
-		var ts Seed
-		ts, err = p.LatestSeed()
+		var ts FullCommit
+		ts, err = p.LatestFullCommit()
 		if err == nil && ts.Height() > s.Height() {
 			s = ts
 		}
@@ -110,13 +110,13 @@ func NewMissingProvider() Provider {
 	return missingProvider{}
 }
 
-func (missingProvider) StoreSeed(_ Seed) error { return nil }
-func (missingProvider) GetByHeight(_ int) (Seed, error) {
-	return Seed{}, certerr.ErrSeedNotFound()
+func (missingProvider) StoreFullCommit(_ FullCommit) error { return nil }
+func (missingProvider) GetByHeight(_ int) (FullCommit, error) {
+	return FullCommit{}, certerr.ErrFullCommitNotFound()
 }
-func (missingProvider) GetByHash(_ []byte) (Seed, error) {
-	return Seed{}, certerr.ErrSeedNotFound()
+func (missingProvider) GetByHash(_ []byte) (FullCommit, error) {
+	return FullCommit{}, certerr.ErrFullCommitNotFound()
 }
-func (missingProvider) LatestSeed() (Seed, error) {
-	return Seed{}, certerr.ErrSeedNotFound()
+func (missingProvider) LatestFullCommit() (FullCommit, error) {
+	return FullCommit{}, certerr.ErrFullCommitNotFound()
 }

@@ -27,7 +27,7 @@ func TestProvider(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 
 	// let's get the highest block
-	seed, err := p.LatestSeed()
+	seed, err := p.LatestFullCommit()
 
 	require.Nil(err, "%+v", err)
 	sh := seed.Height()
@@ -54,9 +54,9 @@ func TestProvider(t *testing.T) {
 	// get by hash fails without match
 	seed, err = p.GetByHash([]byte("foobar"))
 	assert.NotNil(err)
-	assert.True(certerr.IsSeedNotFoundErr(err))
+	assert.True(certerr.IsFullCommitNotFoundErr(err))
 
 	// storing the seed silently ignored
-	err = p.StoreSeed(seed)
+	err = p.StoreFullCommit(seed)
 	assert.Nil(err, "%+v", err)
 }

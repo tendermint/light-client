@@ -18,7 +18,7 @@ func tmpFile() string {
 	return filepath.Join(os.TempDir(), "seed-test-"+suffix)
 }
 
-func TestSerializeSeeds(t *testing.T) {
+func TestSerializeFullCommits(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 
 	// some constants
@@ -30,7 +30,7 @@ func TestSerializeSeeds(t *testing.T) {
 	keys := certifiers.GenValKeys(5)
 	vals := keys.ToValidators(10, 0)
 	check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
-	seed := certifiers.Seed{check, vals}
+	seed := certifiers.FullCommit{check, vals}
 
 	require.Equal(h, seed.Height())
 	require.Equal(vals.Hash(), seed.ValidatorsHash())
@@ -38,11 +38,11 @@ func TestSerializeSeeds(t *testing.T) {
 	// try read/write with json
 	jfile := tmpFile()
 	defer os.Remove(jfile)
-	jseed, err := LoadSeedJSON(jfile)
+	jseed, err := LoadFullCommitJSON(jfile)
 	assert.NotNil(err)
-	err = SaveSeedJSON(seed, jfile)
+	err = SaveFullCommitJSON(seed, jfile)
 	require.Nil(err)
-	jseed, err = LoadSeedJSON(jfile)
+	jseed, err = LoadFullCommitJSON(jfile)
 	assert.Nil(err, "%+v", err)
 	assert.Equal(h, jseed.Height())
 	assert.Equal(vals.Hash(), jseed.ValidatorsHash())
@@ -50,18 +50,18 @@ func TestSerializeSeeds(t *testing.T) {
 	// try read/write with binary
 	bfile := tmpFile()
 	defer os.Remove(bfile)
-	bseed, err := LoadSeed(bfile)
+	bseed, err := LoadFullCommit(bfile)
 	assert.NotNil(err)
-	err = SaveSeed(seed, bfile)
+	err = SaveFullCommit(seed, bfile)
 	require.Nil(err)
-	bseed, err = LoadSeed(bfile)
+	bseed, err = LoadFullCommit(bfile)
 	assert.Nil(err, "%+v", err)
 	assert.Equal(h, bseed.Height())
 	assert.Equal(vals.Hash(), bseed.ValidatorsHash())
 
 	// make sure they don't read the other format (different)
-	_, err = LoadSeed(jfile)
+	_, err = LoadFullCommit(jfile)
 	assert.NotNil(err)
-	_, err = LoadSeedJSON(bfile)
+	_, err = LoadFullCommitJSON(bfile)
 	assert.NotNil(err)
 }

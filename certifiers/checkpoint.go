@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	rtypes "github.com/tendermint/tendermint/rpc/core/types"
+	"github.com/tendermint/tendermint/types"
 
 	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
@@ -25,19 +26,34 @@ type Certifier interface {
 // the system: such as txs, abci state, validator sets, etc...
 type Commit rtypes.ResultCommit
 
+// FullCommit is a commit and the actual validator set,
+// the base info you need to update to a given point,
+// assuming knowledge of some previous validator set
+type FullCommit struct {
+	*Commit    `json:"commit"`
+	Validators *types.ValidatorSet `json:"validator_set"`
+}
+
+func NewFullCommit(commit *Commit, vals *types.ValidatorSet) FullCommit {
+	return FullCommit{
+		Commit:     commit,
+		Validators: vals,
+	}
+}
+
 func CommitFromResult(commit *rtypes.ResultCommit) *Commit {
 	return (*Commit)(commit)
 }
 
 func (c *Commit) Height() int {
-	if c.Header == nil {
+	if c == nil || c.Header == nil {
 		return 0
 	}
 	return c.Header.Height
 }
 
 func (c *Commit) ValidatorsHash() []byte {
-	if c.Header == nil {
+	if c == nil || c.Header == nil {
 		return nil
 	}
 	return c.Header.ValidatorsHash

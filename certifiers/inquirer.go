@@ -8,18 +8,18 @@ import (
 
 type Inquiring struct {
 	Cert         *Dynamic
-	TrustedSeeds Provider // These are only properly validated data, from local system
-	SeedSource   Provider // This is a source of new info, like a node rpc, or other import method
+	TrustedFullCommits Provider // These are only properly validated data, from local system
+	FullCommitSource   Provider // This is a source of new info, like a node rpc, or other import method
 }
 
-func NewInquiring(chainID string, seed Seed, trusted Provider, source Provider) *Inquiring {
+func NewInquiring(chainID string, seed FullCommit, trusted Provider, source Provider) *Inquiring {
 	// store the data in trusted
-	trusted.StoreSeed(seed)
+	trusted.StoreFullCommit(seed)
 
 	return &Inquiring{
 		Cert:         NewDynamic(chainID, seed.Validators, seed.Height()),
-		TrustedSeeds: trusted,
-		SeedSource:   source,
+		TrustedFullCommits: trusted,
+		FullCommitSource:   source,
 	}
 }
 
@@ -54,7 +54,7 @@ func (c *Inquiring) Certify(check *Commit) error {
 	}
 
 	// store the new checkpoint
-	c.TrustedSeeds.StoreSeed(Seed{
+	c.TrustedFullCommits.StoreFullCommit(FullCommit{
 		Commit:     check,
 		Validators: c.Cert.Cert.VSet,
 	})
@@ -69,13 +69,13 @@ func (c *Inquiring) Update(check *Commit, vals *types.ValidatorSet) error {
 
 	err = c.Cert.Update(check, vals)
 	if err == nil {
-		c.TrustedSeeds.StoreSeed(Seed{Commit: check, Validators: vals})
+		c.TrustedFullCommits.StoreFullCommit(FullCommit{Commit: check, Validators: vals})
 	}
 	return err
 }
 
 func (c *Inquiring) useClosestTrust(h int) error {
-	closest, err := c.TrustedSeeds.GetByHeight(h)
+	closest, err := c.TrustedFullCommits.GetByHeight(h)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (c *Inquiring) useClosestTrust(h int) error {
 // if IsTooMuchChangeErr, we try to find a path by binary search over height
 func (c *Inquiring) updateToHash(vhash []byte) error {
 	// try to get the match, and update
-	seed, err := c.SeedSource.GetByHash(vhash)
+	seed, err := c.FullCommitSource.GetByHash(vhash)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (c *Inquiring) updateToHash(vhash []byte) error {
 // updateToHeight will use divide-and-conquer to find a path to h
 func (c *Inquiring) updateToHeight(h int) error {
 	// try to update to this height (with checks)
-	seed, err := c.SeedSource.GetByHeight(h)
+	seed, err := c.FullCommitSource.GetByHeight(h)
 	if err != nil {
 		return err
 	}

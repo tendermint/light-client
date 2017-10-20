@@ -7,7 +7,7 @@ with three issues:
 
   1. Given a validator hash, retrieve the validator set if previously stored
   2. Given a block height, find the *Commit with the highest height <= h
-  3. Given a Seed, store it quickly to satisfy 1 and 2
+  3. Given a FullCommit, store it quickly to satisfy 1 and 2
 
 Note that we do not worry about caching, as that can be achieved by
 pairing this with a MemStoreProvider and CacheProvider from certifiers
@@ -64,7 +64,7 @@ func (p *provider) encodeHeight(h int) string {
 	return fmt.Sprintf("%012d%s", h, Ext)
 }
 
-func (p *provider) StoreSeed(seed certifiers.Seed) error {
+func (p *provider) StoreFullCommit(seed certifiers.FullCommit) error {
 	// make sure the seed is self-consistent before saving
 	err := seed.ValidateBasic(seed.Commit.Header.ChainID)
 	if err != nil {
@@ -76,7 +76,7 @@ func (p *provider) StoreSeed(seed certifiers.Seed) error {
 		filepath.Join(p.valDir, p.encodeHash(seed.Header.ValidatorsHash)),
 	}
 	for _, path := range paths {
-		err := SaveSeed(seed, path)
+		err := SaveFullCommit(seed, path)
 		// unknown error in creating or writing immediately breaks
 		if err != nil {
 			return err
@@ -85,25 +85,25 @@ func (p *provider) StoreSeed(seed certifiers.Seed) error {
 	return nil
 }
 
-func (p *provider) GetByHeight(h int) (certifiers.Seed, error) {
+func (p *provider) GetByHeight(h int) (certifiers.FullCommit, error) {
 	// first we look for exact match, then search...
 	path := filepath.Join(p.checkDir, p.encodeHeight(h))
-	seed, err := LoadSeed(path)
-	if certerr.IsSeedNotFoundErr(err) {
+	seed, err := LoadFullCommit(path)
+	if certerr.IsFullCommitNotFoundErr(err) {
 		path, err = p.searchForHeight(h)
 		if err == nil {
-			seed, err = LoadSeed(path)
+			seed, err = LoadFullCommit(path)
 		}
 	}
 	return seed, err
 }
 
-func (p *provider) LatestSeed() (seed certifiers.Seed, err error) {
+func (p *provider) LatestFullCommit() (seed certifiers.FullCommit, err error) {
 	return p.GetByHeight(math.MaxInt32 - 1)
 }
 
 // search for height, looks for a file with highest height < h
-// return certifiers.ErrSeedNotFound() if not there...
+// return certifiers.ErrFullCommitNotFound() if not there...
 func (p *provider) searchForHeight(h int) (string, error) {
 	d, err := os.Open(p.checkDir)
 	if err != nil {
@@ -120,14 +120,14 @@ func (p *provider) searchForHeight(h int) (string, error) {
 	sort.Strings(files)
 	i := sort.SearchStrings(files, desired)
 	if i == 0 {
-		return "", certerr.ErrSeedNotFound()
+		return "", certerr.ErrFullCommitNotFound()
 	}
 	found := files[i-1]
 	path := filepath.Join(p.checkDir, found)
 	return path, errors.WithStack(err)
 }
 
-func (p *provider) GetByHash(hash []byte) (certifiers.Seed, error) {
+func (p *provider) GetByHash(hash []byte) (certifiers.FullCommit, error) {
 	path := filepath.Join(p.valDir, p.encodeHash(hash))
-	return LoadSeed(path)
+	return LoadFullCommit(path)
 }
