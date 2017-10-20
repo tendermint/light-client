@@ -58,10 +58,15 @@ func (p *Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 func (p *Provider) GetByHeight(h int) (seed certifiers.Seed, err error) {
 	commit, err := p.node.Commit(&h)
 	if err != nil {
-		commit, err = p.GetLatestCommit()
-		if err != nil {
-			return seed, err
-		}
+		return seed, err
+	}
+	return p.seedFromCommit(commit)
+}
+
+func (p *Provider) LatestSeed() (seed certifiers.Seed, err error) {
+	commit, err := p.GetLatestCommit()
+	if err != nil {
+		return seed, err
 	}
 	return p.seedFromCommit(commit)
 }

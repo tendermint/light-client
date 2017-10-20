@@ -1,13 +1,7 @@
 package certifiers
 
 import (
-	"math"
-
 	certerr "github.com/tendermint/light-client/certifiers/errors"
-)
-
-const (
-	FutureHeight = (math.MaxInt32 - 5)
 )
 
 // Provider is used to get more validators by other means
@@ -19,10 +13,8 @@ type Provider interface {
 	GetByHeight(h int) (Seed, error)
 	// GetByHash returns a seed exactly matching this validator hash
 	GetByHash(hash []byte) (Seed, error)
-}
-
-func LatestSeed(p Provider) (Seed, error) {
-	return p.GetByHeight(FutureHeight)
+	// LatestSeed returns the newest Seed stored
+	LatestSeed() (Seed, error)
 }
 
 // cacheProvider allows you to place one or more caches in front of a source
@@ -95,6 +87,21 @@ func (c cacheProvider) GetByHash(hash []byte) (s Seed, err error) {
 	return s, err
 }
 
+func (c cacheProvider) LatestSeed() (s Seed, err error) {
+	for _, p := range c.Providers {
+		var ts Seed
+		ts, err = p.LatestSeed()
+		if err == nil && ts.Height() > s.Height() {
+			s = ts
+		}
+	}
+	// even if the last one had an error, if any was a match, this is good
+	if s.Height() > 0 {
+		err = nil
+	}
+	return s, err
+}
+
 // missingProvider doens't store anything, always a miss
 // Designed as a mock for testing
 type missingProvider struct{}
@@ -103,10 +110,13 @@ func NewMissingProvider() Provider {
 	return missingProvider{}
 }
 
-func (_ missingProvider) StoreSeed(_ Seed) error { return nil }
-func (_ missingProvider) GetByHeight(_ int) (Seed, error) {
+func (missingProvider) StoreSeed(_ Seed) error { return nil }
+func (missingProvider) GetByHeight(_ int) (Seed, error) {
 	return Seed{}, certerr.ErrSeedNotFound()
 }
-func (_ missingProvider) GetByHash(_ []byte) (Seed, error) {
+func (missingProvider) GetByHash(_ []byte) (Seed, error) {
+	return Seed{}, certerr.ErrSeedNotFound()
+}
+func (missingProvider) LatestSeed() (Seed, error) {
 	return Seed{}, certerr.ErrSeedNotFound()
 }

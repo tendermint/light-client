@@ -27,7 +27,8 @@ func TestProvider(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 
 	// let's get the highest block
-	seed, err := p.GetByHeight(5000)
+	seed, err := p.LatestSeed()
+
 	require.Nil(err, "%+v", err)
 	sh := seed.Height()
 	vhash := seed.Header.ValidatorsHash

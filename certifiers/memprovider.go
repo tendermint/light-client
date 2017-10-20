@@ -59,3 +59,11 @@ func (m *memStoreProvider) GetByHash(hash []byte) (Seed, error) {
 	}
 	return s, err
 }
+
+func (m *memStoreProvider) LatestSeed() (Seed, error) {
+	l := len(m.byHeight)
+	if l == 0 {
+		return Seed{}, certerr.ErrSeedNotFound()
+	}
+	return m.byHeight[l-1], nil
+}

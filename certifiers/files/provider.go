@@ -3,6 +3,7 @@ package files
 import (
 	"encoding/hex"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -36,6 +37,8 @@ type Provider struct {
 	valDir   string
 	checkDir string
 }
+
+var _ certifiers.Provider = &Provider{}
 
 // NewProvider creates the parent dir and subdirs
 // for validators and checkpoints as needed
@@ -92,6 +95,10 @@ func (m Provider) GetByHeight(h int) (certifiers.Seed, error) {
 		}
 	}
 	return seed, err
+}
+
+func (p *Provider) LatestSeed() (seed certifiers.Seed, err error) {
+	return p.GetByHeight(math.MaxInt32 - 1)
 }
 
 // search for height, looks for a file with highest height < h
