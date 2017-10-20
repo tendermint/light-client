@@ -1,3 +1,8 @@
+/*
+Package client defines a provider that uses a rpcclient
+to get information, which is used to get new headers
+and validators directly from a node.
+*/
 package client
 
 import (
@@ -11,35 +16,37 @@ import (
 	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
-var _ certifiers.Provider = &Provider{}
-
 type SignStatusClient interface {
 	rpcclient.SignClient
 	rpcclient.StatusClient
 }
 
-type Provider struct {
+type provider struct {
 	node       SignStatusClient
 	lastHeight int
 }
 
-func New(node SignStatusClient) *Provider {
-	return &Provider{node: node}
+// NewProvider can wrap any rpcclient to expose it as
+// a read-only provider.
+func NewProvider(node SignStatusClient) certifiers.Provider {
+	return &provider{node: node}
 }
 
-func NewHTTP(remote string) *Provider {
-	return &Provider{
+// NewProvider can connects to a tendermint json-rpc endpoint
+// at the given url, and uses that as a read-only provider.
+func NewHTTPProvider(remote string) certifiers.Provider {
+	return &provider{
 		node: rpcclient.NewHTTP(remote, "/websocket"),
 	}
 }
 
 // StoreSeed is a noop, as clients can only read from the chain...
-func (p *Provider) StoreSeed(_ certifiers.Seed) error { return nil }
+func (p *provider) StoreSeed(_ certifiers.Seed) error { return nil }
 
 // GetHash gets the most recent validator and sees if it matches
 //
 // TODO: improve when the rpc interface supports more functionality
-func (p *Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
+func (p *provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 	var seed certifiers.Seed
 	vals, err := p.node.Validators(nil)
 	// if we get no validators, or a different height, return an error
@@ -55,7 +62,7 @@ func (p *Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
 }
 
 // GetByHeight gets the validator set by height
-func (p *Provider) GetByHeight(h int) (seed certifiers.Seed, err error) {
+func (p *provider) GetByHeight(h int) (seed certifiers.Seed, err error) {
 	commit, err := p.node.Commit(&h)
 	if err != nil {
 		return seed, err
@@ -63,7 +70,7 @@ func (p *Provider) GetByHeight(h int) (seed certifiers.Seed, err error) {
 	return p.seedFromCommit(commit)
 }
 
-func (p *Provider) LatestSeed() (seed certifiers.Seed, err error) {
+func (p *provider) LatestSeed() (seed certifiers.Seed, err error) {
 	commit, err := p.GetLatestCommit()
 	if err != nil {
 		return seed, err
@@ -74,7 +81,7 @@ func (p *Provider) LatestSeed() (seed certifiers.Seed, err error) {
 // GetLatestCommit should return the most recent commit there is,
 // which handles queries for future heights as per the semantics
 // of GetByHeight.
-func (p *Provider) GetLatestCommit() (*ctypes.ResultCommit, error) {
+func (p *provider) GetLatestCommit() (*ctypes.ResultCommit, error) {
 	status, err := p.node.Status()
 	if err != nil {
 		return nil, err
@@ -82,7 +89,7 @@ func (p *Provider) GetLatestCommit() (*ctypes.ResultCommit, error) {
 	return p.node.Commit(&status.LatestBlockHeight)
 }
 
-func (p *Provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed, error) {
+func (p *provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed, error) {
 	seed := certifiers.Seed{
 		Validators: types.NewValidatorSet(vals.Validators),
 	}
@@ -95,7 +102,7 @@ func (p *Provider) seedFromVals(vals *ctypes.ResultValidators) (certifiers.Seed,
 	return seed, nil
 }
 
-func (p *Provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.Seed, error) {
+func (p *provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.Seed, error) {
 	seed := certifiers.Seed{
 		Commit: certifiers.CommitFromResult(commit),
 	}
@@ -117,7 +124,7 @@ func (p *Provider) seedFromCommit(commit *ctypes.ResultCommit) (certifiers.Seed,
 	return seed, nil
 }
 
-func (p *Provider) updateHeight(h int) {
+func (p *provider) updateHeight(h int) {
 	if h > p.lastHeight {
 		p.lastHeight = h
 	}

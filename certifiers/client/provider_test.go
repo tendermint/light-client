@@ -20,7 +20,7 @@ func TestProvider(t *testing.T) {
 	cfg := rpctest.GetConfig()
 	rpcAddr := cfg.RPC.ListenAddress
 	chainID := cfg.ChainID
-	p := client.NewHTTP(rpcAddr)
+	p := client.NewHTTPProvider(rpcAddr)
 	require.NotNil(t, p)
 
 	// let it produce some blocks
