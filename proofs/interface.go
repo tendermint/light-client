@@ -20,7 +20,7 @@ type Prover interface {
 type Proof interface {
 	BlockHeight() uint64
 	// Validates this Proof matches the checkpoint
-	Validate(certifiers.Checkpoint) error
+	Validate(*certifiers.Commit) error
 	// Marshal prepares for storage
 	Marshal() ([]byte, error)
 	// Data extracts the query result we want to see

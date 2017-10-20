@@ -68,7 +68,7 @@ func (p TxProof) BlockHeight() uint64 {
 	return p.Height
 }
 
-func (p TxProof) Validate(check certifiers.Checkpoint) error {
+func (p TxProof) Validate(check *certifiers.Commit) error {
 	if uint64(check.Height()) != p.Height {
 		return certerr.ErrHeightMismatch(int(p.Height), check.Height())
 	}

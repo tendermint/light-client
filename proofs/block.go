@@ -10,12 +10,12 @@ import (
 	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
-func ValidateBlockMeta(meta *types.BlockMeta, check certifiers.Checkpoint) error {
+func ValidateBlockMeta(meta *types.BlockMeta, check *certifiers.Commit) error {
 	// TODO: check the BlockID??
 	return ValidateHeader(meta.Header, check)
 }
 
-func ValidateBlock(meta *types.Block, check certifiers.Checkpoint) error {
+func ValidateBlock(meta *types.Block, check *certifiers.Commit) error {
 	err := ValidateHeader(meta.Header, check)
 	if err != nil {
 		return err
@@ -26,7 +26,7 @@ func ValidateBlock(meta *types.Block, check certifiers.Checkpoint) error {
 	return nil
 }
 
-func ValidateHeader(head *types.Header, check certifiers.Checkpoint) error {
+func ValidateHeader(head *types.Header, check *certifiers.Commit) error {
 	// make sure they are for the same height (obvious fail)
 	if head.Height != check.Height() {
 		return certerr.ErrHeightMismatch(head.Height, check.Height())

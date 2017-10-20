@@ -57,7 +57,7 @@ func (w Wrapper) proveQuery(r *ctypes.ResultABCIQuery) (*ctypes.ResultABCIQuery,
 		return nil, err
 	}
 	// make sure the checkpoint and proof match up
-	check := certifiers.CheckpointFromResult(c)
+	check := certifiers.CommitFromResult(c)
 	// verify query
 	proof := AppProof{
 		Height: r.Height,
@@ -80,7 +80,7 @@ func (w Wrapper) Tx(hash []byte, prove bool) (*ctypes.ResultTx, error) {
 		return nil, err
 	}
 	// make sure the checkpoint and proof match up
-	check := certifiers.CheckpointFromResult(c)
+	check := certifiers.CommitFromResult(c)
 	// verify tx
 	proof := TxProof{
 		Height: uint64(r.Height),
@@ -103,7 +103,7 @@ func (w Wrapper) BlockchainInfo(minHeight, maxHeight int) (*ctypes.ResultBlockch
 		if err != nil {
 			return nil, err
 		}
-		check := certifiers.CheckpointFromResult(c)
+		check := certifiers.CommitFromResult(c)
 		err = ValidateBlockMeta(meta, check)
 		if err != nil {
 			return nil, err
@@ -123,7 +123,7 @@ func (w Wrapper) Block(height *int) (*ctypes.ResultBlock, error) {
 	if err != nil {
 		return nil, err
 	}
-	check := certifiers.CheckpointFromResult(c)
+	check := certifiers.CommitFromResult(c)
 
 	// now verify
 	err = ValidateBlockMeta(r.BlockMeta, check)
@@ -145,7 +145,7 @@ func (w Wrapper) Commit(height *int) (*ctypes.ResultCommit, error) {
 	r, err := w.Client.Commit(height)
 	// if we got it, then certify it
 	if err == nil {
-		check := certifiers.CheckpointFromResult(r)
+		check := certifiers.CommitFromResult(r)
 		err = w.cert.Certify(check)
 	}
 	return r, err
@@ -189,7 +189,7 @@ func verifyHeader(c rpcclient.Client, head *types.Header) error {
 	if err != nil {
 		return err
 	}
-	check := certifiers.CheckpointFromResult(commit)
+	check := certifiers.CommitFromResult(commit)
 	return ValidateHeader(head, check)
 }
 
@@ -199,6 +199,6 @@ func verifyBlock(c rpcclient.Client, block *types.Block) error {
 	if err != nil {
 		return err
 	}
-	check := certifiers.CheckpointFromResult(commit)
+	check := certifiers.CommitFromResult(commit)
 	return ValidateBlock(block, check)
 }

@@ -84,7 +84,7 @@ func (p AppProof) BlockHeight() uint64 {
 	return p.Height
 }
 
-func (p AppProof) Validate(check certifiers.Checkpoint) error {
+func (p AppProof) Validate(check *certifiers.Commit) error {
 	if uint64(check.Height()) != p.Height {
 		return certerr.ErrHeightMismatch(int(p.Height), check.Height())
 	}
