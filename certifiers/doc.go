@@ -114,16 +114,6 @@ If one of these steps doesn't work, then we continue
 bisecting, until we eventually have to externally
 validate the valdiator set changes at every block.
 
-There is only one problem now... it is impossible to get
-old validator sets from the tendermint RPC API.
-You can currently copy these seeds from one light client
-to another, with full verification.
-Thus, if client A cannot update from height 800 to 1200,
-but client B has the full seed for height 1000, he can
-export it and client A can import that seed, doing the
-full verification procedure above to advance from 800 to 1000,
-and then move up to the current block height.
-
 Since we never trust any server in this protocol, only the
 signatures themselves, it doesn't matter if the seed comes
 from a (possibly malicious) node or a (possibly malicious) user.
