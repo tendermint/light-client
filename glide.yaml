@@ -7,6 +7,10 @@ import:
 - package: github.com/spf13/cobra
 - package: github.com/spf13/pflag
 - package: github.com/spf13/viper
+- package: github.com/tendermint/abci
+  version: develop
+  subpackages:
+  - examples/dummy
 - package: github.com/tendermint/go-crypto
   version: develop
   subpackages:
@@ -16,10 +20,8 @@ import:
   version: develop
   subpackages:
   - data
-- package: github.com/tendermint/merkleeyes
+- package: github.com/tendermint/iavl
   version: develop
-  subpackages:
-  - iavl
 - package: github.com/tendermint/tendermint
   version: develop
   subpackages:

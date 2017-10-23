@@ -30,11 +30,26 @@ func Wrap(c rpcclient.Client, cert *certifiers.InquiringCertifier) Wrapper {
 	return wrap
 }
 
-func (w Wrapper) ABCIQuery(path string, data data.Bytes, prove bool) (*ctypes.ResultABCIQuery, error) {
-	r, err := w.Client.ABCIQuery(path, data, prove)
-	if !prove || err != nil {
+func (w Wrapper) ABCIQueryWithOptions(path string, data data.Bytes, opts rpcclient.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
+	r, err := w.Client.ABCIQuery(path, data)
+	if opts.Trusted || err != nil {
 		return r, err
 	}
+
+	return w.proveQuery(r)
+}
+
+func (w Wrapper) ABCIQuery(path string, data data.Bytes) (*ctypes.ResultABCIQuery, error) {
+	// default always with proof
+	r, err := w.Client.ABCIQuery(path, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return w.proveQuery(r)
+}
+
+func (w Wrapper) proveQuery(r *ctypes.ResultABCIQuery) (*ctypes.ResultABCIQuery, error) {
 	// get a verified commit to validate from
 	h := int(r.Height)
 	c, err := w.Commit(&h)

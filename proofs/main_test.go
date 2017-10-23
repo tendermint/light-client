@@ -4,7 +4,9 @@ import (
 	"os"
 	"testing"
 
-	meapp "github.com/tendermint/merkleeyes/app"
+	"github.com/tendermint/abci/example/dummy"
+	cmn "github.com/tendermint/tmlibs/common"
+
 	nm "github.com/tendermint/tendermint/node"
 	"github.com/tendermint/tendermint/rpc/client"
 	rpctest "github.com/tendermint/tendermint/rpc/test"
@@ -18,7 +20,7 @@ func getLocalClient() client.Local {
 
 func TestMain(m *testing.M) {
 	// start a tendermint node (and merkleeyes) in the background to test against
-	app := meapp.NewMerkleEyesApp("", 100)
+	app := dummy.NewDummyApplication()
 	node = rpctest.StartTendermint(app)
 	code := m.Run()
 
@@ -26,4 +28,11 @@ func TestMain(m *testing.M) {
 	node.Stop()
 	node.Wait()
 	os.Exit(code)
+}
+
+func MakeTxKV() ([]byte, []byte, []byte) {
+	k := cmn.RandStr(8)
+	v := cmn.RandStr(8)
+	tx := k + "=" + v
+	return []byte(k), []byte(v), []byte(tx)
 }
