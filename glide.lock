@@ -1,5 +1,5 @@
-hash: 87b66db020855a372d1506308b7a1ee6ec8f4770afa4033f91570e62ae85963f
-updated: 2017-10-19T16:30:49.262629373+02:00
+hash: 26227c7fdb04e560ac2bdefb47ebb64971cecc0dc5cff2e607603581ac1de7f4
+updated: 2017-10-23T14:27:45.267043079+02:00
 imports:
 - name: github.com/bgentry/speakeasy
   version: 4aabc24848ce5fd31929f7d1e4ea74d3709c14cd
@@ -74,7 +74,7 @@ imports:
   - leveldb/table
   - leveldb/util
 - name: github.com/tendermint/abci
-  version: 5162ed1b2b4e7c0cea98be442210b43a0b6b94b9
+  version: bb9bb4aa465a31fd6a272765be381888e6898c74
   subpackages:
   - client
   - example/dummy
@@ -91,11 +91,11 @@ imports:
   - cmd
   - keys
 - name: github.com/tendermint/go-wire
-  version: 26ee079df7fca1958da8995c727b59759b197534
+  version: 55ae61f1fc83cfaa57ab7d54250d7a1a2be0b83c
   subpackages:
   - data
 - name: github.com/tendermint/iavl
-  version: 4f9a4a2433e3b3022ae2ceec50a1f57689d54145
+  version: 721710e7aa59f61dbfbf558943a207ba3fe6b926
 - name: github.com/tendermint/tendermint
   version: fa56e8c0ce463f77c87ab17a3d7cf5431d9f2c0b
   subpackages:
@@ -185,7 +185,7 @@ imports:
   - tap
   - transport
 - name: gopkg.in/go-playground/validator.v9
-  version: d529ee1b0f30352444f507cc6cdac96bfd12decc
+  version: 6d8c18553ea1ac493d049edd6f102f52e618f085
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9

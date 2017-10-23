@@ -8,7 +8,7 @@ import:
 - package: github.com/spf13/pflag
 - package: github.com/spf13/viper
 - package: github.com/tendermint/abci
-  version: feature/merkleeyes-to-iavl
+  version: develop
   subpackages:
   - examples/dummy
 - package: github.com/tendermint/go-crypto
