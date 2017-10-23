@@ -13,6 +13,9 @@ import (
 )
 
 const (
+	// MaxFullCommitSize is the maximum number of bytes we will
+	// read in for a full commit to avoid excessive allocations
+	// in the deserializer
 	MaxFullCommitSize = 1024 * 1024
 )
 
@@ -20,9 +23,6 @@ const (
 func SaveFullCommit(fc certifiers.FullCommit, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
-		// if os.IsExist(err) {
-		//   return nil
-		// }
 		return errors.WithStack(err)
 	}
 	defer f.Close()
@@ -36,9 +36,6 @@ func SaveFullCommit(fc certifiers.FullCommit, path string) error {
 func SaveFullCommitJSON(fc certifiers.FullCommit, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
-		// if os.IsExist(err) {
-		//   return nil
-		// }
 		return errors.WithStack(err)
 	}
 	defer f.Close()

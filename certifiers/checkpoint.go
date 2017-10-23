@@ -67,7 +67,7 @@ func (c *Commit) ValidatorsHash() []byte {
 func (c *Commit) ValidateBasic(chainID string) error {
 	// make sure the header is reasonable
 	if c.Header == nil {
-		return errors.New("*Commit missing header")
+		return errors.New("Commit missing header")
 	}
 	if c.Header.ChainID != chainID {
 		return errors.Errorf("Header belongs to another chain '%s' not '%s'",
@@ -75,7 +75,7 @@ func (c *Commit) ValidateBasic(chainID string) error {
 	}
 
 	if c.Commit == nil {
-		return errors.New("*Commit missing commits")
+		return errors.New("Commit missing signatures")
 	}
 
 	// make sure the header and commit match (height and hash)

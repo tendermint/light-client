@@ -8,6 +8,9 @@ import (
 //
 // Examples: MemProvider, files.Provider, client.Provider....
 type Provider interface {
+	// StoreCommit saves a FullCommit after we have verified it,
+	// so we can query for it later. Important for updating our
+	// store of trusted commits
 	StoreCommit(fc FullCommit) error
 	// GetByHeight returns the closest commit with height <= h
 	GetByHeight(h int) (FullCommit, error)
