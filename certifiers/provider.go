@@ -52,7 +52,7 @@ GetByHeight should return the closest possible match from all providers.
 
 The Cache is usually organized in order from cheapest call (memory)
 to most expensive calls (disk/network). However, since GetByHeight returns
-a FullCommit a h' <= h, if the memory has a seed at h-10, but the network would
+a FullCommit at h' <= h, if the memory has a seed at h-10, but the network would
 give us the exact match, a naive "stop at first non-error" would hide
 the actual desired results.
 

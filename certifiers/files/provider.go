@@ -99,6 +99,7 @@ func (p *provider) GetByHeight(h int) (certifiers.FullCommit, error) {
 }
 
 func (p *provider) LatestCommit() (fc certifiers.FullCommit, err error) {
+	// Note to future: please update by 2077 to avoid rollover
 	return p.GetByHeight(math.MaxInt32 - 1)
 }
 

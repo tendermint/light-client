@@ -23,7 +23,7 @@ func ErrCommitNotFound() error {
 	return errors.WithStack(errCommitNotFound)
 }
 
-// IsValidatorsChangedErr checks whether and error is due
+// IsValidatorsChangedErr checks whether an error is due
 // to a differing validator set
 func IsValidatorsChangedErr(err error) bool {
 	return err != nil && (errors.Cause(err) == errValidatorsChanged)
@@ -33,7 +33,7 @@ func ErrValidatorsChanged() error {
 	return errors.WithStack(errValidatorsChanged)
 }
 
-// IsTooMuchChangeErr checks whether and error is due to too much change
+// IsTooMuchChangeErr checks whether an error is due to too much change
 // between these validators sets
 func IsTooMuchChangeErr(err error) bool {
 	return err != nil && (errors.Cause(err) == errTooMuchChange)

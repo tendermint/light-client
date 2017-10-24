@@ -74,7 +74,7 @@ func (c *Dynamic) Update(fc FullCommit) error {
 		return err
 	}
 
-	// TODO: now, make sure not too much change... meaning this commit
+	// now, make sure not too much change... meaning this commit
 	// would be approved by the currently known validator set
 	// as well as the new set
 	commit := fc.Commit.Commit
