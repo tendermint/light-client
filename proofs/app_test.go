@@ -6,23 +6,26 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/proofs"
-	"github.com/tendermint/tendermint/rpc/client"
+
 	ctest "github.com/tendermint/tmlibs/test"
+
+	"github.com/tendermint/tendermint/rpc/client"
+
+	"github.com/tendermint/light-client/certifiers"
+	"github.com/tendermint/light-client/proofs"
 )
 
-func getCurrentCheck(t *testing.T, cl client.Client) lc.Checkpoint {
+func getCurrentCheck(t *testing.T, cl client.Client) *certifiers.Commit {
 	stat, err := cl.Status()
 	require.Nil(t, err, "%+v", err)
 	return getCheckForHeight(t, cl, stat.LatestBlockHeight)
 }
 
-func getCheckForHeight(t *testing.T, cl client.Client, h int) lc.Checkpoint {
+func getCheckForHeight(t *testing.T, cl client.Client, h int) *certifiers.Commit {
 	client.WaitForHeight(cl, h, nil)
 	commit, err := cl.Commit(&h)
 	require.Nil(t, err, "%+v", err)
-	return lc.CheckpointFromResult(commit)
+	return certifiers.CommitFromResult(commit)
 }
 
 func TestAppProofs(t *testing.T) {
@@ -73,8 +76,8 @@ func TestAppProofs(t *testing.T) {
 // testSerialization makes sure the proof will un/marshal properly
 // and validate with the checkpoint.  It also does lots of modifications
 // to the binary data and makes sure no mods validates properly
-func testSerialization(t *testing.T, prover lc.Prover, pr lc.Proof,
-	check lc.Checkpoint, mods int) {
+func testSerialization(t *testing.T, prover proofs.Prover, pr proofs.Proof,
+	check *certifiers.Commit, mods int) {
 
 	require := require.New(t)
 

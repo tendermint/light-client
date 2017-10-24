@@ -9,11 +9,12 @@ import (
 
 	"github.com/tendermint/tendermint/rpc/client"
 
-	lc "github.com/tendermint/light-client"
+	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
-var _ lc.Prover = AppProver{}
-var _ lc.Proof = AppProof{}
+var _ Prover = AppProver{}
+var _ Proof = AppProof{}
 
 // we limit proofs to 1MB to stop overflow attacks
 const appLimit = 1000 * 1000
@@ -31,7 +32,7 @@ func NewAppProver(node client.Client) AppProver {
 
 // Get tries to download a merkle hash for app state on this key from
 // the tendermint node.
-func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
+func (a AppProver) Get(key []byte, h uint64) (Proof, error) {
 	resp, err := a.node.ABCIQuery("/key", key)
 	if err != nil {
 		return nil, err
@@ -42,13 +43,13 @@ func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
 		return nil, errors.Errorf("Query error %d: %s", resp.Code, resp.Code.String())
 	}
 	if len(resp.Key) == 0 || len(resp.Value) == 0 || len(resp.Proof) == 0 {
-		return nil, lc.ErrNoData()
+		return nil, ErrNoData()
 	}
 	if resp.Height == 0 {
 		resp.Height = h
 	}
 	if h != 0 && h != resp.Height {
-		return nil, lc.ErrHeightMismatch(int(h), int(resp.Height))
+		return nil, certerr.ErrHeightMismatch(int(h), int(resp.Height))
 	}
 	proof := AppProof{
 		Height: resp.Height,
@@ -59,7 +60,7 @@ func (a AppProver) Get(key []byte, h uint64) (lc.Proof, error) {
 	return proof, nil
 }
 
-func (a AppProver) Unmarshal(data []byte) (lc.Proof, error) {
+func (a AppProver) Unmarshal(data []byte) (Proof, error) {
 	var proof AppProof
 	err := errors.WithStack(wire.ReadBinaryBytes(data, &proof))
 	return proof, err
@@ -83,9 +84,9 @@ func (p AppProof) BlockHeight() uint64 {
 	return p.Height
 }
 
-func (p AppProof) Validate(check lc.Checkpoint) error {
+func (p AppProof) Validate(check *certifiers.Commit) error {
 	if uint64(check.Height()) != p.Height {
-		return lc.ErrHeightMismatch(int(p.Height), check.Height())
+		return certerr.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 
 	proof, err := iavl.ReadKeyExistsProof(p.Proof)

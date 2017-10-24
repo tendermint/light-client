@@ -6,9 +6,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	rpctest "github.com/tendermint/tendermint/rpc/test"
+
 	"github.com/tendermint/light-client/certifiers"
 	"github.com/tendermint/light-client/certifiers/client"
-	rpctest "github.com/tendermint/tendermint/rpc/test"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 func TestProvider(t *testing.T) {
@@ -17,14 +20,15 @@ func TestProvider(t *testing.T) {
 	cfg := rpctest.GetConfig()
 	rpcAddr := cfg.RPC.ListenAddress
 	chainID := cfg.ChainID
-	p := client.NewHTTP(rpcAddr)
+	p := client.NewHTTPProvider(rpcAddr)
 	require.NotNil(t, p)
 
 	// let it produce some blocks
 	time.Sleep(500 * time.Millisecond)
 
 	// let's get the highest block
-	seed, err := p.GetByHeight(5000)
+	seed, err := p.LatestCommit()
+
 	require.Nil(err, "%+v", err)
 	sh := seed.Height()
 	vhash := seed.Header.ValidatorsHash
@@ -44,15 +48,15 @@ func TestProvider(t *testing.T) {
 	seed, err = p.GetByHash(vhash)
 	require.Nil(err, "%+v", err)
 	require.Equal(vhash, seed.Header.ValidatorsHash)
-	err = cert.Certify(seed.Checkpoint)
+	err = cert.Certify(seed.Commit)
 	assert.Nil(err, "%+v", err)
 
 	// get by hash fails without match
 	seed, err = p.GetByHash([]byte("foobar"))
 	assert.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(certerr.IsCommitNotFoundErr(err))
 
 	// storing the seed silently ignored
-	err = p.StoreSeed(seed)
+	err = p.StoreCommit(seed)
 	assert.Nil(err, "%+v", err)
 }

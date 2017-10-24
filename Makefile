@@ -1,4 +1,4 @@
-.PHONY: install build test list_pkg docs clean_docs get_vendor_deps tools $(DOC_PKGS)
+.PHONY: install build test get_vendor_deps tools
 
 build: tools
 	go build `glide novendor`

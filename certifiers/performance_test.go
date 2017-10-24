@@ -7,33 +7,33 @@ import (
 	"github.com/tendermint/light-client/certifiers"
 )
 
-func BenchmarkGenCheckpoint20(b *testing.B) {
+func BenchmarkGenCommit20(b *testing.B) {
 	keys := certifiers.GenValKeys(20)
-	benchmarkGenCheckpoint(b, keys)
+	benchmarkGenCommit(b, keys)
 }
 
-func BenchmarkGenCheckpoint100(b *testing.B) {
+func BenchmarkGenCommit100(b *testing.B) {
 	keys := certifiers.GenValKeys(100)
-	benchmarkGenCheckpoint(b, keys)
+	benchmarkGenCommit(b, keys)
 }
 
-func BenchmarkGenCheckpointSec20(b *testing.B) {
-	keys := certifiers.GenSecValKeys(20)
-	benchmarkGenCheckpoint(b, keys)
+func BenchmarkGenCommitSec20(b *testing.B) {
+	keys := certifiers.GenSecpValKeys(20)
+	benchmarkGenCommit(b, keys)
 }
 
-func BenchmarkGenCheckpointSec100(b *testing.B) {
-	keys := certifiers.GenSecValKeys(100)
-	benchmarkGenCheckpoint(b, keys)
+func BenchmarkGenCommitSec100(b *testing.B) {
+	keys := certifiers.GenSecpValKeys(100)
+	benchmarkGenCommit(b, keys)
 }
 
-func benchmarkGenCheckpoint(b *testing.B, keys certifiers.ValKeys) {
+func benchmarkGenCommit(b *testing.B, keys certifiers.ValKeys) {
 	chainID := fmt.Sprintf("bench-%d", len(keys))
 	vals := keys.ToValidators(20, 10)
 	for i := 0; i < b.N; i++ {
 		h := 1 + i
 		appHash := []byte(fmt.Sprintf("h=%d", h))
-		keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, len(keys))
+		keys.GenCommit(chainID, h, nil, vals, appHash, 0, len(keys))
 	}
 }
 
@@ -46,8 +46,8 @@ func BenchmarkGenValKeys(b *testing.B) {
 }
 
 // this benchmarks generating one key
-func BenchmarkGenSecValKeys(b *testing.B) {
-	keys := certifiers.GenSecValKeys(20)
+func BenchmarkGenSecpValKeys(b *testing.B) {
+	keys := certifiers.GenSecpValKeys(20)
 	for i := 0; i < b.N; i++ {
 		keys = keys.Extend(1)
 	}
@@ -75,37 +75,37 @@ func BenchmarkToValidatorsSec100(b *testing.B) {
 
 // this benchmarks constructing the validator set (.PubKey() * nodes)
 func benchmarkToValidatorsSec(b *testing.B, nodes int) {
-	keys := certifiers.GenSecValKeys(nodes)
+	keys := certifiers.GenSecpValKeys(nodes)
 	for i := 1; i <= b.N; i++ {
 		keys.ToValidators(int64(2*i), int64(i))
 	}
 }
 
-func BenchmarkCertifyCheckpoint20(b *testing.B) {
+func BenchmarkCertifyCommit20(b *testing.B) {
 	keys := certifiers.GenValKeys(20)
-	benchmarkCertifyCheckpoint(b, keys)
+	benchmarkCertifyCommit(b, keys)
 }
 
-func BenchmarkCertifyCheckpoint100(b *testing.B) {
+func BenchmarkCertifyCommit100(b *testing.B) {
 	keys := certifiers.GenValKeys(100)
-	benchmarkCertifyCheckpoint(b, keys)
+	benchmarkCertifyCommit(b, keys)
 }
 
-func BenchmarkCertifyCheckpointSec20(b *testing.B) {
-	keys := certifiers.GenSecValKeys(20)
-	benchmarkCertifyCheckpoint(b, keys)
+func BenchmarkCertifyCommitSec20(b *testing.B) {
+	keys := certifiers.GenSecpValKeys(20)
+	benchmarkCertifyCommit(b, keys)
 }
 
-func BenchmarkCertifyCheckpointSec100(b *testing.B) {
-	keys := certifiers.GenSecValKeys(100)
-	benchmarkCertifyCheckpoint(b, keys)
+func BenchmarkCertifyCommitSec100(b *testing.B) {
+	keys := certifiers.GenSecpValKeys(100)
+	benchmarkCertifyCommit(b, keys)
 }
 
-func benchmarkCertifyCheckpoint(b *testing.B, keys certifiers.ValKeys) {
+func benchmarkCertifyCommit(b *testing.B, keys certifiers.ValKeys) {
 	chainID := "bench-certify"
 	vals := keys.ToValidators(20, 10)
 	cert := certifiers.NewStatic(chainID, vals)
-	check := keys.GenCheckpoint(chainID, 123, nil, vals, []byte("foo"), 0, len(keys))
+	check := keys.GenCommit(chainID, 123, nil, vals, []byte("foo"), 0, len(keys))
 	for i := 0; i < b.N; i++ {
 		err := cert.Certify(check)
 		if err != nil {

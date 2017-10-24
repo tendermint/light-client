@@ -3,57 +3,76 @@ package certifiers
 import (
 	"encoding/hex"
 	"sort"
+
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
-type MemStoreProvider struct {
+type memStoreProvider struct {
 	// byHeight is always sorted by Height... need to support range search (nil, h]
 	// btree would be more efficient for larger sets
-	byHeight Seeds
-	byHash   map[string]Seed
+	byHeight fullCommits
+	byHash   map[string]FullCommit
 }
 
-func NewMemStoreProvider() *MemStoreProvider {
-	return &MemStoreProvider{
-		byHeight: Seeds{},
-		byHash:   map[string]Seed{},
+// fullCommits just exists to allow easy sorting
+type fullCommits []FullCommit
+
+func (s fullCommits) Len() int      { return len(s) }
+func (s fullCommits) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s fullCommits) Less(i, j int) bool {
+	return s[i].Height() < s[j].Height()
+}
+
+func NewMemStoreProvider() Provider {
+	return &memStoreProvider{
+		byHeight: fullCommits{},
+		byHash:   map[string]FullCommit{},
 	}
 }
 
-func (m *MemStoreProvider) encodeHash(hash []byte) string {
+func (m *memStoreProvider) encodeHash(hash []byte) string {
 	return hex.EncodeToString(hash)
 }
 
-func (m *MemStoreProvider) StoreSeed(seed Seed) error {
-	// make sure the seed is self-consistent before saving
-	err := seed.ValidateBasic(seed.Checkpoint.Header.ChainID)
+func (m *memStoreProvider) StoreCommit(fc FullCommit) error {
+	// make sure the fc is self-consistent before saving
+	err := fc.ValidateBasic(fc.Commit.Header.ChainID)
 	if err != nil {
 		return err
 	}
 
-	// store the valid seed
-	key := m.encodeHash(seed.Hash())
-	m.byHash[key] = seed
-	m.byHeight = append(m.byHeight, seed)
+	// store the valid fc
+	key := m.encodeHash(fc.ValidatorsHash())
+	m.byHash[key] = fc
+	m.byHeight = append(m.byHeight, fc)
 	sort.Sort(m.byHeight)
 	return nil
 }
 
-func (m *MemStoreProvider) GetByHeight(h int) (Seed, error) {
+func (m *memStoreProvider) GetByHeight(h int) (FullCommit, error) {
 	// search from highest to lowest
 	for i := len(m.byHeight) - 1; i >= 0; i-- {
-		s := m.byHeight[i]
-		if s.Height() <= h {
-			return s, nil
+		fc := m.byHeight[i]
+		if fc.Height() <= h {
+			return fc, nil
 		}
 	}
-	return Seed{}, ErrSeedNotFound()
+	return FullCommit{}, certerr.ErrCommitNotFound()
 }
 
-func (m *MemStoreProvider) GetByHash(hash []byte) (Seed, error) {
+func (m *memStoreProvider) GetByHash(hash []byte) (FullCommit, error) {
 	var err error
-	s, ok := m.byHash[m.encodeHash(hash)]
+	fc, ok := m.byHash[m.encodeHash(hash)]
 	if !ok {
-		err = ErrSeedNotFound()
+		err = certerr.ErrCommitNotFound()
 	}
-	return s, err
+	return fc, err
+}
+
+func (m *memStoreProvider) LatestCommit() (FullCommit, error) {
+	l := len(m.byHeight)
+	if l == 0 {
+		return FullCommit{}, certerr.ErrCommitNotFound()
+	}
+	return m.byHeight[l-1], nil
 }

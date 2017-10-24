@@ -9,16 +9,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 	"github.com/tendermint/light-client/certifiers/files"
 )
 
-func checkEqual(stored, loaded certifiers.Seed, chainID string) error {
+func checkEqual(stored, loaded certifiers.FullCommit, chainID string) error {
 	err := loaded.ValidateBasic(chainID)
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(stored.Hash(), loaded.Hash()) {
+	if !bytes.Equal(stored.ValidatorsHash(), loaded.ValidatorsHash()) {
 		return errors.New("Different block hashes")
 	}
 	return nil
@@ -38,31 +40,31 @@ func TestFileProvider(t *testing.T) {
 	count := 10
 
 	// make a bunch of seeds...
-	seeds := make([]certifiers.Seed, count)
+	seeds := make([]certifiers.FullCommit, count)
 	for i := 0; i < count; i++ {
 		// two seeds for each validator, to check how we handle dups
 		// (10, 0), (10, 1), (10, 1), (10, 2), (10, 2), ...
 		vals := keys.ToValidators(10, int64(count/2))
 		h := 20 + 10*i
-		check := keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, 5)
-		seeds[i] = certifiers.Seed{check, vals}
+		check := keys.GenCommit(chainID, h, nil, vals, appHash, 0, 5)
+		seeds[i] = certifiers.NewFullCommit(check, vals)
 	}
 
 	// check provider is empty
 	seed, err := p.GetByHeight(20)
 	require.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(certerr.IsCommitNotFoundErr(err))
 
-	seed, err = p.GetByHash(seeds[3].Hash())
+	seed, err = p.GetByHash(seeds[3].ValidatorsHash())
 	require.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(certerr.IsCommitNotFoundErr(err))
 
 	// now add them all to the provider
 	for _, s := range seeds {
-		err = p.StoreSeed(s)
+		err = p.StoreCommit(s)
 		require.Nil(err)
 		// and make sure we can get it back
-		s2, err := p.GetByHash(s.Hash())
+		s2, err := p.GetByHash(s.ValidatorsHash())
 		assert.Nil(err)
 		err = checkEqual(s, s2, chainID)
 		assert.Nil(err)
@@ -90,5 +92,5 @@ func TestFileProvider(t *testing.T) {
 	// and proper error for too low
 	_, err = p.GetByHeight(5)
 	assert.NotNil(err)
-	assert.True(certifiers.IsSeedNotFoundErr(err))
+	assert.True(certerr.IsCommitNotFoundErr(err))
 }

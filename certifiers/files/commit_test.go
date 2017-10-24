@@ -1,4 +1,4 @@
-package certifiers
+package files
 
 import (
 	"os"
@@ -9,14 +9,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	cmn "github.com/tendermint/tmlibs/common"
+
+	"github.com/tendermint/light-client/certifiers"
 )
 
 func tmpFile() string {
 	suffix := cmn.RandStr(16)
-	return filepath.Join(os.TempDir(), "seed-test-"+suffix)
+	return filepath.Join(os.TempDir(), "fc-test-"+suffix)
 }
 
-func TestSerializeSeeds(t *testing.T) {
+func TestSerializeFullCommits(t *testing.T) {
 	assert, require := assert.New(t), require.New(t)
 
 	// some constants
@@ -24,42 +26,41 @@ func TestSerializeSeeds(t *testing.T) {
 	chainID := "ser-ial"
 	h := 25
 
-	// build a seed
-	keys := GenValKeys(5)
+	// build a fc
+	keys := certifiers.GenValKeys(5)
 	vals := keys.ToValidators(10, 0)
-	check := keys.GenCheckpoint(chainID, h, nil, vals, appHash, 0, 5)
-	seed := Seed{check, vals}
+	fc := keys.GenFullCommit(chainID, h, nil, vals, appHash, 0, 5)
 
-	require.Equal(h, seed.Height())
-	require.Equal(vals.Hash(), seed.Hash())
+	require.Equal(h, fc.Height())
+	require.Equal(vals.Hash(), fc.ValidatorsHash())
 
 	// try read/write with json
 	jfile := tmpFile()
 	defer os.Remove(jfile)
-	jseed, err := LoadSeedJSON(jfile)
+	jseed, err := LoadFullCommitJSON(jfile)
 	assert.NotNil(err)
-	err = seed.WriteJSON(jfile)
+	err = SaveFullCommitJSON(fc, jfile)
 	require.Nil(err)
-	jseed, err = LoadSeedJSON(jfile)
+	jseed, err = LoadFullCommitJSON(jfile)
 	assert.Nil(err, "%+v", err)
 	assert.Equal(h, jseed.Height())
-	assert.Equal(vals.Hash(), jseed.Hash())
+	assert.Equal(vals.Hash(), jseed.ValidatorsHash())
 
 	// try read/write with binary
 	bfile := tmpFile()
 	defer os.Remove(bfile)
-	bseed, err := LoadSeed(bfile)
+	bseed, err := LoadFullCommit(bfile)
 	assert.NotNil(err)
-	err = seed.Write(bfile)
+	err = SaveFullCommit(fc, bfile)
 	require.Nil(err)
-	bseed, err = LoadSeed(bfile)
+	bseed, err = LoadFullCommit(bfile)
 	assert.Nil(err, "%+v", err)
 	assert.Equal(h, bseed.Height())
-	assert.Equal(vals.Hash(), bseed.Hash())
+	assert.Equal(vals.Hash(), bseed.ValidatorsHash())
 
 	// make sure they don't read the other format (different)
-	_, err = LoadSeed(jfile)
+	_, err = LoadFullCommit(jfile)
 	assert.NotNil(err)
-	_, err = LoadSeedJSON(bfile)
+	_, err = LoadFullCommitJSON(bfile)
 	assert.NotNil(err)
 }

@@ -5,8 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/light-client/certifiers"
+
 	"github.com/tendermint/tendermint/types"
+
+	"github.com/tendermint/light-client/certifiers"
+	"github.com/tendermint/light-client/certifiers/errors"
 )
 
 // TestDynamicCert just makes sure it still works like StaticCert
@@ -42,16 +45,16 @@ func TestDynamicCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		check := tc.keys.GenCheckpoint(chainID, tc.height, nil, tc.vals,
+		check := tc.keys.GenCommit(chainID, tc.height, nil, tc.vals,
 			[]byte("bar"), tc.first, tc.last)
 		err := cert.Certify(check)
 		if tc.proper {
 			assert.Nil(err, "%+v", err)
-			assert.Equal(cert.LastHeight, tc.height)
+			assert.Equal(cert.LastHeight(), tc.height)
 		} else {
 			assert.NotNil(err)
 			if tc.changed {
-				assert.True(certifiers.IsValidatorsChangedErr(err), "%+v", err)
+				assert.True(errors.IsValidatorsChangedErr(err), "%+v", err)
 			}
 		}
 	}
@@ -68,7 +71,7 @@ func TestDynamicUpdate(t *testing.T) {
 
 	// one valid block to give us a sense of time
 	h := 100
-	good := keys.GenCheckpoint(chainID, h, nil, vals, []byte("foo"), 0, len(keys))
+	good := keys.GenCommit(chainID, h, nil, vals, []byte("foo"), 0, len(keys))
 	err := cert.Certify(good)
 	require.Nil(err, "%+v", err)
 
@@ -105,21 +108,21 @@ func TestDynamicUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		check := tc.keys.GenCheckpoint(chainID, tc.height, nil, tc.vals,
+		fc := tc.keys.GenFullCommit(chainID, tc.height, nil, tc.vals,
 			[]byte("bar"), tc.first, tc.last)
-		err := cert.Update(check, tc.vals)
+		err := cert.Update(fc)
 		if tc.proper {
 			assert.Nil(err, "%d: %+v", tc.height, err)
 			// we update last seen height
-			assert.Equal(cert.LastHeight, tc.height)
+			assert.Equal(cert.LastHeight(), tc.height)
 			// and we update the proper validators
-			assert.EqualValues(check.Header.ValidatorsHash, cert.Cert.Hash())
+			assert.EqualValues(fc.Header.ValidatorsHash, cert.Hash())
 		} else {
 			assert.NotNil(err, "%d", tc.height)
 			// we don't update the height
-			assert.NotEqual(cert.LastHeight, tc.height)
+			assert.NotEqual(cert.LastHeight(), tc.height)
 			if tc.changed {
-				assert.True(certifiers.IsTooMuchChangeErr(err),
+				assert.True(errors.IsTooMuchChangeErr(err),
 					"%d: %+v", tc.height, err)
 			}
 		}

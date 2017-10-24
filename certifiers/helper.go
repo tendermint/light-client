@@ -4,11 +4,19 @@ import (
 	"time"
 
 	crypto "github.com/tendermint/go-crypto"
-	lc "github.com/tendermint/light-client"
+
 	"github.com/tendermint/tendermint/types"
 )
 
-// Test Helper: ValKeys lets us simulate signing with many keys
+// ValKeys is a helper for testing.
+//
+// It lets us simulate signing with many keys, either ed25519 or secp256k1.
+// The main use case is to create a set, and call GenCommit
+// to get propely signed header for testing.
+//
+// You can set different weights of validators each time you call
+// ToValidators, and can optionally extend the validator set later
+// with Extend or ExtendSecp
 type ValKeys []crypto.PrivKey
 
 // GenValKeys produces an array of private keys to generate commits
@@ -34,8 +42,8 @@ func (v ValKeys) Extend(n int) ValKeys {
 	return append(v, extra...)
 }
 
-// GenSecValKeys produces an array of secp256k1 private keys to generate commits
-func GenSecValKeys(n int) ValKeys {
+// GenSecpValKeys produces an array of secp256k1 private keys to generate commits
+func GenSecpValKeys(n int) ValKeys {
 	res := make(ValKeys, n)
 	for i := range res {
 		res[i] = crypto.GenPrivKeySecp256k1().Wrap()
@@ -43,9 +51,9 @@ func GenSecValKeys(n int) ValKeys {
 	return res
 }
 
-// Extend adds n more secp256k1 keys (to remove, just take a slice)
-func (v ValKeys) ExtendSec(n int) ValKeys {
-	extra := GenSecValKeys(n)
+// ExtendSecp adds n more secp256k1 keys (to remove, just take a slice)
+func (v ValKeys) ExtendSecp(n int) ValKeys {
+	extra := GenSecpValKeys(n)
 	return append(v, extra...)
 }
 
@@ -61,8 +69,8 @@ func (v ValKeys) ToValidators(init, inc int64) *types.ValidatorSet {
 	return types.NewValidatorSet(res)
 }
 
-// SignHeader properly signs the header with all keys from first to last exclusive
-func (v ValKeys) SignHeader(header *types.Header, first, last int) *types.Commit {
+// signHeader properly signs the header with all keys from first to last exclusive
+func (v ValKeys) signHeader(header *types.Header, first, last int) *types.Commit {
 	votes := make([]*types.Vote, len(v))
 
 	// we need this list to keep the ordering...
@@ -98,7 +106,7 @@ func makeVote(header *types.Header, vals *types.ValidatorSet, key crypto.PrivKey
 	return vote
 }
 
-func GenHeader(chainID string, height int, txs types.Txs,
+func genHeader(chainID string, height int, txs types.Txs,
 	vals *types.ValidatorSet, appHash []byte) *types.Header {
 
 	return &types.Header{
@@ -114,14 +122,28 @@ func GenHeader(chainID string, height int, txs types.Txs,
 	}
 }
 
-// GenCheckpoint calls GenHeader and SignHeader and combines them into a Checkpoint
-func (v ValKeys) GenCheckpoint(chainID string, height int, txs types.Txs,
-	vals *types.ValidatorSet, appHash []byte, first, last int) lc.Checkpoint {
+// GenCommit calls genHeader and signHeader and combines them into a *Commit
+func (v ValKeys) GenCommit(chainID string, height int, txs types.Txs,
+	vals *types.ValidatorSet, appHash []byte, first, last int) *Commit {
 
-	header := GenHeader(chainID, height, txs, vals, appHash)
-	check := lc.Checkpoint{
-		Header: header,
-		Commit: v.SignHeader(header, first, last),
+	header := genHeader(chainID, height, txs, vals, appHash)
+	check := &Commit{
+		Header:          header,
+		Commit:          v.signHeader(header, first, last),
+		CanonicalCommit: true,
 	}
 	return check
+}
+
+// GenFullCommit calls genHeader and signHeader and combines them into a *Commit
+func (v ValKeys) GenFullCommit(chainID string, height int, txs types.Txs,
+	vals *types.ValidatorSet, appHash []byte, first, last int) FullCommit {
+
+	header := genHeader(chainID, height, txs, vals, appHash)
+	commit := &Commit{
+		Header:          header,
+		Commit:          v.signHeader(header, first, last),
+		CanonicalCommit: true,
+	}
+	return NewFullCommit(commit, vals)
 }

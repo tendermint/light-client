@@ -1,14 +1,31 @@
+/*
+Package files defines a Provider that stores all data in the filesystem
+
+We assume the same validator hash may be reused by many different
+headers/*Commits, and thus store it separately. This leaves us
+with three issues:
+
+  1. Given a validator hash, retrieve the validator set if previously stored
+  2. Given a block height, find the *Commit with the highest height <= h
+  3. Given a FullCommit, store it quickly to satisfy 1 and 2
+
+Note that we do not worry about caching, as that can be achieved by
+pairing this with a MemStoreProvider and CacheProvider from certifiers
+*/
 package files
 
 import (
 	"encoding/hex"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
 
 	"github.com/pkg/errors"
+
 	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 const (
@@ -19,25 +36,14 @@ const (
 	filePerm = os.FileMode(0644)
 )
 
-// Provider stores all data in the filesystem
-// We assume the same validator hash may be reused by many different
-// headers/Checkpoints, and thus store it separately. This leaves us
-// with three issues:
-//
-// 1. Given a validator hash, retrieve the validator set if previously stored
-// 2. Given a block height, find the Checkpoint with the highest height <= h
-// 3. Given a Seed, store it quickly to satisfy 1 and 2
-//
-// Note that we do not worry about caching, as that can be achieved by
-// pairing this with a MemStoreProvider and CacheProvider from certifiers
-type Provider struct {
+type provider struct {
 	valDir   string
 	checkDir string
 }
 
 // NewProvider creates the parent dir and subdirs
 // for validators and checkpoints as needed
-func NewProvider(dir string) Provider {
+func NewProvider(dir string) certifiers.Provider {
 	valDir := filepath.Join(dir, ValDir)
 	checkDir := filepath.Join(dir, CheckDir)
 	for _, d := range []string{valDir, checkDir} {
@@ -46,31 +52,31 @@ func NewProvider(dir string) Provider {
 			panic(err)
 		}
 	}
-	return Provider{valDir: valDir, checkDir: checkDir}
+	return &provider{valDir: valDir, checkDir: checkDir}
 }
 
-func (m Provider) encodeHash(hash []byte) string {
+func (p *provider) encodeHash(hash []byte) string {
 	return hex.EncodeToString(hash) + Ext
 }
 
-func (m Provider) encodeHeight(h int) string {
+func (p *provider) encodeHeight(h int) string {
 	// pad up to 10^12 for height...
 	return fmt.Sprintf("%012d%s", h, Ext)
 }
 
-func (m Provider) StoreSeed(seed certifiers.Seed) error {
-	// make sure the seed is self-consistent before saving
-	err := seed.ValidateBasic(seed.Checkpoint.Header.ChainID)
+func (p *provider) StoreCommit(fc certifiers.FullCommit) error {
+	// make sure the fc is self-consistent before saving
+	err := fc.ValidateBasic(fc.Commit.Header.ChainID)
 	if err != nil {
 		return err
 	}
 
 	paths := []string{
-		filepath.Join(m.checkDir, m.encodeHeight(seed.Height())),
-		filepath.Join(m.valDir, m.encodeHash(seed.Header.ValidatorsHash)),
+		filepath.Join(p.checkDir, p.encodeHeight(fc.Height())),
+		filepath.Join(p.valDir, p.encodeHash(fc.Header.ValidatorsHash)),
 	}
-	for _, p := range paths {
-		err := seed.Write(p)
+	for _, path := range paths {
+		err := SaveFullCommit(fc, path)
 		// unknown error in creating or writing immediately breaks
 		if err != nil {
 			return err
@@ -79,23 +85,28 @@ func (m Provider) StoreSeed(seed certifiers.Seed) error {
 	return nil
 }
 
-func (m Provider) GetByHeight(h int) (certifiers.Seed, error) {
+func (p *provider) GetByHeight(h int) (certifiers.FullCommit, error) {
 	// first we look for exact match, then search...
-	path := filepath.Join(m.checkDir, m.encodeHeight(h))
-	seed, err := certifiers.LoadSeed(path)
-	if certifiers.IsSeedNotFoundErr(err) {
-		path, err = m.searchForHeight(h)
+	path := filepath.Join(p.checkDir, p.encodeHeight(h))
+	fc, err := LoadFullCommit(path)
+	if certerr.IsCommitNotFoundErr(err) {
+		path, err = p.searchForHeight(h)
 		if err == nil {
-			seed, err = certifiers.LoadSeed(path)
+			fc, err = LoadFullCommit(path)
 		}
 	}
-	return seed, err
+	return fc, err
+}
+
+func (p *provider) LatestCommit() (fc certifiers.FullCommit, err error) {
+	// Note to future: please update by 2077 to avoid rollover
+	return p.GetByHeight(math.MaxInt32 - 1)
 }
 
 // search for height, looks for a file with highest height < h
-// return certifiers.ErrSeedNotFound() if not there...
-func (m Provider) searchForHeight(h int) (string, error) {
-	d, err := os.Open(m.checkDir)
+// return certifiers.ErrCommitNotFound() if not there...
+func (p *provider) searchForHeight(h int) (string, error) {
+	d, err := os.Open(p.checkDir)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -106,18 +117,18 @@ func (m Provider) searchForHeight(h int) (string, error) {
 		return "", errors.WithStack(err)
 	}
 
-	desired := m.encodeHeight(h)
+	desired := p.encodeHeight(h)
 	sort.Strings(files)
 	i := sort.SearchStrings(files, desired)
 	if i == 0 {
-		return "", certifiers.ErrSeedNotFound()
+		return "", certerr.ErrCommitNotFound()
 	}
 	found := files[i-1]
-	path := filepath.Join(m.checkDir, found)
+	path := filepath.Join(p.checkDir, found)
 	return path, errors.WithStack(err)
 }
 
-func (m Provider) GetByHash(hash []byte) (certifiers.Seed, error) {
-	path := filepath.Join(m.valDir, m.encodeHash(hash))
-	return certifiers.LoadSeed(path)
+func (p *provider) GetByHash(hash []byte) (certifiers.FullCommit, error) {
+	path := filepath.Join(p.valDir, p.encodeHash(hash))
+	return LoadFullCommit(path)
 }

@@ -4,16 +4,18 @@ import (
 	"bytes"
 	"errors"
 
-	lc "github.com/tendermint/light-client"
 	"github.com/tendermint/tendermint/types"
+
+	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
-func ValidateBlockMeta(meta *types.BlockMeta, check lc.Checkpoint) error {
+func ValidateBlockMeta(meta *types.BlockMeta, check *certifiers.Commit) error {
 	// TODO: check the BlockID??
 	return ValidateHeader(meta.Header, check)
 }
 
-func ValidateBlock(meta *types.Block, check lc.Checkpoint) error {
+func ValidateBlock(meta *types.Block, check *certifiers.Commit) error {
 	err := ValidateHeader(meta.Header, check)
 	if err != nil {
 		return err
@@ -24,10 +26,10 @@ func ValidateBlock(meta *types.Block, check lc.Checkpoint) error {
 	return nil
 }
 
-func ValidateHeader(head *types.Header, check lc.Checkpoint) error {
+func ValidateHeader(head *types.Header, check *certifiers.Commit) error {
 	// make sure they are for the same height (obvious fail)
 	if head.Height != check.Height() {
-		return lc.ErrHeightMismatch(head.Height, check.Height())
+		return certerr.ErrHeightMismatch(head.Height, check.Height())
 	}
 	// check if they are equal by using hashes
 	chead := check.Header

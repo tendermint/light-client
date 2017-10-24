@@ -4,8 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/light-client/certifiers"
+
 	"github.com/tendermint/tendermint/types"
+
+	"github.com/tendermint/light-client/certifiers"
+	errors "github.com/tendermint/light-client/certifiers/errors"
 )
 
 func TestStaticCert(t *testing.T) {
@@ -40,7 +43,7 @@ func TestStaticCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		check := tc.keys.GenCheckpoint(chainID, tc.height, nil, tc.vals,
+		check := tc.keys.GenCommit(chainID, tc.height, nil, tc.vals,
 			[]byte("foo"), tc.first, tc.last)
 		err := cert.Certify(check)
 		if tc.proper {
@@ -48,7 +51,7 @@ func TestStaticCert(t *testing.T) {
 		} else {
 			assert.NotNil(err)
 			if tc.changed {
-				assert.True(certifiers.IsValidatorsChangedErr(err), "%+v", err)
+				assert.True(errors.IsValidatorsChangedErr(err), "%+v", err)
 			}
 		}
 	}

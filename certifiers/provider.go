@@ -1,46 +1,45 @@
 package certifiers
 
-import "math"
-
-const (
-	FutureHeight = (math.MaxInt32 - 5)
+import (
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 // Provider is used to get more validators by other means
 //
 // Examples: MemProvider, files.Provider, client.Provider....
 type Provider interface {
-	StoreSeed(seed Seed) error
-	// GetByHeight returns the closest seed at with height <= h
-	GetByHeight(h int) (Seed, error)
-	// GetByHash returns a seed exactly matching this validator hash
-	GetByHash(hash []byte) (Seed, error)
+	// StoreCommit saves a FullCommit after we have verified it,
+	// so we can query for it later. Important for updating our
+	// store of trusted commits
+	StoreCommit(fc FullCommit) error
+	// GetByHeight returns the closest commit with height <= h
+	GetByHeight(h int) (FullCommit, error)
+	// GetByHash returns a commit exactly matching this validator hash
+	GetByHash(hash []byte) (FullCommit, error)
+	// LatestCommit returns the newest commit stored
+	LatestCommit() (FullCommit, error)
 }
 
-func LatestSeed(p Provider) (Seed, error) {
-	return p.GetByHeight(FutureHeight)
-}
-
-// CacheProvider allows you to place one or more caches in front of a source
+// cacheProvider allows you to place one or more caches in front of a source
 // Provider.  It runs through them in order until a match is found.
 // So you can keep a local cache, and check with the network if
 // no data is there.
-type CacheProvider struct {
+type cacheProvider struct {
 	Providers []Provider
 }
 
-func NewCacheProvider(providers ...Provider) CacheProvider {
-	return CacheProvider{
+func NewCacheProvider(providers ...Provider) Provider {
+	return cacheProvider{
 		Providers: providers,
 	}
 }
 
-// StoreSeed tries to add the seed to all providers.
+// StoreCommit tries to add the seed to all providers.
 //
 // Aborts on first error it encounters (closest provider)
-func (c CacheProvider) StoreSeed(seed Seed) (err error) {
+func (c cacheProvider) StoreCommit(fc FullCommit) (err error) {
 	for _, p := range c.Providers {
-		err = p.StoreSeed(seed)
+		err = p.StoreCommit(fc)
 		if err != nil {
 			break
 		}
@@ -53,7 +52,7 @@ GetByHeight should return the closest possible match from all providers.
 
 The Cache is usually organized in order from cheapest call (memory)
 to most expensive calls (disk/network). However, since GetByHeight returns
-a Seed a h' <= h, if the memory has a seed at h-10, but the network would
+a FullCommit at h' <= h, if the memory has a seed at h-10, but the network would
 give us the exact match, a naive "stop at first non-error" would hide
 the actual desired results.
 
@@ -61,48 +60,66 @@ Thus, we query each provider in order until we find an exact match
 or we finished querying them all.  If at least one returned a non-error,
 then this returns the best match (minimum h-h').
 */
-func (c CacheProvider) GetByHeight(h int) (s Seed, err error) {
+func (c cacheProvider) GetByHeight(h int) (fc FullCommit, err error) {
 	for _, p := range c.Providers {
-		var ts Seed
-		ts, err = p.GetByHeight(h)
+		var tfc FullCommit
+		tfc, err = p.GetByHeight(h)
 		if err == nil {
-			if ts.Height() > s.Height() {
-				s = ts
+			if tfc.Height() > fc.Height() {
+				fc = tfc
 			}
-			if ts.Height() == h {
+			if tfc.Height() == h {
 				break
 			}
 		}
 	}
 	// even if the last one had an error, if any was a match, this is good
-	if s.Height() > 0 {
+	if fc.Height() > 0 {
 		err = nil
 	}
-	return s, err
+	return fc, err
 }
 
-func (c CacheProvider) GetByHash(hash []byte) (s Seed, err error) {
+func (c cacheProvider) GetByHash(hash []byte) (fc FullCommit, err error) {
 	for _, p := range c.Providers {
-		s, err = p.GetByHash(hash)
+		fc, err = p.GetByHash(hash)
 		if err == nil {
 			break
 		}
 	}
-	return s, err
+	return fc, err
 }
 
-// MissingProvider doens't store anything, always a miss
+func (c cacheProvider) LatestCommit() (fc FullCommit, err error) {
+	for _, p := range c.Providers {
+		var tfc FullCommit
+		tfc, err = p.LatestCommit()
+		if err == nil && tfc.Height() > fc.Height() {
+			fc = tfc
+		}
+	}
+	// even if the last one had an error, if any was a match, this is good
+	if fc.Height() > 0 {
+		err = nil
+	}
+	return fc, err
+}
+
+// missingProvider doens't store anything, always a miss
 // Designed as a mock for testing
-type MissingProvider struct{}
+type missingProvider struct{}
 
-func NewMissingProvider() MissingProvider {
-	return MissingProvider{}
+func NewMissingProvider() Provider {
+	return missingProvider{}
 }
 
-func (_ MissingProvider) StoreSeed(_ Seed) error { return nil }
-func (_ MissingProvider) GetByHeight(_ int) (Seed, error) {
-	return Seed{}, ErrSeedNotFound()
+func (missingProvider) StoreCommit(_ FullCommit) error { return nil }
+func (missingProvider) GetByHeight(_ int) (FullCommit, error) {
+	return FullCommit{}, certerr.ErrCommitNotFound()
 }
-func (_ MissingProvider) GetByHash(_ []byte) (Seed, error) {
-	return Seed{}, ErrSeedNotFound()
+func (missingProvider) GetByHash(_ []byte) (FullCommit, error) {
+	return FullCommit{}, certerr.ErrCommitNotFound()
+}
+func (missingProvider) LatestCommit() (FullCommit, error) {
+	return FullCommit{}, certerr.ErrCommitNotFound()
 }

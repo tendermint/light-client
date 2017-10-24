@@ -1,42 +1,62 @@
-package lightclient
+package certifiers
 
 import (
 	"bytes"
 
 	"github.com/pkg/errors"
+
 	rtypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
+
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
 // Certifier checks the votes to make sure the block really is signed properly.
 // Certifier must know the current set of validitors by some other means.
 type Certifier interface {
-	Certify(check Checkpoint) error
+	Certify(check *Commit) error
+	ChainID() string
 }
 
-// Checkpoint is basically the rpc /commit response, but extended
+// *Commit is basically the rpc /commit response, but extended
 //
 // This is the basepoint for proving anything on the blockchain. It contains
 // a signed header.  If the signatures are valid and > 2/3 of the known set,
 // we can store this checkpoint and use it to prove any number of aspects of
 // the system: such as txs, abci state, validator sets, etc...
-type Checkpoint struct {
-	Header *types.Header `json:"header"`
-	Commit *types.Commit `json:"commit"`
+type Commit rtypes.ResultCommit
+
+// FullCommit is a commit and the actual validator set,
+// the base info you need to update to a given point,
+// assuming knowledge of some previous validator set
+type FullCommit struct {
+	*Commit    `json:"commit"`
+	Validators *types.ValidatorSet `json:"validator_set"`
 }
 
-func CheckpointFromResult(commit *rtypes.ResultCommit) Checkpoint {
-	return Checkpoint{
-		Header: commit.Header,
-		Commit: commit.Commit,
+func NewFullCommit(commit *Commit, vals *types.ValidatorSet) FullCommit {
+	return FullCommit{
+		Commit:     commit,
+		Validators: vals,
 	}
 }
 
-func (c Checkpoint) Height() int {
-	if c.Header == nil {
+func CommitFromResult(commit *rtypes.ResultCommit) *Commit {
+	return (*Commit)(commit)
+}
+
+func (c *Commit) Height() int {
+	if c == nil || c.Header == nil {
 		return 0
 	}
 	return c.Header.Height
+}
+
+func (c *Commit) ValidatorsHash() []byte {
+	if c == nil || c.Header == nil {
+		return nil
+	}
+	return c.Header.ValidatorsHash
 }
 
 // ValidateBasic does basic consistency checks and makes sure the headers
@@ -44,10 +64,10 @@ func (c Checkpoint) Height() int {
 //
 // Make sure to use a Verifier to validate the signatures actually provide
 // a significantly strong proof for this header's validity.
-func (c Checkpoint) ValidateBasic(chainID string) error {
+func (c *Commit) ValidateBasic(chainID string) error {
 	// make sure the header is reasonable
 	if c.Header == nil {
-		return errors.New("Checkpoint missing header")
+		return errors.New("Commit missing header")
 	}
 	if c.Header.ChainID != chainID {
 		return errors.Errorf("Header belongs to another chain '%s' not '%s'",
@@ -55,12 +75,12 @@ func (c Checkpoint) ValidateBasic(chainID string) error {
 	}
 
 	if c.Commit == nil {
-		return errors.New("Checkpoint missing commits")
+		return errors.New("Commit missing signatures")
 	}
 
 	// make sure the header and commit match (height and hash)
 	if c.Commit.Height() != c.Header.Height {
-		return ErrHeightMismatch(c.Commit.Height(), c.Header.Height)
+		return certerr.ErrHeightMismatch(c.Commit.Height(), c.Header.Height)
 	}
 	hhash := c.Header.Hash()
 	chash := c.Commit.BlockID.Hash

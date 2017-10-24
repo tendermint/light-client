@@ -1,26 +1,26 @@
-package client
+package proofs
 
 import (
 	"fmt"
 
 	"github.com/tendermint/go-wire/data"
-	lc "github.com/tendermint/light-client"
-	"github.com/tendermint/light-client/certifiers"
-	"github.com/tendermint/light-client/proofs"
+	"github.com/tendermint/tmlibs/events"
+
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
-	"github.com/tendermint/tmlibs/events"
+
+	"github.com/tendermint/light-client/certifiers"
 )
 
 var _ rpcclient.Client = Wrapper{}
 
 type Wrapper struct {
 	rpcclient.Client
-	cert *certifiers.InquiringCertifier
+	cert *certifiers.Inquiring
 }
 
-func Wrap(c rpcclient.Client, cert *certifiers.InquiringCertifier) Wrapper {
+func Wrap(c rpcclient.Client, cert *certifiers.Inquiring) Wrapper {
 	wrap := Wrapper{c, cert}
 	// if we wrap http client, then we can swap out the event switch to filter
 	if hc, ok := c.(*rpcclient.HTTP); ok {
@@ -57,9 +57,9 @@ func (w Wrapper) proveQuery(r *ctypes.ResultABCIQuery) (*ctypes.ResultABCIQuery,
 		return nil, err
 	}
 	// make sure the checkpoint and proof match up
-	check := lc.CheckpointFromResult(c)
+	check := certifiers.CommitFromResult(c)
 	// verify query
-	proof := proofs.AppProof{
+	proof := AppProof{
 		Height: r.Height,
 		Key:    r.Key,
 		Value:  r.Value,
@@ -80,9 +80,9 @@ func (w Wrapper) Tx(hash []byte, prove bool) (*ctypes.ResultTx, error) {
 		return nil, err
 	}
 	// make sure the checkpoint and proof match up
-	check := lc.CheckpointFromResult(c)
+	check := certifiers.CommitFromResult(c)
 	// verify tx
-	proof := proofs.TxProof{
+	proof := TxProof{
 		Height: uint64(r.Height),
 		Proof:  r.Proof,
 	}
@@ -103,8 +103,8 @@ func (w Wrapper) BlockchainInfo(minHeight, maxHeight int) (*ctypes.ResultBlockch
 		if err != nil {
 			return nil, err
 		}
-		check := lc.CheckpointFromResult(c)
-		err = proofs.ValidateBlockMeta(meta, check)
+		check := certifiers.CommitFromResult(c)
+		err = ValidateBlockMeta(meta, check)
 		if err != nil {
 			return nil, err
 		}
@@ -123,14 +123,14 @@ func (w Wrapper) Block(height *int) (*ctypes.ResultBlock, error) {
 	if err != nil {
 		return nil, err
 	}
-	check := lc.CheckpointFromResult(c)
+	check := certifiers.CommitFromResult(c)
 
 	// now verify
-	err = proofs.ValidateBlockMeta(r.BlockMeta, check)
+	err = ValidateBlockMeta(r.BlockMeta, check)
 	if err != nil {
 		return nil, err
 	}
-	err = proofs.ValidateBlock(r.Block, check)
+	err = ValidateBlock(r.Block, check)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (w Wrapper) Commit(height *int) (*ctypes.ResultCommit, error) {
 	r, err := w.Client.Commit(height)
 	// if we got it, then certify it
 	if err == nil {
-		check := lc.CheckpointFromResult(r)
+		check := certifiers.CommitFromResult(r)
 		err = w.cert.Certify(check)
 	}
 	return r, err
@@ -189,8 +189,8 @@ func verifyHeader(c rpcclient.Client, head *types.Header) error {
 	if err != nil {
 		return err
 	}
-	check := lc.CheckpointFromResult(commit)
-	return proofs.ValidateHeader(head, check)
+	check := certifiers.CommitFromResult(commit)
+	return ValidateHeader(head, check)
 }
 
 func verifyBlock(c rpcclient.Client, block *types.Block) error {
@@ -199,6 +199,6 @@ func verifyBlock(c rpcclient.Client, block *types.Block) error {
 	if err != nil {
 		return err
 	}
-	check := lc.CheckpointFromResult(commit)
-	return proofs.ValidateBlock(block, check)
+	check := certifiers.CommitFromResult(commit)
+	return ValidateBlock(block, check)
 }

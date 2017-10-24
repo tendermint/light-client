@@ -2,14 +2,18 @@ package proofs
 
 import (
 	"github.com/pkg/errors"
+
 	wire "github.com/tendermint/go-wire"
-	lc "github.com/tendermint/light-client"
+
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/types"
+
+	"github.com/tendermint/light-client/certifiers"
+	certerr "github.com/tendermint/light-client/certifiers/errors"
 )
 
-var _ lc.Prover = TxProver{}
-var _ lc.Proof = TxProof{}
+var _ Prover = TxProver{}
+var _ Proof = TxProof{}
 
 // we store up to 10MB as a proof, as we need an entire block! right now
 const txLimit = 10 * 1000 * 1000
@@ -30,7 +34,7 @@ func NewTxProver(node client.Client) TxProver {
 //
 // Important: key must be Tx.Hash()
 // Height is completely ignored for now :(
-func (t TxProver) Get(key []byte, h uint64) (lc.Proof, error) {
+func (t TxProver) Get(key []byte, h uint64) (Proof, error) {
 	res, err := t.node.Tx(key, true)
 	if err != nil {
 		return nil, err
@@ -44,7 +48,7 @@ func (t TxProver) Get(key []byte, h uint64) (lc.Proof, error) {
 	return proof, err
 }
 
-func (t TxProver) Unmarshal(data []byte) (pr lc.Proof, err error) {
+func (t TxProver) Unmarshal(data []byte) (pr Proof, err error) {
 	var proof TxProof
 	err = errors.WithStack(wire.ReadBinaryBytes(data, &proof))
 	return proof, err
@@ -64,9 +68,9 @@ func (p TxProof) BlockHeight() uint64 {
 	return p.Height
 }
 
-func (p TxProof) Validate(check lc.Checkpoint) error {
+func (p TxProof) Validate(check *certifiers.Commit) error {
 	if uint64(check.Height()) != p.Height {
-		return lc.ErrHeightMismatch(int(p.Height), check.Height())
+		return certerr.ErrHeightMismatch(int(p.Height), check.Height())
 	}
 	return p.Proof.Validate(check.Header.DataHash)
 }
